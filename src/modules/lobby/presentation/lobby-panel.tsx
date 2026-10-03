@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import type { LobbySnapshot, LobbyActor } from "../public";
 import type { OperationResult } from "@/shared/contracts/operation-result";
 import { lobbyViewReducer } from "./lobby-view-state";
+import { sendLobbyCommand } from "./lobby-command";
 export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const t = useTranslations();
   const [view, dispatch] = useReducer(lobbyViewReducer, {
@@ -63,18 +64,16 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
     setPending(true);
     setError("");
     try {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const result: OperationResult<LobbySnapshot> = await response.json();
+      const { result, currentRoom } = await sendLobbyCommand(path, body);
       if (result.ok)
         dispatch({
           type: "command",
           room: path.endsWith("/leave") ? null : result.value,
         });
-      else setError(result.error.messageKey);
+      else {
+        setError(currentRoom ? "roomConflict" : result.error.messageKey);
+        if (currentRoom) dispatch({ type: "command", room: currentRoom });
+      }
     } catch {
       setError("errors.INTERNAL");
     } finally {
