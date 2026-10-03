@@ -24,7 +24,8 @@
     "db:migrate:test": "node --import tsx scripts/with-test-env.ts prisma migrate deploy",
     "check:boundaries": "node --import tsx scripts/check-boundaries.ts",
     "test:http": "node --import tsx scripts/test-stack.ts exec node --import tsx scripts/smoke-http.ts",
-    "test:browser": "node --import tsx scripts/test-stack.ts exec playwright test"
+    "test:browser": "node --import tsx scripts/test-stack.ts exec playwright test",
+    "db:seed:s1": "node --import tsx prisma/seed-s1.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.0",
