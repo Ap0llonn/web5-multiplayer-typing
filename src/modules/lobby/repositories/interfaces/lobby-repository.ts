@@ -6,6 +6,12 @@ export interface LobbyRepository {
     code: string,
     change: (room: Lobby) => OperationResult<Lobby>,
   ): Promise<OperationResult<Lobby>>;
+  refreshPresence(
+    code: string,
+    playerIdentityId: string,
+    now: number,
+    activeSince: number,
+  ): Promise<OperationResult<Lobby>>;
   findForPlayer(
     playerIdentityId: string,
   ): Promise<OperationResult<Lobby | null>>;

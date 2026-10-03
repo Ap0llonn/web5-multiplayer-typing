@@ -70,3 +70,41 @@ test("bad login displays translated error without false success", async ({
     page.getByRole("button", { name: "Sign in", exact: true }),
   ).toBeEnabled();
 });
+test("a delayed initial room lookup cannot erase a successful creation", async ({
+  page,
+}) => {
+  const name = `delay${Date.now().toString().slice(-8)}`;
+  const signup = await page.request.post("/api/auth/sign-up/email", {
+    headers: { origin: "http://localhost:3000" },
+    data: {
+      name,
+      username: name,
+      email: `${name}@example.com`,
+      password: "test-password-123",
+    },
+  });
+  expect(signup.ok()).toBe(true);
+  let release!: () => void;
+  let intercepted!: () => void;
+  const waiting = new Promise<void>((r) => {
+    release = r;
+  });
+  const requestSeen = new Promise<void>((r) => {
+    intercepted = r;
+  });
+  await page.route("**/api/lobbies/me", async (route) => {
+    intercepted();
+    await waiting;
+    await route.fulfill({ json: { ok: true, value: null } });
+  });
+  await page.goto("/en");
+  await requestSeen;
+  await page.getByLabel("Room name").fill("Delayed lookup");
+  await page.getByRole("button", { name: "Create room", exact: true }).click();
+  await expect(page.getByTestId("room-code")).toBeVisible();
+  const code = await page.getByTestId("room-code").innerText();
+  const loaded = page.waitForResponse("**/api/lobbies/me");
+  release();
+  await loaded;
+  await expect(page.getByTestId("room-code")).toHaveText(code);
+});

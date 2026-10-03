@@ -42,22 +42,32 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
     return result.ok ? success(snapshot(result.value, this.now())) : result;
   }
   async heartbeat(code: string, actor: LobbyActor) {
-    const result = await this.repository.mutate(code, (room) =>
-      heartbeatRoom(room, actor.playerIdentityId, this.now()),
+    const now = this.now();
+    let result = await this.repository.refreshPresence(
+      code,
+      actor.playerIdentityId,
+      now,
+      now - 30000,
     );
-    return result.ok ? success(snapshot(result.value, this.now())) : result;
+    if (
+      result.ok &&
+      result.value.members.some((member) => now - member.lastSeenAt > 30000)
+    ) {
+      result = await this.repository.mutate(code, (room) =>
+        heartbeatRoom(room, actor.playerIdentityId, now),
+      );
+    }
+    return result.ok ? success(snapshot(result.value, now)) : result;
   }
   async currentLobby(actor: LobbyActor) {
     const result = await this.repository.findForPlayer(actor.playerIdentityId);
     if (!result.ok) return result;
     if (!result.value) return success(null);
-    const live = await this.repository.mutate(result.value.code, (room) =>
-      heartbeatRoom(room, actor.playerIdentityId, this.now()),
-    );
+    const live = await this.heartbeat(result.value.code, actor);
     if (!live.ok)
       return ["FORBIDDEN", "ROOM_CLOSED"].includes(live.error.code)
         ? success(null)
         : live;
-    return success(snapshot(live.value, this.now()));
+    return live;
   }
 }

@@ -74,6 +74,7 @@ export class PrismaLobbyRepository implements LobbyRepository {
       try {
         return await this.db.$transaction(
           async (tx) => {
+            await tx.$queryRaw`SELECT id FROM "Lobby" WHERE code=${code} FOR UPDATE`;
             const row = await tx.lobby.findUnique({
               where: { code },
               include: { members: true },
@@ -130,7 +131,7 @@ export class PrismaLobbyRepository implements LobbyRepository {
             }
             return result.ok ? success(room) : result;
           },
-          { isolationLevel: "Serializable" },
+          { isolationLevel: "ReadCommitted" },
         );
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -140,6 +141,48 @@ export class PrismaLobbyRepository implements LobbyRepository {
         return failure("INTERNAL");
       }
     return failure("CONFLICT");
+  }
+  async refreshPresence(
+    code: string,
+    playerIdentityId: string,
+    now: number,
+    activeSince: number,
+  ): Promise<OperationResult<Lobby>> {
+    try {
+      return await this.db.$transaction(
+        async (tx) => {
+          // Shared room lock prevents membership/state mutations during a presence sample.
+          // Concurrent heartbeats share this lock and update only their own member row.
+          const locked = await tx.$queryRaw<
+            Array<{ id: string }>
+          >`SELECT id FROM "Lobby" WHERE code=${code} FOR SHARE`;
+          if (!locked[0]) return failure("NOT_FOUND");
+          await tx.lobbyMember.updateMany({
+            where: {
+              lobbyId: locked[0].id,
+              activePlayerIdentityId: playerIdentityId,
+              lastSeenAt: { gte: new Date(activeSince) },
+            },
+            data: { lastSeenAt: new Date(now) },
+          });
+          const row = await tx.lobby.findUnique({
+            where: { id: locked[0].id },
+            include: { members: true },
+          });
+          if (!row) return failure("NOT_FOUND");
+          if (row.state === "CLOSED") return failure("ROOM_CLOSED");
+          const room = fromRow(row);
+          if (
+            !room.members.some((m) => m.playerIdentityId === playerIdentityId)
+          )
+            return failure("FORBIDDEN");
+          return success(room);
+        },
+        { isolationLevel: "ReadCommitted" },
+      );
+    } catch {
+      return failure("INTERNAL");
+    }
   }
   async findForPlayer(
     playerIdentityId: string,

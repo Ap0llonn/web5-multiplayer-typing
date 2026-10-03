@@ -1,11 +1,16 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useReducer } from "react";
 import { useTranslations } from "next-intl";
 import type { LobbySnapshot, LobbyActor } from "../public";
 import type { OperationResult } from "@/shared/contracts/operation-result";
+import { lobbyViewReducer } from "./lobby-view-state";
 export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const t = useTranslations();
-  const [room, setRoom] = useState<LobbySnapshot | null>(null);
+  const [view, dispatch] = useReducer(lobbyViewReducer, {
+    room: null,
+    generation: 0,
+  });
+  const room = view.room;
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [connection, setConnection] = useState("connecting");
@@ -16,7 +21,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
       .then((r) => r.json())
       .then((r: OperationResult<LobbySnapshot | null>) => {
         if (!active) return;
-        if (r.ok) setRoom(r.value);
+        if (r.ok) dispatch({ type: "loaded", generation: 0, room: r.value });
         else setError(r.error.messageKey);
       })
       .catch(() => {
@@ -35,21 +40,21 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
     events.addEventListener("snapshot", (event) => {
       try {
         const result = JSON.parse(event.data) as OperationResult<LobbySnapshot>;
-        if (result.ok)
-          setRoom((current) =>
-            current && current.version > result.value.version
-              ? current
-              : result.value,
-          );
-        else {
+        if (result.ok) {
+          dispatch({ type: "snapshot", code, room: result.value });
+          setConnection("connected");
+        } else {
           setError(result.error.messageKey);
           events.close();
-          setRoom(null);
+          dispatch({ type: "command", room: null });
         }
       } catch {
         setError("errors.INTERNAL");
       }
     });
+    events.addEventListener("transient-error", () =>
+      setConnection("disconnected"),
+    );
     return () => events.close();
   }, [code]);
   async function send(path: string, body: unknown) {
@@ -64,7 +69,11 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
         body: JSON.stringify(body),
       });
       const result: OperationResult<LobbySnapshot> = await response.json();
-      if (result.ok) setRoom(path.endsWith("/leave") ? null : result.value);
+      if (result.ok)
+        dispatch({
+          type: "command",
+          room: path.endsWith("/leave") ? null : result.value,
+        });
       else setError(result.error.messageKey);
     } catch {
       setError("errors.INTERNAL");

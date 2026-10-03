@@ -1,9 +1,14 @@
 import "server-only";
 import { getRoomSnapshot } from "./http";
 import { resultResponse } from "@/shared/infrastructure/http/response";
+const isRetryable = (result: Awaited<ReturnType<typeof getRoomSnapshot>>) =>
+  !result.ok &&
+  ["CONFLICT", "INTERNAL", "RATE_LIMITED", "PROVIDER_UNAVAILABLE"].includes(
+    result.error.code,
+  );
 export async function lobbyEvents(request: Request, code: string) {
   const first = await getRoomSnapshot(request.headers, code);
-  if (!first.ok) return resultResponse(first);
+  if (!first.ok && !isRetryable(first)) return resultResponse(first);
   const encoder = new TextEncoder();
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -16,27 +21,31 @@ export async function lobbyEvents(request: Request, code: string) {
         controller.close();
       };
       request.signal.addEventListener("abort", close, { once: true });
-      const send = (value: Awaited<ReturnType<typeof getRoomSnapshot>>) => {
+      const send = (
+        value: Awaited<ReturnType<typeof getRoomSnapshot>>,
+        event = "snapshot",
+      ) => {
         if (!stopped)
           controller.enqueue(
             encoder.encode(
-              `event: snapshot\ndata: ${JSON.stringify(value)}\n\n`,
+              `event: ${event}\ndata: ${JSON.stringify(value)}\n\n`,
             ),
           );
       };
-      send(first);
+      send(first, isRetryable(first) ? "transient-error" : "snapshot");
       const tick = async () => {
         try {
           const result = await getRoomSnapshot(request.headers, code);
           if (stopped) return;
-          send(result);
-          if (!result.ok) {
+          const retryable = isRetryable(result);
+          send(result, retryable ? "transient-error" : "snapshot");
+          if (!result.ok && !retryable) {
             close();
             return;
           }
           timer = setTimeout(tick, 1000);
         } catch {
-          close();
+          if (!stopped) timer = setTimeout(tick, 1000);
         }
       };
       timer = setTimeout(tick, 1000);

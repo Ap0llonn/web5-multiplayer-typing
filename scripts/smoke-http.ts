@@ -126,7 +126,6 @@ try {
     }
   }
   assert.ok(observed, "SSE must show a real second session");
-  ctrl.abort();
   const repeat = await request(
     "/api/lobbies/join",
     { code: room.value.code, role: "PARTICIPANT" },
@@ -135,6 +134,26 @@ try {
   assert.equal((await repeat.json()).value.members.length, 2);
   const current = await request("/api/lobbies/me", undefined, guestCookie);
   assert.equal((await current.json()).value.code, room.value.code);
+  // Keep the real host SSE connection open while its session is revoked.
+  assert.equal(
+    (await request("/api/auth/sign-out", {}, hostCookie)).status,
+    200,
+  );
+  let revoked = false;
+  for (let n = 0; n < 6; n++) {
+    const frame = await reader.read();
+    if (frame.done) break;
+    if (new TextDecoder().decode(frame.value).includes("UNAUTHENTICATED")) {
+      revoked = true;
+      break;
+    }
+  }
+  assert.ok(
+    revoked,
+    "An active stream must stop exposing data after session revocation",
+  );
+  assert.equal((await reader.read()).done, true);
+  ctrl.abort();
   await request("/api/auth/sign-out", {}, guestCookie);
   assert.equal(
     (await request("/api/lobbies/me", undefined, guestCookie)).status,
