@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import type { LobbySnapshot, LobbyActor } from "../public";
 import type { OperationResult } from "@/shared/contracts/operation-result";
 import { lobbyViewReducer } from "./lobby-view-state";
+import { LobbyRoster } from "./lobby-roster";
 export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const t = useTranslations();
   const [view, dispatch] = useReducer(lobbyViewReducer, {
@@ -103,23 +104,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
           <p className="code" data-testid="room-code">
             {room.code}
           </p>
-          <h2>{t("roster")}</h2>
-          <ul>
-            {room.members.map((m) => (
-              <li data-testid="member-row" key={m.playerIdentityId}>
-                <span
-                  aria-hidden="true"
-                  className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full border font-mono"
-                >
-                  {m.displayName.slice(0, 2).toUpperCase()}
-                </span>
-                <span>{m.displayName}</span> · {t(m.role)}{" "}
-                {m.playerIdentityId === room.hostPlayerIdentityId &&
-                  `· ${t("host")}`}{" "}
-                · {t(m.online ? "online" : "offline")}
-              </li>
-            ))}
-          </ul>
+          <LobbyRoster room={room} />
           <button
             disabled={pending}
             onClick={() => send(`/api/lobbies/${room.code}/leave`, {})}

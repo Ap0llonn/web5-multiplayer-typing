@@ -57,5 +57,9 @@
     "RATE_LIMITED": "Trop de tentatives. Patientez une minute.",
     "PROVIDER_UNAVAILABLE": "Ce fournisseur est indisponible pour le moment.",
     "INTERNAL": "Une erreur est survenue. Réessayez."
+  },
+  "memberKind": {
+    "account": "Compte",
+    "guest": "Invité"
   }
 }
