@@ -1,4 +1,6 @@
 "use client";
+import { LobbyRoster } from "./lobby-roster";
+import { startLobbyHeartbeat } from "./lobby-heartbeat";
 import { useEffect, useRef, useState, useReducer } from "react";
 import { useTranslations } from "next-intl";
 import type { LobbySnapshot, LobbyActor } from "../public";
@@ -14,7 +16,14 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const room = view.room;
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-  const [connection, setConnection] = useState("connecting");
+  const [stream, setStream] = useState("connecting");
+  const [presence, setPresence] = useState("connecting");
+  const connection =
+    stream === "connected" && presence === "connected"
+      ? "connected"
+      : stream === "disconnected" || presence === "disconnected"
+        ? "disconnected"
+        : "connecting";
   const lock = useRef(false);
   useEffect(() => {
     let active = true;
@@ -35,15 +44,35 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const code = room?.code;
   useEffect(() => {
     if (!code) return;
+    return startLobbyHeartbeat(code, (result) => {
+      if (result.ok) setPresence("connected");
+      else {
+        setPresence("disconnected");
+        if (
+          ![
+            "CONFLICT",
+            "INTERNAL",
+            "RATE_LIMITED",
+            "PROVIDER_UNAVAILABLE",
+          ].includes(result.error.code)
+        ) {
+          setError(result.error.messageKey);
+          dispatch({ type: "command", room: null });
+        }
+      }
+    });
+  }, [code]);
+  useEffect(() => {
+    if (!code) return;
     const events = new EventSource(`/api/lobbies/${code}/events`);
-    events.addEventListener("open", () => setConnection("connected"));
-    events.addEventListener("error", () => setConnection("disconnected"));
+    events.addEventListener("open", () => setStream("connected"));
+    events.addEventListener("error", () => setStream("disconnected"));
     events.addEventListener("snapshot", (event) => {
       try {
         const result = JSON.parse(event.data) as OperationResult<LobbySnapshot>;
         if (result.ok) {
           dispatch({ type: "snapshot", code, room: result.value });
-          setConnection("connected");
+          setStream("connected");
         } else {
           setError(result.error.messageKey);
           events.close();
@@ -53,9 +82,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
         setError("errors.INTERNAL");
       }
     });
-    events.addEventListener("transient-error", () =>
-      setConnection("disconnected"),
-    );
+    events.addEventListener("transient-error", () => setStream("disconnected"));
     return () => events.close();
   }, [code]);
   async function send(path: string, body: unknown) {
@@ -105,23 +132,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
           <p className="code" data-testid="room-code">
             {room.code}
           </p>
-          <h2>{t("roster")}</h2>
-          <ul>
-            {room.members.map((m) => (
-              <li data-testid="member-row" key={m.playerIdentityId}>
-                <span
-                  aria-hidden="true"
-                  className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full border font-mono"
-                >
-                  {m.displayName.slice(0, 2).toUpperCase()}
-                </span>
-                <span>{m.displayName}</span> · {t(m.role)}{" "}
-                {m.playerIdentityId === room.hostPlayerIdentityId &&
-                  `· ${t("host")}`}{" "}
-                · {t(m.online ? "online" : "offline")}
-              </li>
-            ))}
-          </ul>
+          <LobbyRoster room={room} />
           <button
             disabled={pending}
             onClick={() => send(`/api/lobbies/${room.code}/leave`, {})}

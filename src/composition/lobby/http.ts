@@ -3,6 +3,7 @@ import { getCurrentActor } from "@/modules/identity/server";
 import {
   getLobbyService,
   createLobbySchema,
+  heartbeatLobbySchema,
   joinLobbySchema,
   roomCodeSchema,
 } from "@/modules/lobby/server";
@@ -12,7 +13,7 @@ import { readServerEnv } from "@/shared/infrastructure/env/server";
 import { allowRequest } from "@/shared/infrastructure/http/rate-limit";
 export async function handleLobbyCommand(
   request: Request,
-  operation: "create" | "join" | "leave" | "current",
+  operation: "create" | "join" | "leave" | "current" | "heartbeat",
   code?: string,
 ) {
   try {
@@ -31,7 +32,10 @@ export async function handleLobbyCommand(
       if (!parsed.success) return resultResponse(failure("VALIDATION"));
       return resultResponse(await service.leaveLobby(parsed.data, actor.value));
     }
-    if (!(await allowRequest(operation, request.headers, 10)))
+    if (
+      operation !== "heartbeat" &&
+      !(await allowRequest(operation, request.headers, 10))
+    )
       return resultResponse(failure("RATE_LIMITED"));
     if (Number(request.headers.get("content-length") ?? 0) > 4096)
       return resultResponse(failure("VALIDATION"));
@@ -42,6 +46,14 @@ export async function handleLobbyCommand(
       data = JSON.parse(raw);
     } catch {
       return resultResponse(failure("VALIDATION"));
+    }
+    if (operation === "heartbeat") {
+      const parsed = roomCodeSchema.safeParse(code);
+      return resultResponse(
+        parsed.success && heartbeatLobbySchema.safeParse(data).success
+          ? await service.heartbeat(parsed.data, actor.value)
+          : failure("VALIDATION"),
+      );
     }
     if (operation === "create") {
       const parsed = createLobbySchema.safeParse(data);
@@ -70,5 +82,5 @@ export async function getRoomSnapshot(headers: Headers, code: string) {
   if (!parsed.success) return failure("VALIDATION");
   const actor = await getCurrentActor(headers);
   if (!actor.ok) return actor;
-  return getLobbyService().heartbeat(parsed.data, actor.value);
+  return getLobbyService().observeLobby(parsed.data, actor.value);
 }

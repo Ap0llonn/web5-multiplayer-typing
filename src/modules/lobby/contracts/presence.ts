@@ -1,0 +1,4 @@
+export const PRESENCE_FRESH_MS = 10000;
+export const PRESENCE_GRACE_MS = 30000;
+export const HEARTBEAT_INTERVAL_MS = 5000;
+export const HEARTBEAT_TIMEOUT_MS = 4000;

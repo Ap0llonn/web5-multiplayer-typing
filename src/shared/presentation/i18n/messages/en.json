@@ -57,5 +57,9 @@
     "RATE_LIMITED": "Too many attempts. Please wait a minute.",
     "PROVIDER_UNAVAILABLE": "This provider is currently unavailable.",
     "INTERNAL": "Something went wrong. Please try again."
+  },
+  "memberKind": {
+    "account": "Account",
+    "guest": "Guest"
   }
 }

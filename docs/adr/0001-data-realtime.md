@@ -1,6 +1,6 @@
 # ADR 0001 — PostgreSQL, autorité et présence au checkpoint
 
-Statut : implémenté localement pour le salon ; déploiement/mesures VPS à vérifier.
+Statut : implémenté localement pour le salon ; déploiement/mesures VPS à vérifier. La sémantique de présence est corrigée par [ADR 0002](0002-client-presence.md) : observation SSE sans renouvellement, heartbeat explicite du navigateur.
 
 ## Décision
 
@@ -18,7 +18,7 @@ Les mutations vérifient Origin et session serveur ; schémas stricts et corps l
 
 ## Compromis et extension
 
-SSE consomme une connexion par onglet et une transaction courte par heartbeat. Les erreurs transitoires produisent un événement transient-error puis sont réessayées, sans abandon du salon ; les refus d’autorisation/fermetures terminent le stream. Seul le membre modifié est réécrit ; pas une réécriture de toute la liste. Le test local synchronisé de30 membres passe quatre rafales sans conflit après la correction de contention ; aucune preuve de charge VPS n'est annoncée. Les spectateurs n'ont pas de plafond produit arbitraire ; une politique de ressources sera nécessaire avant ouverture publique. Les données RateLimit demandent une purge d'exploitation des anciennes entrées. Pas de DB à chaque frappe future : le serveur de course devra regrouper messages, appliquer l'autorité progression/temps et prouver ≥4 mises à jour perçues/s ; WebSocket restera une option selon mesures. Course, bonus et bots ne sont pas implémentés par ce transport.
+SSE consomme une connexion par onglet et une lecture par snapshot ; les heartbeats HTTP du navigateur réalisent une transaction courte toutes les cinq secondes. Les erreurs transitoires produisent un événement transient-error puis sont réessayées, sans abandon du salon ; les refus d’autorisation/fermetures terminent le stream. Seul le membre modifié est réécrit ; pas une réécriture de toute la liste. Le test local synchronisé de30 membres passe quatre rafales sans conflit après la correction de contention ; aucune preuve de charge VPS n'est annoncée. Les spectateurs n'ont pas de plafond produit arbitraire ; une politique de ressources sera nécessaire avant ouverture publique. Les données RateLimit demandent une purge d'exploitation des anciennes entrées. Pas de DB à chaque frappe future : le serveur de course devra regrouper messages, appliquer l'autorité progression/temps et prouver ≥4 mises à jour perçues/s ; WebSocket restera une option selon mesures. Course, bonus et bots ne sont pas implémentés par ce transport.
 
 ## Correction issue de la revue
 

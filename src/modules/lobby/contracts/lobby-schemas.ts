@@ -11,6 +11,7 @@ export const createLobbySchema = z
     role: z.enum(["PARTICIPANT", "SPECTATOR"]),
   })
   .strict();
+export const heartbeatLobbySchema = z.object({}).strict();
 export const joinLobbySchema = z
   .object({ code: roomCodeSchema, role: z.enum(["PARTICIPANT", "SPECTATOR"]) })
   .strict();
