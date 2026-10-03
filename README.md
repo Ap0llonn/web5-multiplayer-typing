@@ -18,7 +18,7 @@ pnpm exec prisma migrate deploy
 pnpm dev
 ```
 
-Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale, utilisable au clavier et cible 360px, mais preuve navigateur encore requise dans CI.
+Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : quatre scénarios Chromium passent en CI, dont le parcours à deux sessions, le thème sombre après reload et l’absence de débordement horizontal de l’accueil à 360 px. La recette clavier, les contrastes, le sans-flash et la couverture mobile de toutes les pages restent à faire ; voir [les preuves et limites exactes](docs/verification.md).
 
 ## Authentification
 
