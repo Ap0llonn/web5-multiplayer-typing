@@ -116,21 +116,21 @@ Les actions ci-dessous sont un protocole **à exécuter**. Une case cochée doit
 
 ## 5 Registre de preuves à remplir
 
-Les champs « À fournir » restent manquants. Le code local vérifié est `77bf8f0` ; voir [verification.md](verification.md). Remplacer la ligne au fur et à mesure, avec lien vers fichier/rapport ou service effectivement consultable par le lecteur autorisé. Ne jamais mettre de credentials, cookie ou token dans ce registre.
+Les champs « À fournir » restent manquants. Le code local vérifié est `f0e0563` ; voir [verification.md](verification.md). Remplacer la ligne au fur et à mesure, avec lien vers fichier/rapport ou service effectivement consultable par le lecteur autorisé. Ne jamais mettre de credentials, cookie ou token dans ce registre.
 
 | Référence | Preuve attendue | Commit ou version | Date et résultat | Lien ou pièce |
 | --- | --- | --- | --- | --- |
-| PREUVE-01 | Revue des documents et décompte 90 IDs | 77bf8f0 | 03/10/2026 : 90 IDs officiels présents ; relus | [EXIGENCES.md](EXIGENCES.md) |
+| PREUVE-01 | Revue des documents et décompte 90 IDs | f0e0563 | 03/10/2026 : 90 IDs officiels présents ; relus | [EXIGENCES.md](EXIGENCES.md) |
 | PREUVE-02 | Nom personnel, croquis/logo, moodboard, palette, typo | À fournir | À fournir | À fournir par l'étudiant |
-| PREUVE-03 | Modèle DB/FSM/ADR/bots relus | 77bf8f0 | 03/10/2026 : Modèle/FSM/ADR/bots documentés ; revue indépendante en attente | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| PREUVE-04 | Lint/types/frontières/unitaires | 77bf8f0 | 03/10/2026 : PASS lint/types/frontières ; 19 tests unitaires | [verification.md](verification.md) |
-| PREUVE-05 | Migrations et tests PostgreSQL réels | 77bf8f0 | 03/10/2026 : PASS 11 intégrations PostgreSQL ; deux migrations et replay | [verification.md](verification.md) |
-| PREUVE-06 | Build et contrôles navigateur | 77bf8f0 | 03/10/2026 : Build PASS ; navigateur BLOQUÉ par environnement | [verification.md](verification.md) |
+| PREUVE-03 | Modèle DB/FSM/ADR/bots relus | f0e0563 | 03/10/2026 : Modèle/FSM/ADR/bots documentés ; revue indépendante effectuée, deux corrections vérifiées | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| PREUVE-04 | Lint/types/frontières/unitaires | f0e0563 | 03/10/2026 : PASS lint/types/frontières ; 23 tests unitaires | [verification.md](verification.md) |
+| PREUVE-05 | Migrations et tests PostgreSQL réels | f0e0563 | 03/10/2026 : PASS 13 intégrations PostgreSQL ; deux migrations et replay | [verification.md](verification.md) |
+| PREUVE-06 | Build et contrôles navigateur | f0e0563 | 03/10/2026 : Build PASS ; navigateur BLOQUÉ par environnement | [verification.md](verification.md) |
 | PREUVE-07 | Run CI à chaque push | À fournir | Non attesté ici | À fournir |
 | PREUVE-08 | URL VPS HTTPS et version déployée | À fournir | Non attesté ici | À fournir |
 | PREUVE-09 | Connexion GitHub réelle en HTTPS | À fournir | Non attesté ici | À fournir |
 | PREUVE-10 | Connexion Discord réelle en HTTPS | À fournir | Non attesté ici | À fournir |
-| PREUVE-11 | Deux sessions création/entrée/présence | 77bf8f0 | 03/10/2026 : PASS HTTP/SSE avec deux sessions ; UI non vérifiée | [verification.md](verification.md) |
+| PREUVE-11 | Deux sessions création/entrée/présence | f0e0563 | 03/10/2026 : PASS HTTP/SSE avec deux sessions ; UI non vérifiée | [verification.md](verification.md) |
 | PREUVE-12 | FR/EN, thèmes, 360 px, clavier et contrastes | À fournir | Non attesté ici | À fournir |
 
 ## 6 Conditions pour annoncer le checkpoint prêt
@@ -147,4 +147,4 @@ Conserver dès maintenant les vrais incidents d'usage de l'IA, leurs détections
 
 ## Vérification locale du 3 octobre 2026
 
-Le backend S1 et l’UI minimale sont présents. Suite locale verte : 19 unitaires, 11 intégrations, build et smoke HTTP/SSE. Les cases de recette navigateur restent ouvertes faute de navigateur accessible ; HTTP ne les remplace pas. OAuth GitHub/Discord, VPS public HTTPS, CI distante, nom/logo et direction artistique humaine restent non validés.
+Le backend S1 et l’UI minimale sont présents. Suite locale verte : 23 unitaires, 13 intégrations, build et smoke HTTP/SSE. Les cases de recette navigateur restent ouvertes faute de navigateur accessible ; HTTP ne les remplace pas. OAuth GitHub/Discord, VPS public HTTPS, CI distante, nom/logo et direction artistique humaine restent non validés.
