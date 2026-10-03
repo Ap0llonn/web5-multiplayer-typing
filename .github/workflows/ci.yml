@@ -32,7 +32,10 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - name: Generate ephemeral test secret
-        run: echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+        run: |
+          secret=$(openssl rand -hex 32)
+          echo "::add-mask::$secret"
+          echo "BETTER_AUTH_SECRET=$secret" >> "$GITHUB_ENV"
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:validate && pnpm db:generate
       - run: pnpm db:migrate:test
@@ -43,3 +46,11 @@ jobs:
       - run: pnpm exec node --import tsx scripts/smoke-http.ts
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
+      - name: Retain sanitized browser failure context
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-error-context
+          path: test-results/**/error-context.md
+          if-no-files-found: ignore
+          retention-days: 7

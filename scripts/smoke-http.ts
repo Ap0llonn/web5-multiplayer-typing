@@ -60,6 +60,19 @@ try {
   const hostCookie = cookieOf(signup);
   assert.ok(hostCookie.includes("session_token"));
   assert.match(signup.headers.get("set-cookie") ?? "", /HttpOnly/);
+  // Navigation and refresh may resolve a newly signed-up actor concurrently.
+  const firstHomes = await Promise.all(
+    Array.from({ length: 8 }, async () => {
+      const response = await fetch(base + "/en", {
+        headers: { cookie: hostCookie },
+      });
+      return { status: response.status, html: await response.text() };
+    }),
+  );
+  assert.ok(
+    firstHomes.every((r) => r.status === 200 && r.html.includes("Room name")),
+    "Every concurrent authenticated SSR response must expose the room form",
+  );
   const guest = await request("/api/auth/sign-in/anonymous", {
     name: "Smoke Guest",
   });
