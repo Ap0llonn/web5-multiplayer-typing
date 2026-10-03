@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import type { LobbySnapshot, LobbyActor } from "../public";
 import type { OperationResult } from "@/shared/contracts/operation-result";
 import { lobbyViewReducer } from "./lobby-view-state";
+import { sendLobbyCommand } from "./lobby-command";
 export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const t = useTranslations();
   const [view, dispatch] = useReducer(lobbyViewReducer, {
@@ -62,19 +63,19 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
     lock.current = true;
     setPending(true);
     setError("");
+    const generation = view.generation;
     try {
-      const response = await fetch(path, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const result: OperationResult<LobbySnapshot> = await response.json();
+      const { result, currentRoom } = await sendLobbyCommand(path, body);
       if (result.ok)
         dispatch({
           type: "command",
           room: path.endsWith("/leave") ? null : result.value,
         });
-      else setError(result.error.messageKey);
+      else {
+        if (currentRoom)
+          dispatch({ type: "recovered", generation, room: currentRoom });
+        else setError(result.error.messageKey);
+      }
     } catch {
       setError("errors.INTERNAL");
     } finally {
@@ -82,6 +83,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
       setPending(false);
     }
   }
+  const messageKey = error || (view.conflictNotice ? "roomConflict" : "");
   const roleField = (
     <label>
       {t("role")}
@@ -93,7 +95,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   );
   return (
     <div className="grid gap-5">
-      {error && <p role="alert">{t(error)}</p>}
+      {messageKey && <p role="alert">{t(messageKey)}</p>}
       {room ? (
         <section>
           <h2>{room.name}</h2>
