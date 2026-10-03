@@ -19,6 +19,10 @@ export interface LobbySupervisor {
     code: string,
     actor: LobbyActor,
   ): Promise<OperationResult<LobbySnapshot>>;
+  observeLobby(
+    code: string,
+    actor: LobbyActor,
+  ): Promise<OperationResult<LobbySnapshot>>;
   heartbeat(
     code: string,
     actor: LobbyActor,

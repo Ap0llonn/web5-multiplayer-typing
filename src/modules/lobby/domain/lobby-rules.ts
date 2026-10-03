@@ -1,4 +1,5 @@
 import { randomInt, randomUUID } from "node:crypto";
+import { PRESENCE_FRESH_MS, PRESENCE_GRACE_MS } from "../contracts/presence";
 import {
   failure,
   success,
@@ -46,7 +47,7 @@ export function joinRoom(
   now: number,
 ): OperationResult<Lobby> {
   for (const member of [...room.members])
-    if (now - member.lastSeenAt > 30000)
+    if (now - member.lastSeenAt > PRESENCE_GRACE_MS)
       leaveRoom(room, member.playerIdentityId, now);
   if (room.state === "CLOSED") return failure("ROOM_CLOSED");
   if (!["WAITING", "RESULTS"].includes(room.state)) return failure("CONFLICT");
@@ -77,7 +78,9 @@ export function leaveRoom(
   );
   if (room.hostPlayerIdentityId === playerIdentityId) {
     const successor = room.members
-      .filter((m) => m.kind === "account" && now - m.lastSeenAt <= 30000)
+      .filter(
+        (m) => m.kind === "account" && now - m.lastSeenAt <= PRESENCE_GRACE_MS,
+      )
       .sort(
         (a, b) =>
           a.joinedAt - b.joinedAt ||
@@ -91,16 +94,29 @@ export function leaveRoom(
   }
   return success(room);
 }
-export function heartbeatRoom(
+export function observeRoom(
   room: Lobby,
   playerIdentityId: string,
   now: number,
 ): OperationResult<Lobby> {
   if (room.state === "CLOSED") return failure("ROOM_CLOSED");
   for (const member of [...room.members])
-    if (now - member.lastSeenAt > 30000)
+    if (now - member.lastSeenAt > PRESENCE_GRACE_MS)
       leaveRoom(room, member.playerIdentityId, now);
   if (room.members.length === 0) return failure("ROOM_CLOSED");
+  const member = room.members.find(
+    (m) => m.playerIdentityId === playerIdentityId,
+  );
+  if (!member) return failure("FORBIDDEN");
+  return success(room);
+}
+export function heartbeatRoom(
+  room: Lobby,
+  playerIdentityId: string,
+  now: number,
+): OperationResult<Lobby> {
+  const result = observeRoom(room, playerIdentityId, now);
+  if (!result.ok) return result;
   const member = room.members.find(
     (m) => m.playerIdentityId === playerIdentityId,
   );
@@ -113,7 +129,7 @@ export function snapshot(room: Lobby, now: number): LobbySnapshot {
     ...room,
     members: room.members.map(({ lastSeenAt, ...m }) => ({
       ...m,
-      online: now - lastSeenAt <= 10000,
+      online: now - lastSeenAt <= PRESENCE_FRESH_MS,
     })),
   };
 }

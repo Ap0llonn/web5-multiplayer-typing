@@ -1,3 +1,4 @@
+import { PRESENCE_GRACE_MS } from "../../contracts/presence";
 import { success, failure } from "@/shared/contracts/operation-result";
 import type {
   CreateLobbyInput,
@@ -10,6 +11,7 @@ import {
   joinRoom,
   leaveRoom,
   heartbeatRoom,
+  observeRoom,
   snapshot,
 } from "../../domain/lobby-rules";
 import type { LobbyRepository } from "../../repositories/interfaces/lobby-repository";
@@ -41,17 +43,33 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
     );
     return result.ok ? success(snapshot(result.value, this.now())) : result;
   }
+  async observeLobby(code: string, actor: LobbyActor) {
+    const found = await this.repository.findForPlayer(actor.playerIdentityId);
+    if (!found.ok) return found;
+    if (!found.value || found.value.code !== code) return failure("FORBIDDEN");
+    const now = this.now();
+    const result = found.value.members.some(
+      (member) => now - member.lastSeenAt > PRESENCE_GRACE_MS,
+    )
+      ? await this.repository.mutate(code, (room) =>
+          observeRoom(room, actor.playerIdentityId, now),
+        )
+      : observeRoom(found.value, actor.playerIdentityId, now);
+    return result.ok ? success(snapshot(result.value, now)) : result;
+  }
   async heartbeat(code: string, actor: LobbyActor) {
     const now = this.now();
     let result = await this.repository.refreshPresence(
       code,
       actor.playerIdentityId,
       now,
-      now - 30000,
+      now - PRESENCE_GRACE_MS,
     );
     if (
       result.ok &&
-      result.value.members.some((member) => now - member.lastSeenAt > 30000)
+      result.value.members.some(
+        (member) => now - member.lastSeenAt > PRESENCE_GRACE_MS,
+      )
     ) {
       result = await this.repository.mutate(code, (room) =>
         heartbeatRoom(room, actor.playerIdentityId, now),

@@ -2,6 +2,10 @@
 
 La liste rend maintenant distinctement compte/invité, participant/spectateur, hôte et présence, en français et en anglais. Les données viennent du snapshot serveur existant ; aucune identité ni autorisation n’est déduite du libellé navigateur. Le composant de présentation `lobby-roster.tsx` n’accède ni à la DB ni aux sessions.
 
+## Correction après premier run Chromium
+
+Le run [37136241829](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37136241829) a échoué sur la première coupure invitée : la présence restait Online pendant vingt secondes. La preuve PostgreSQL a confirmé que les observations SSE renouvelaient à tort le timestamp serveur. [ADR 0002](adr/0002-client-presence.md) sépare désormais lecture SSE et heartbeat HTTP du navigateur ; le test de réseau est conservé sans augmenter son délai ni simuler un succès. Le prochain run CI doit confirmer la recette complète et ses durées.
+
 ## Vérification automatisée
 
 - `tests/unit/lobby-roster.test.tsx` rend le vrai composant React avec les deux catalogues FR/EN et vérifie les deux types de personne, le rôle, l’hôte et la présence
