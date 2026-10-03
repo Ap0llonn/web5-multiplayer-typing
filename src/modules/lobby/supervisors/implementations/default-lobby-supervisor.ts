@@ -38,6 +38,10 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
     return result.ok ? success(snapshot(result.value, this.now())) : result;
   }
   async leaveLobby(code: string, actor: LobbyActor) {
+    const current = await this.repository.findForPlayer(actor.playerIdentityId);
+    if (!current.ok) return current;
+    if (!current.value || current.value.code !== code)
+      return failure("FORBIDDEN");
     const result = await this.repository.mutate(code, (room) =>
       leaveRoom(room, actor.playerIdentityId, this.now()),
     );
@@ -58,6 +62,10 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
     return result.ok ? success(snapshot(result.value, now)) : result;
   }
   async heartbeat(code: string, actor: LobbyActor) {
+    const current = await this.repository.findForPlayer(actor.playerIdentityId);
+    if (!current.ok) return current;
+    if (!current.value || current.value.code !== code)
+      return failure("FORBIDDEN");
     const now = this.now();
     let result = await this.repository.refreshPresence(
       code,

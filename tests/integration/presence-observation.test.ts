@@ -126,7 +126,113 @@ it("client heartbeats refresh only their verified membership and reject forged o
     auth,
     `outside${Date.now().toString().slice(-8)}`,
   );
-  expect((await heartbeat(outsider.cookie, room.value.code)).status).toBe(403);
+  for (const otherCode of [
+    room.value.code,
+    room.value.code.toLowerCase(),
+    "ZZZZZZ",
+  ]) {
+    const refused = await heartbeat(outsider.cookie, otherCode);
+    expect(refused.status).toBe(403);
+    expect(await refused.json()).toEqual({
+      ok: false,
+      error: { code: "FORBIDDEN", messageKey: "errors.FORBIDDEN" },
+    });
+  }
+  const outsiderActor = await actor(outsider.cookie);
+  const outsiderRoom = await service.createLobby(
+    { name: "Own room", capacity: 2, role: "PARTICIPANT" },
+    outsiderActor,
+  );
+  if (!outsiderRoom.ok) throw Error(outsiderRoom.error.code);
+  expect(
+    (await heartbeat(outsider.cookie, outsiderRoom.value.code.toLowerCase()))
+      .status,
+  ).toBe(200);
+  for (const otherCode of [room.value.code, "ZZZZZZ"]) {
+    const refused = await heartbeat(outsider.cookie, otherCode);
+    expect(refused.status).toBe(403);
+    expect(await refused.json()).toEqual({
+      ok: false,
+      error: { code: "FORBIDDEN", messageKey: "errors.FORBIDDEN" },
+    });
+  }
+  expect(
+    (await service.leaveLobby(outsiderRoom.value.code, outsiderActor)).ok,
+  ).toBe(true);
+  const closed = await heartbeat(outsider.cookie, outsiderRoom.value.code);
+  expect(closed.status).toBe(403);
+  expect(await closed.json()).toEqual({
+    ok: false,
+    error: { code: "FORBIDDEN", messageKey: "errors.FORBIDDEN" },
+  });
   await prisma.session.deleteMany({ where: { userId: user.id } });
   expect((await heartbeat(cookie, room.value.code)).status).toBe(401);
+});
+it("leave cannot distinguish foreign from unknown codes, with or without another active room", async () => {
+  const auth = createAuthentication();
+  const owner = await signup(
+    auth,
+    `leaveown${Date.now().toString().slice(-8)}`,
+  );
+  const outsider = await signup(
+    auth,
+    `leaveout${Date.now().toString().slice(-8)}`,
+  );
+  const service = getLobbyService();
+  const ownerActor = await actor(owner.cookie);
+  const outsiderActor = await actor(outsider.cookie);
+  const foreign = await service.createLobby(
+    { name: "Foreign", capacity: 2, role: "PARTICIPANT" },
+    ownerActor,
+  );
+  if (!foreign.ok) throw Error(foreign.error.code);
+  const leave = (code: string) =>
+    handleLobbyCommand(
+      new Request(`${base}/api/lobbies/${code}/leave`, {
+        method: "POST",
+        headers: { cookie: outsider.cookie, origin: base },
+      }),
+      "leave",
+      code,
+    );
+  for (const withActiveRoom of [false, true]) {
+    const own = withActiveRoom
+      ? await service.createLobby(
+          { name: "Outsider own room", capacity: 2, role: "SPECTATOR" },
+          outsiderActor,
+        )
+      : null;
+    for (const code of [
+      foreign.value.code,
+      foreign.value.code.toLowerCase(),
+      "ZZZZZZ",
+    ]) {
+      const refused = await leave(code);
+      expect(refused.status).toBe(403);
+      expect(await refused.json()).toEqual({
+        ok: false,
+        error: { code: "FORBIDDEN", messageKey: "errors.FORBIDDEN" },
+      });
+    }
+    if (own) {
+      if (!own.ok) throw Error(own.error.code);
+      expect((await leave(own.value.code.toLowerCase())).status).toBe(200);
+      const closed = await leave(own.value.code);
+      expect(closed.status).toBe(403);
+      expect(await closed.json()).toEqual({
+        ok: false,
+        error: { code: "FORBIDDEN", messageKey: "errors.FORBIDDEN" },
+      });
+      expect(
+        await prisma.lobbyMember.findUnique({
+          where: { activePlayerIdentityId: outsiderActor.playerIdentityId },
+        }),
+      ).toBeNull();
+    }
+    expect(
+      await prisma.lobbyMember.findUnique({
+        where: { activePlayerIdentityId: ownerActor.playerIdentityId },
+      }),
+    ).toMatchObject({ lobbyId: foreign.value.id });
+  }
 });
