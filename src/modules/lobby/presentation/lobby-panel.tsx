@@ -1,0 +1,188 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import type { LobbySnapshot, LobbyActor } from "../public";
+import type { OperationResult } from "@/shared/contracts/operation-result";
+export function LobbyPanel({ actor }: { actor: LobbyActor }) {
+  const t = useTranslations();
+  const [room, setRoom] = useState<LobbySnapshot | null>(null);
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  const [connection, setConnection] = useState("connecting");
+  const lock = useRef(false);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/lobbies/me")
+      .then((r) => r.json())
+      .then((r: OperationResult<LobbySnapshot | null>) => {
+        if (!active) return;
+        if (r.ok) setRoom(r.value);
+        else setError(r.error.messageKey);
+      })
+      .catch(() => {
+        if (active) setError("errors.INTERNAL");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  const code = room?.code;
+  useEffect(() => {
+    if (!code) return;
+    const events = new EventSource(`/api/lobbies/${code}/events`);
+    events.addEventListener("open", () => setConnection("connected"));
+    events.addEventListener("error", () => setConnection("disconnected"));
+    events.addEventListener("snapshot", (event) => {
+      try {
+        const result = JSON.parse(event.data) as OperationResult<LobbySnapshot>;
+        if (result.ok)
+          setRoom((current) =>
+            current && current.version > result.value.version
+              ? current
+              : result.value,
+          );
+        else {
+          setError(result.error.messageKey);
+          events.close();
+          setRoom(null);
+        }
+      } catch {
+        setError("errors.INTERNAL");
+      }
+    });
+    return () => events.close();
+  }, [code]);
+  async function send(path: string, body: unknown) {
+    if (lock.current) return;
+    lock.current = true;
+    setPending(true);
+    setError("");
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const result: OperationResult<LobbySnapshot> = await response.json();
+      if (result.ok) setRoom(path.endsWith("/leave") ? null : result.value);
+      else setError(result.error.messageKey);
+    } catch {
+      setError("errors.INTERNAL");
+    } finally {
+      lock.current = false;
+      setPending(false);
+    }
+  }
+  const roleField = (
+    <label>
+      {t("role")}
+      <select name="role" defaultValue="PARTICIPANT">
+        <option value="PARTICIPANT">{t("PARTICIPANT")}</option>
+        <option value="SPECTATOR">{t("SPECTATOR")}</option>
+      </select>
+    </label>
+  );
+  return (
+    <div className="grid gap-5">
+      {error && <p role="alert">{t(error)}</p>}
+      {room ? (
+        <section>
+          <h2>{room.name}</h2>
+          <p>
+            {t(room.state)} · {t("connection")}: {t(connection)}
+          </p>
+          <p className="code" data-testid="room-code">
+            {room.code}
+          </p>
+          <h2>{t("roster")}</h2>
+          <ul>
+            {room.members.map((m) => (
+              <li data-testid="member-row" key={m.playerIdentityId}>
+                <span
+                  aria-hidden="true"
+                  className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full border font-mono"
+                >
+                  {m.displayName.slice(0, 2).toUpperCase()}
+                </span>
+                <span>{m.displayName}</span> · {t(m.role)}{" "}
+                {m.playerIdentityId === room.hostPlayerIdentityId &&
+                  `· ${t("host")}`}{" "}
+                · {t(m.online ? "online" : "offline")}
+              </li>
+            ))}
+          </ul>
+          <button
+            disabled={pending}
+            onClick={() => send(`/api/lobbies/${room.code}/leave`, {})}
+          >
+            {t("leave")}
+          </button>
+        </section>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2">
+          {actor.kind === "account" ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const data = new FormData(e.currentTarget);
+                void send("/api/lobbies", {
+                  name: data.get("name"),
+                  capacity: Number(data.get("capacity")),
+                  role: data.get("role"),
+                });
+              }}
+            >
+              <h2>{t("create")}</h2>
+              <label>
+                {t("roomName")}
+                <input name="name" required maxLength={60} />
+              </label>
+              <label>
+                {t("capacity")}
+                <input
+                  name="capacity"
+                  type="number"
+                  min={2}
+                  max={30}
+                  defaultValue={8}
+                  required
+                />
+              </label>
+              {roleField}
+              <button disabled={pending}>{t("create")}</button>
+            </form>
+          ) : (
+            <section>
+              <p>{t("guestLimit")}</p>
+            </section>
+          )}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const data = new FormData(e.currentTarget);
+              void send("/api/lobbies/join", {
+                code: data.get("code"),
+                role: data.get("role"),
+              });
+            }}
+          >
+            <h2>{t("join")}</h2>
+            <label>
+              {t("code")}
+              <input
+                name="code"
+                minLength={6}
+                maxLength={6}
+                autoComplete="off"
+                autoCapitalize="characters"
+                required
+              />
+            </label>
+            {roleField}
+            <button disabled={pending}>{t("join")}</button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
