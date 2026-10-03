@@ -243,6 +243,10 @@ Tests futurs : rejouer une seed, comparer plusieurs découpages de temps, vérif
 - Le nom et le logo finaux doivent venir de l'étudiant sans IA (`DES-01/02`). Aucun agent ne les invente, ne génère des croquis ou ne présente un placeholder comme identité finale.
 - Versions exactes, lockfile pnpm et Node versionnés. Variables dans `.env.example`, secrets hors Git. PostgreSQL jetable pour les tests ; ne jamais réinitialiser une base non explicitement dédiée aux tests.
 
+### Infrastructure locale de développement
+
+`compose.yaml` fournit PostgreSQL 18.4, Redis 8.2.10 (AOF) et SeaweedFS 4.48 (API S3, bucket privé pour images), avec ports hôte limités à `127.0.0.1` et volumes nommés. Next.js reste exécuté sur l’hôte. Cette infrastructure ne crée aucun module métier : PostgreSQL reste la source de vérité du socle, Redis et S3 ne sont pas encore consommés par l’application. Les futurs adaptateurs resteront serveur uniquement, derrière les contrats du module propriétaire. Aucune dépendance SDK inutilisée, aucun changement de transport du lobby et aucune validation d’upload revendiquée. Configuration, cycle de vie et limites : [développement local](DEVELOPPEMENT-LOCAL.md).
+
 ## 12. Contrôles obligatoires avant livraison
 
 1. **Contrats/unitaires :** entrées invalides, branches succès/échec, acteur absent, création refusée à l'invité, droits hôte, capacité et transitions. Tests de superviseurs avec repository injecté, pas DB ou réseau caché.

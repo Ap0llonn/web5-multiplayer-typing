@@ -1,0 +1,91 @@
+# Local development only. See docs/DEVELOPPEMENT-LOCAL.md.
+# Credentials below come from .env; never use production credentials here.
+name: typing-local
+
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Copy .env.example to .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a local-only PostgreSQL password}
+      POSTGRES_DB: ${POSTGRES_DB:?Set the local database name}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 stores PGDATA in a version-specific subdirectory.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:8.2.10-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set a local-only Redis password}
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Set a local-only Redis password}
+    command:
+      [
+        "sh",
+        "-ec",
+        'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"',
+      ]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  s3:
+    # Maintainer-published, S3-compatible single-node image; no AWS account.
+    image: chrislusf/seaweedfs:4.48
+    command:
+      - mini
+      - -dir=/data
+      - -ip=127.0.0.1
+      - -ip.bind=0.0.0.0
+      - -master.telemetry=false
+      - -webdav=false
+      - -admin.ui=false
+      - -s3.port.iceberg=0
+      - -s3.port.lance=0
+      - -s3.allowDeleteBucketNotEmpty=false
+      - -s3.autoCreateBucket=false
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?Set a local-only S3 access key}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?Set a local-only S3 secret}
+      AWS_DEFAULT_REGION: ${S3_REGION:-us-east-1}
+      # Mini creates this bucket idempotently at startup, with authentication.
+      S3_BUCKET: ${S3_BUCKET:?Set the local images bucket}
+    ports:
+      - "127.0.0.1:${S3_PORT:-8333}:8333"
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "--fail",
+          "--silent",
+          "--max-time",
+          "3",
+          "http://127.0.0.1:8333/status",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 15s
+    stop_grace_period: 30s
+
+volumes:
+  postgres-data:
+  redis-data:
+  s3-data:

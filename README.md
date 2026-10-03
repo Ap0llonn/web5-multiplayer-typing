@@ -6,17 +6,21 @@ Le titre ci-dessus est une description fonctionnelle, pas le nom de marque. Le n
 
 ## Démarrage
 
-Node24.19.0 et pnpm11.19.0, PostgreSQL18.4 (ou version supportée par Prisma). Les scripts sont en TypeScript.
+Node 24.19.0 et pnpm 11.19.0. Docker Engine/Desktop avec Compose v2 fournit PostgreSQL 18.4, Redis et un stockage S3 local pour les futures images. Next.js reste lancé sur la machine avec rechargement à chaud. [Guide de développement local](docs/DEVELOPPEMENT-LOCAL.md). Les scripts sont en TypeScript.
 
 ```sh
 pnpm install --frozen-lockfile
-cp .env.example .env
-# Remplir DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL.
-# Secret de développement : openssl rand -base64 32
+cp -n .env.example .env  # Ne pas écraser un fichier existant
+# Définir BETTER_AUTH_SECRET dans .env : openssl rand -base64 32
+# Les autres valeurs fournies sont des exemples réservés au développement.
+pnpm infra:up
 pnpm db:generate
+# Vérifier que DATABASE_URL pointe bien vers PostgreSQL local.
 pnpm exec prisma migrate deploy
 pnpm dev
 ```
+
+Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL est utilisé par le socle ; Redis et S3 sont provisionnés pour la suite, sans intégration métier ni upload de photo à ce stade.
 
 Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : quatre scénarios Chromium passent en CI, dont le parcours à deux sessions, le thème sombre après reload et l’absence de débordement horizontal de l’accueil à 360 px. La recette clavier, les contrastes, le sans-flash et la couverture mobile de toutes les pages restent à faire ; voir [les preuves et limites exactes](docs/verification.md).
 
@@ -33,6 +37,8 @@ Compte : créer avec nom, capacité2–30 et rôle participant/spectateur. Invit
 ## Vérification
 
 ```sh
+pnpm infra:validate    # validation réelle de la configuration par Docker Compose
+pnpm test:compose      # services jetables distincts, image S3 et persistance
 pnpm db:validate
 pnpm db:generate
 pnpm exec next typegen
