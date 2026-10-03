@@ -32,7 +32,17 @@ test("two real sessions create/join, stream roster and reconnect without duplica
   await h.getByLabel("Username").fill(`e2e${Date.now().toString().slice(-8)}`);
   await h.getByLabel("Email").fill(`e2e${Date.now()}@example.com`);
   await h.getByLabel("Password", { exact: true }).fill("test-password-123");
-  await h.getByRole("button", { name: "Create account", exact: true }).click();
+  const [signupResponse] = await Promise.all([
+    h.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/auth/sign-up/email") &&
+        response.request().method() === "POST",
+    ),
+    h.getByRole("button", { name: "Create account", exact: true }).click(),
+  ]);
+  expect(signupResponse.status()).toBe(200);
+  await expect(h).toHaveURL(/\/en\/?$/);
+  await expect(h.getByRole("alert")).toHaveCount(0);
   await expect(h.getByLabel("Room name")).toBeVisible();
   await h.getByLabel("Room name").fill("Test room");
   await h.getByRole("button", { name: "Create room", exact: true }).click();

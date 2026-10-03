@@ -34,3 +34,22 @@ it("upserts concurrently and revalidates expired and revoked sessions", async ()
     error: { code: "UNAUTHENTICATED" },
   });
 });
+it("resolves every caller to one identity during repeated first-access bursts", async () => {
+  const repo = new PrismaPlayerIdentityRepository(prisma);
+  for (let round = 0; round < 12; round++) {
+    const id = `burst-${round}-${crypto.randomUUID()}`;
+    await prisma.user.create({
+      data: { id, name: "Concurrent user", email: `${id}@example.test` },
+    });
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () => repo.ensureForAuthUser(id)),
+    );
+    expect(results.every((r) => r.ok)).toBe(true);
+    expect(
+      new Set(results.flatMap((r) => (r.ok ? [r.value.id] : []))).size,
+    ).toBe(1);
+    expect(
+      await prisma.playerIdentity.count({ where: { authUserId: id } }),
+    ).toBe(1);
+  }
+});
