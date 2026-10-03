@@ -48,6 +48,7 @@ h2 {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0.5rem 0;
+  overflow-wrap: anywhere;
 }
 p {
   margin: 0.5rem 0;
