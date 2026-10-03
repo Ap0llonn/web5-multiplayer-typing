@@ -63,6 +63,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
     lock.current = true;
     setPending(true);
     setError("");
+    const generation = view.generation;
     try {
       const { result, currentRoom } = await sendLobbyCommand(path, body);
       if (result.ok)
@@ -71,8 +72,9 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
           room: path.endsWith("/leave") ? null : result.value,
         });
       else {
-        setError(currentRoom ? "roomConflict" : result.error.messageKey);
-        if (currentRoom) dispatch({ type: "command", room: currentRoom });
+        if (currentRoom)
+          dispatch({ type: "recovered", generation, room: currentRoom });
+        else setError(result.error.messageKey);
       }
     } catch {
       setError("errors.INTERNAL");
@@ -81,6 +83,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
       setPending(false);
     }
   }
+  const messageKey = error || (view.conflictNotice ? "roomConflict" : "");
   const roleField = (
     <label>
       {t("role")}
@@ -92,7 +95,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   );
   return (
     <div className="grid gap-5">
-      {error && <p role="alert">{t(error)}</p>}
+      {messageKey && <p role="alert">{t(messageKey)}</p>}
       {room ? (
         <section>
           <h2>{room.name}</h2>
