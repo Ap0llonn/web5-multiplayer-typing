@@ -1,0 +1,45 @@
+name: Quality
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_USER: typing
+          POSTGRES_PASSWORD: ci-disposable
+          POSTGRES_DB: typing_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U typing -d typing_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://typing:ci-disposable@localhost:5432/typing_test
+      BETTER_AUTH_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - name: Generate ephemeral test secret
+        run: echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:validate && pnpm db:generate
+      - run: pnpm db:migrate:test
+      - run: pnpm lint && pnpm exec next typegen && pnpm typecheck && pnpm check:boundaries
+      - run: pnpm test:unit
+      - run: pnpm exec vitest run tests/integration
+      - run: pnpm build
+      - run: pnpm exec node --import tsx scripts/smoke-http.ts
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

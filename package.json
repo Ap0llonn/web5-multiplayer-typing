@@ -1,0 +1,63 @@
+{
+  "name": "web5-multiplayer-typing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "node --import tsx scripts/test-stack.ts",
+    "test:e2e": "playwright test",
+    "test": "pnpm test:unit",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:test:up": "node --import tsx scripts/test-db.ts up",
+    "db:test:down": "node --import tsx scripts/test-db.ts down",
+    "db:migrate:test": "node --import tsx scripts/with-test-env.ts prisma migrate deploy",
+    "check:boundaries": "node --import tsx scripts/check-boundaries.ts",
+    "test:http": "node --import tsx scripts/test-stack.ts exec node --import tsx scripts/smoke-http.ts",
+    "test:browser": "node --import tsx scripts/test-stack.ts exec playwright test"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "better-auth": "1.7.7",
+    "next": "16.3.8",
+    "next-intl": "4.14.9",
+    "next-themes": "0.4.6",
+    "pg": "8.23.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "0.0.1",
+    "ws": "8.22.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.10.1",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/ws": "8.18.2",
+    "auth": "1.7.7",
+    "dotenv": "18.0.5",
+    "embedded-postgres": "18.4.0-beta.17",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.3.8",
+    "prettier": "3.8.2",
+    "prisma": "7.10.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "5.0.3"
+  }
+}
