@@ -1,6 +1,6 @@
 # ADR 0002 — présence renouvelée par le navigateur
 
-Statut : correctif S1 en préparation après échec Chromium de PR #35 ; ne constitue pas encore une preuve de recette réussie.
+Statut : correctif S1 implémenté et vérifié le 3 octobre 2026 sur [PR #35](https://github.com/Ap0llonn/web5-multiplayer-typing/pull/35), code `91e24c225aa169482ac4b463201958a444ce0c53` : 29 unitaires, 19 intégrations PostgreSQL et 5 scénarios Chromium passent, dont la vraie coupure/reprise invitée puis hôte. La cible VPS HTTPS reste à vérifier.
 
 ## Constat
 
@@ -20,10 +20,12 @@ Le test de coupure réseau conserve « Online » pendant vingt secondes. La cha�
 
 Le trafic de présence client est d’environ douze requêtes/minute/onglet. La limite actuelle de création/entrée par code ne s’applique pas au heartbeat, afin de ne pas expirer des utilisateurs partageant une IP ou plusieurs onglets. Les limites opérationnelles et la charge du VPS restent à mesurer ; cette correction n’est pas une certification de capacité.
 
-## Vérification requise
+## Vérification réalisée et limite restante
 
 1. RED PostgreSQL : observer un membre depuis SSE ne change pas son timestamp et montre « reconnexion » après dix secondes ; observation seule ne prolonge pas la grâce
 2. POST autorisé renouvelle uniquement sa participation ; invité autorisé comme membre, non-membre/origine étrangère/champ acteur falsifié refusés ; session révoquée refusée
 3. Timers navigateur : immédiat, séquentiel, reprise après erreur, délai borné et abort/arrêt sans réponse tardive appliquée
 4. Conserver concurrence trente membres, dernières places, unicité et expirations ; full agrégat local
 5. Rejouer la vraie coupure/reprise invité puis hôte en Chromium distant, mêmes IDs/host, aucun doublon, délais consignés ; recette HTTPS de production toujours ouverte
+
+Preuves distantes : [run PR 37137711735](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37137711735) et [run push 37137708939](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37137708939), tous deux verts. Le scénario réseau initialement rouge n’a pas été assoupli : arrivée visible en 883 ms, détection invitée en 9 858 ms et reprise en 15 213 ms ; détection hôte en 10 353 ms et reprise en 14 668 ms. Les durées de reprise partent du début de la coupure et restent sous la grâce de 30 s. Identités, hôte et nombre d’adhésions sont conservés. Ces observations CI sur localhost ne constituent ni une mesure de charge ni la recette HTTPS.
