@@ -22,7 +22,7 @@ pnpm dev
 
 Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL est utilisé par le socle ; Redis et S3 sont provisionnés pour la suite, sans intégration métier ni upload de photo à ce stade.
 
-Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : quatre scénarios Chromium passent en CI, dont le parcours à deux sessions, le thème sombre après reload et l’absence de débordement horizontal de l’accueil à 360 px. La recette clavier, les contrastes, le sans-flash et la couverture mobile de toutes les pages restent à faire ; voir [les preuves et limites exactes](docs/verification.md).
+Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : 14 scénarios Chromium passent sur la référence `66787c07`, dont les salons à plusieurs sessions/onglets, la reconnexion de l’hôte et de l’invité, les préférences langue/thème, l’inscription au clavier et les pages/formulaires/salons à 360 px en FR/EN et clair/sombre. Les contrôles axe automatisés passent sur les états parcourus ; la certification WCAG exhaustive et l’absence de flash visuel au premier affichage ne sont pas établies. Voir [les preuves et limites exactes](docs/verification.md).
 
 ## Authentification
 
@@ -32,9 +32,15 @@ GitHub ET Discord sont requis pour la remise. Chaque paire CLIENT_ID/CLIENT_SECR
 
 ## Salons
 
-Compte : créer avec nom, capacité2–30 et rôle participant/spectateur. Invité ou compte : rejoindre avec code6caractères. S1 implémente « Sur code » ; annuaire public et invitations privées sont futurs. Une seule salle active par joueur, contrainte DB ; rechargement/onglets de la même identité ne doublent pas le siège. Liste présente via SSE autorisé. Reconnexion≤30secondes conserve le siège ; départ explicite transfère l'hôte au compte actif arrivé le plus tôt, sinon ferme la salle. Course, bots, bonus, photos, stats et historique restent futurs.
+Compte : créer avec nom, capacité2–30 et rôle participant/spectateur. Invité ou compte : rejoindre avec code6caractères. S1 implémente « Sur code » ; annuaire public et invitations privées sont futurs. Une seule salle active par joueur, contrainte DB ; rechargement/onglets de la même identité ne doublent pas le siège. Liste des présents via SSE autorisé, avec libellés compte/invité, hôte, rôle et présence. Le heartbeat du navigateur renouvelle sa propre adhésion ; les lectures SSE ne maintiennent pas artificiellement une personne en ligne. La reconnexion de l’hôte et de l’invité dans la grâce de 30 secondes conserve les identités et le siège. Un onglet périmé retrouve sa salle actuelle et demande un départ explicite avant de rejoindre une autre salle ; aucun changement de salle automatique. Le départ explicite transfère l’hôte au compte actif arrivé le plus tôt, sinon ferme la salle. Course, bots, bonus, photos, stats et historique restent futurs.
+
+## Seed de développement S1
+
+Après les migrations, `pnpm db:seed:s1` crée deux utilisateurs synthétiques sans credentials ni sessions et une salle exemple fermée, avec deux adhésions inactives. Le script accepte seulement une base locale nommée `*_dev` ou `*_test`, hors production. Les tests PostgreSQL vérifient répétition, concurrence, conservation des données existantes et rollback en cas de collision. Ce seed ne fournit ni compte de démonstration connectable ni corpus/historique de course final.
 
 ## Vérification
+
+Référence vérifiée : [`66787c07`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/66787c07d6fb691419c76e9c736370a03673583c), 3 octobre 2026. [Quality](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37146692723) : **44 unitaires, 20 intégrations PostgreSQL et 14 scénarios Chromium**, avec installation, Prisma/migrations, lint/types/frontières, build et smoke HTTP/SSE. [Local infrastructure](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37146692732) : validation Docker Compose et smoke PostgreSQL/Redis/S3 avec persistance après `down`/`up`. Les deux workflows sont distincts ; ces preuves locales/CI ne valident pas la production ni le Sprint 1 entier.
 
 ```sh
 pnpm infra:validate    # validation réelle de la configuration par Docker Compose
