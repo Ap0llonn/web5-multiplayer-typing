@@ -42,7 +42,8 @@ test("two real sessions create/join, stream roster and reconnect without duplica
   ]);
   expect(signupResponse.status()).toBe(200);
   await expect(h).toHaveURL(/\/en\/?$/);
-  await expect(h.getByRole("alert")).toHaveCount(0);
+  // Next renders a screen-reader route announcer with role=alert outside main.
+  await expect(h.getByRole("main").getByRole("alert")).toHaveCount(0);
   await expect(h.getByLabel("Room name")).toBeVisible();
   await h.getByLabel("Room name").fill("Test room");
   await h.getByRole("button", { name: "Create room", exact: true }).click();
@@ -74,7 +75,9 @@ test("bad login displays translated error without false success", async ({
   await page.getByLabel("Username").fill("missing");
   await page.getByLabel("Password", { exact: true }).fill("incorrect-password");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
+    "Sign in again or check your username and password.",
+  );
   await expect(page).toHaveURL(/login/);
   await expect(
     page.getByRole("button", { name: "Sign in", exact: true }),
