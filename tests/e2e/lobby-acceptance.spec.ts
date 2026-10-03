@@ -79,7 +79,12 @@ test("a stale tab recovers its real room and requires an explicit leave before j
     await expect(
       stale.getByRole("button", { name: en.leave, exact: true }),
     ).toBeVisible();
-    expect(mutations).toEqual(["/api/lobbies/join"]);
+    // Recovery renews presence in the original room, but must not change rooms.
+    expect(
+      mutations.filter(
+        (path) => path !== `/api/lobbies/${originalCode}/heartbeat`,
+      ),
+    ).toEqual(["/api/lobbies/join"]);
     expect(
       await (await owner.request.get("/api/lobbies/me")).json(),
     ).toMatchObject({ ok: true, value: { code: originalCode } });
