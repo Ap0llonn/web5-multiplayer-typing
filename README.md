@@ -2,7 +2,7 @@
 
 Next.js App Router, TypeScript strict, Tailwind, Better Auth, PostgreSQL/Prisma. Monolithe modulaire inspiré de Type : lire [architecture](docs/ARCHITECTURE.md) et [exigences](docs/EXIGENCES.md) avant toute modification.
 
-Le titre ci-dessus est une description fonctionnelle, pas le nom de marque. Le nom et le logo définitifs doivent être créés par l'étudiant sans IA.
+Le titre ci-dessus décrit le projet. L’interface rétro arcade utilise le PNG CLAK! fourni, dans la navigation et le footer. Son intégration ne prouve pas la création personnelle sans IA ni le caractère définitif du nom/logo ; les pièces requises restent suivies dans [la démarche créative](docs/DEMARCHE-CREATIVE.md).
 
 ## Démarrage
 
@@ -24,7 +24,7 @@ Pour arrêter les services sans effacer les données : `pnpm infra:down`. Postgr
 
 `pnpm dev` et `pnpm build` génèrent automatiquement le client Prisma avant Next.js. Les migrations et la génération sont distinctes : `prisma migrate deploy` ne crée pas `src/generated/prisma/client.ts`. Pour les commandes de types, tests ou seed lancées seules, conserver `pnpm db:generate` comme préparation explicite.
 
-Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : quatre scénarios Chromium passent en CI, dont le parcours à deux sessions, le thème sombre après reload et l’absence de débordement horizontal de l’accueil à 360 px. La recette clavier, les contrastes, le sans-flash et la couverture mobile de toutes les pages restent à faire ; voir [les preuves et limites exactes](docs/verification.md).
+Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. La présentation rétro arcade conserve les opérations réelles du socle S1 : 15 scénarios Chromium passent sur la référence `25fd45a6`, dont salons à plusieurs sessions/onglets, reconnexion hôte/invité, préférences langue/thème, inscription au clavier et pages/formulaires/salons à 360 px en FR/EN et clair/sombre. Le logo chargé, les liens de navigation/footer et la conservation des paramètres/fragment au changement de langue sont aussi vérifiés. Les contrôles axe passent sur les états parcourus ; le bootstrap SSR est testé, mais la conformité WCAG exhaustive et l’absence de flash visuel au premier paint ne sont pas établies. Voir [les preuves et limites exactes](docs/verification.md).
 
 ## Authentification
 
@@ -34,9 +34,15 @@ GitHub ET Discord sont requis pour la remise. Chaque paire CLIENT_ID/CLIENT_SECR
 
 ## Salons
 
-Compte : créer avec nom, capacité2–30 et rôle participant/spectateur. Invité ou compte : rejoindre avec code6caractères. S1 implémente « Sur code » ; annuaire public et invitations privées sont futurs. Une seule salle active par joueur, contrainte DB ; rechargement/onglets de la même identité ne doublent pas le siège. Liste présente via SSE autorisé. Reconnexion≤30secondes conserve le siège ; départ explicite transfère l'hôte au compte actif arrivé le plus tôt, sinon ferme la salle. Course, bots, bonus, photos, stats et historique restent futurs.
+Compte : créer avec nom, capacité2–30 et rôle participant/spectateur. Invité ou compte : rejoindre avec code6caractères. S1 implémente « Sur code » ; annuaire public et invitations privées sont futurs. Une seule salle active par joueur, contrainte DB ; rechargement/onglets de la même identité ne doublent pas le siège. Liste des présents via SSE autorisé, avec libellés compte/invité, hôte, rôle et présence. Le heartbeat du navigateur renouvelle sa propre adhésion ; les lectures SSE ne maintiennent pas artificiellement une personne en ligne. La reconnexion de l’hôte et de l’invité dans la grâce de 30 secondes conserve les identités et le siège. Un onglet périmé retrouve sa salle actuelle et demande un départ explicite avant de rejoindre une autre salle ; aucun changement de salle automatique. Le départ explicite transfère l’hôte au compte actif arrivé le plus tôt, sinon ferme la salle. Course, bots, bonus, photos, stats et historique restent futurs.
+
+## Seed de développement S1
+
+Après les migrations, `pnpm db:seed:s1` crée deux utilisateurs synthétiques sans credentials ni sessions et une salle exemple fermée, avec deux adhésions inactives. Le script accepte seulement une base locale nommée `*_dev` ou `*_test`, hors production. Les tests PostgreSQL vérifient répétition, concurrence, conservation des données existantes et rollback en cas de collision. Ce seed ne fournit ni compte de démonstration connectable ni corpus/historique de course final.
 
 ## Vérification
+
+Référence vérifiée : [`25fd45a6`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/25fd45a6d2b019c95f14043e92f319336b217613), 4 octobre 2026. [Quality](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335041) : **58 unitaires, 20 intégrations PostgreSQL et 15 scénarios Chromium**, avec installation, Prisma/migrations, lint/types/frontières, build et smoke HTTP/SSE. [Local infrastructure](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335050) : validation Docker Compose et smoke PostgreSQL/Redis/S3 avec persistance après `down`/`up`. Les deux workflows sont distincts ; ces preuves locales/CI ne valident pas la production ni le Sprint 1 entier. Le rapport distingue aussi la limite du harnais Windows : trois tests seed échouent avant exécution avec `spawn pnpm ENOENT` ; le succès Linux ne démontre pas sa correction.
 
 ```sh
 pnpm infra:validate    # validation réelle de la configuration par Docker Compose

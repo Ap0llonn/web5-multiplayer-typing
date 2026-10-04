@@ -1,6 +1,80 @@
 # Vérification du socle Sprint 1
 
-## Frontend rétro arcade et logo fourni — 4 octobre 2026
+## Référence courante vérifiée — 4 octobre 2026
+
+La référence de ce rapport est le commit fusionné sur main [`25fd45a6d2b019c95f14043e92f319336b217613`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/25fd45a6d2b019c95f14043e92f319336b217613), arbre `386f83caec39757f47527001b4084fa0b2e580b0`. Les métadonnées des deux runs, les états de leurs jobs et leurs journaux ont été relus le 4 octobre 2026. Tous portent sur ce SHA exact ; aucune modification ultérieure n’est incluse dans les comptes ci-dessous.
+
+- **Quality : succès**, [run 37208335041](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335041), [job verify 111454155895](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335041/job/111454155895)
+- **Local infrastructure : succès**, [run 37208335050](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335050), [job compose 111454155932](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335050/job/111454155932)
+
+Il s’agit de contrôles automatisés sur des services locaux jetables en CI, pas d’une preuve de déploiement public. **Le checkpoint et le Sprint 1 ne sont pas déclarés entièrement conformes.**
+
+### Résultats sur cette référence
+
+| Contrôle | Résultat | Preuve et portée |
+| --- | --- | --- |
+| Installation verrouillée | PASS dans les deux workflows | `pnpm install --frozen-lockfile`, versions Node/pnpm du dépôt |
+| Prisma et migrations | PASS dans Quality | Validation, génération et application des deux migrations sur PostgreSQL 18.4 jetable ; présence des migrations et contraintes vérifiée en intégration |
+| Lint, types et frontières | PASS dans Quality | ESLint, `next typegen`, `tsc --noEmit`, contrôle des imports modulaires |
+| Unitaires | **58/58, 16 fichiers** | Contrats, configuration, identité, règles de salon, roster FR/EN, ordre des snapshots, récupération après conflit, heartbeat, SSE, frontières, pages auth indisponibles, shell et bootstrap SSR du thème |
+| Intégration PostgreSQL | **20/20, 11 fichiers** | Auth locale/invité, sessions, concurrence, capacité/unicité, collisions, présence observée/renouvelée, autorisations, migrations et seed S1 |
+| Build de production | PASS dans Quality | Next.js, routes FR/EN, auth, salons et SSE |
+| Smoke HTTP/SSE de production locale | PASS dans Quality | Sessions réelles, refus invité/CSRF/acteur falsifié, création/entrée, flux partagé, identité après reconnexion et refus après révocation |
+| Chromium et Playwright | **15/15, 4 fichiers** | Projet `chromium` / Desktop Chrome, un worker, aucun retry ; vrai build et PostgreSQL jetable |
+| Configuration Docker Compose | PASS dans Local infrastructure | `pnpm infra:validate` appelle réellement Docker Compose ; images épinglées, ports loopback, healthchecks et volumes vérifiés |
+| Services et persistance Docker Compose | PASS dans Local infrastructure | `pnpm test:compose` : PostgreSQL, Redis, aller-retour PNG S3 authentifié, refus de lecture anonyme 403, données conservées après `down` puis `up` |
+
+La relecture statique de l’arbre épinglé ne trouve aucun fichier `.js`/`.jsx` versionné ; `tsconfig.json` active `strict`, ESLint interdit `any` explicite et les deux `@ts-expect-error` de `tests/unit/operation-result.test.ts` portent chacun leur justification. Ce contrôle de sources complète le lint/types vert, sans prétendre scanner l’historique des secrets.
+
+Le journal Quality donne `58 passed` à 14:12:36 UTC, `20 passed` à 14:12:57 UTC, le smoke HTTP réussi à 14:13:30 UTC puis `15 passed` à 14:15:16 UTC. Le journal Compose confirme la configuration à 14:11:58 UTC et le smoke de persistance à 14:12:28 UTC. Le job Compose est indépendant de Quality : Redis/S3 restent des services de développement, sans intégration métier photo/cache démontrée.
+
+### Portée exacte des 15 scénarios Chromium
+
+Sources : [`sprint.spec.ts`](../tests/e2e/sprint.spec.ts) (4), [`lobby-acceptance.spec.ts`](../tests/e2e/lobby-acceptance.spec.ts) (3), [`presence.spec.ts`](../tests/e2e/presence.spec.ts) (1), [`ui-acceptance.spec.ts`](../tests/e2e/ui-acceptance.spec.ts) (7) et [`playwright.config.ts`](../playwright.config.ts).
+
+1. **Socle, 4 scénarios :** FR→EN, sombre persistant après reload et accueil sans débordement à 360 × 780 ; deux vraies sessions compte/invité avec création, entrée, roster partagé, reload sans doublon et départ ; mauvais login avec erreur traduite sans faux succès ; réponse initiale `/api/lobbies/me` retardée qui ne peut effacer une création récente. Cette dernière réponse est interceptée pour rendre la régression déterministe. La navigation reflète aussi la session après inscription puis déconnexion ; le parcours de thème détecte l’avertissement React ciblé de script lors du changement de langue.
+2. **Salons, 3 scénarios :** un onglet périmé tente une autre salle, retrouve la salle réellement active, affiche le conflit et exige le bouton Quitter avant une nouvelle entrée. Le test accepte uniquement le join tenté et les heartbeats de la salle retrouvée avant ce départ ; il vérifie ensuite les trois onglets/contextes sans adhésion supplémentaire. En FR et EN, un hôte spectateur laisse deux places participantes ; les codes invalides/inconnus, salle pleine puis fermée rendent les erreurs attendues sans affichage de faux salon ni navigation de succès.
+3. **Présence, 1 scénario :** les lignes nominatives distinguent compte/invité et hôte, avec libellés FR/EN. Chromium coupe réellement le réseau du contexte invité puis du contexte hôte ; le pair voit Reconnecting puis Online. Le retour intervient en moins de 30 secondes, avec même code, deux membres, identités et hôte inchangés. Mesures de ce run localhost : arrivée **858 ms** ; invité détecté hors ligne à **9 849 ms**, revenu à **14 689 ms** ; hôte détecté à **10 850 ms**, revenu à **15 167 ms**. Ce sont les observations d’un run, pas un engagement de latence ni un test de charge/proxy.
+4. **Préférences, 1 scénario :** `/` suit `en-US` et le thème système sombre ; le choix explicite français/clair persiste après reload et nouvelle entrée sur `/`. Accueil, login et signup conservent les contrôles, titre, description et langue française ; aucune erreur d’hydratation ciblée/pageerror sur ce parcours. Une nouvelle session `es-ES` avec système clair utilise le repli FR/clair. Les assertions de classe après `DOMContentLoaded` ne mesurent pas le premier paint : **l’absence de flash visuel reste à vérifier**.
+5. **Clavier, 1 scénario :** à 360 × 780, Tab/Entrée activent le lien d’évitement et parcourent l’inscription avec assertions de focus ; l’outline du champ identifiant n’est pas `none`. Une salle au nom de 60 caractères reste dans la largeur, puis le bouton Quitter reçoit le focus et est activé au clavier. La création utilise encore les actions Playwright fill/click ; ce test n’est pas une recette intégrale de toutes les actions au clavier.
+6. **Pages et accessibilité, 4 scénarios FR/EN × clair/sombre :** accueil, login, signup, accueil connecté/formulaire de création puis salon ne débordent pas à 360 × 780. Les pages vérifient notamment titre, un `main` et un `h1`. Les analyses axe avec tags WCAG 2 A/AA et 2.1 A/AA ne trouvent aucune violation dans les états parcourus. Elles apportent une preuve automatisée incluant les contrôles de contraste disponibles ; **elles ne certifient pas une conformité WCAG exhaustive**, tous les états d’erreur, les alternatives des futures images ou la lecture réelle par technologies d’assistance.
+7. **Identité et navigation, 1 scénario :** le PNG CLAK! est visible et effectivement chargé dans les deux emplacements de `/fr/login?from=invite#content`. Le passage en anglais conserve query et fragment ; les liens du footer vers signup puis de la navigation vers l’accueil fonctionnent. Cela prouve l’intégration du fichier, pas sa provenance personnelle ou l’originalité du nom.
+
+Trois tests unitaires exécutent le bootstrap SSR de `next-themes` et vérifient le choix système ainsi que la priorité des préférences clair/sombre. Ils complètent le contrôle navigateur d’hydratation ; ils ne mesurent pas visuellement le premier paint.
+
+### Seed et présence désormais couverts
+
+Le seed [`prisma/seed-s1.ts`](../prisma/seed-s1.ts) et ses [3 tests PostgreSQL](../tests/integration/seed-s1.test.ts) sont présents et verts sur cette référence. Deux utilisateurs synthétiques sans credentials/sessions, leurs identités et une salle fermée aux adhésions inactives sont créés de façon répétable et concurrente. Les données étrangères restent intactes, une collision de fixture provoque un rollback complet et les cibles production/distantes/non nommées sont refusées avant connexion sans exposer leur URL. Le corpus, le jeu de données final et l’historique de course restent futurs ; ce seed n’est pas un compte démo connectable.
+
+Les [tests d’observation de présence](../tests/integration/presence-observation.test.ts) prouvent que les lectures ne renouvellent pas `lastSeenAt`, que seul le heartbeat de l’acteur vérifié renouvelle son adhésion et que l’hôte expiré est réconcilié. Ils vérifient les refus d’acteur falsifié, origine étrangère, session révoquée et codes de salle étrangers/inconnus pour heartbeat/départ. Le roster et sa traduction ont aussi des [tests unitaires dédiés](../tests/unit/lobby-roster.test.tsx). La validation de la présence du lobby ne prouve ni la reprise/abandon d’une course future ni son débit cible.
+
+### Limites encore ouvertes sur la référence courante
+
+- Callbacks OAuth GitHub **et** Discord réels, y compris annulation/erreur fournisseur : non vérifiés
+- VPS public HTTPS, certificat, proxy SSE, redémarrage et version réellement déployée : non attestés par localhost/CI ou Docker Compose
+- PNG CLAK! intégré, palette et piles typographiques décrites : provenance personnelle sans IA, originalité/choix définitif, croquis, moodboard sourcé de 3–5 références et favicon restent à documenter ou vérifier
+- Absence de flash au premier paint, revue visuelle manuelle exhaustive, accessibilité exhaustive, lecture assistée, tous les parcours clavier et autres moteurs Firefox/WebKit : non établis
+- Login local réussi dans le navigateur, Retour/Avancer et tous les cas de double clic/interruption : restent à compléter ; le login local réussi est couvert en intégration HTTP
+- Limite IP des tentatives de code : implémentation présente, mais recette de seuil/concurrence et proxy de production non prouvée par les tests de cette référence ; ne pas confondre avec le test de rate limit du login. Les trois régressions dédiées de [PR39](https://github.com/Ap0llonn/web5-multiplayer-typing/pull/39) sont encore hors de cette référence main
+- Course, scoring, bots exécutables, bonus, corpus, photos, statistiques/historique, annuaire public et invitations privées : futurs ; Lighthouse et charge/capacité de production non validés
+
+### Reproduire sans confondre les environnements
+
+Suivre les commandes du [README](../README.md) et le [guide local](DEVELOPPEMENT-LOCAL.md). Les harnais `test:integration`, `test:http` et `test:browser` créent leur PostgreSQL local jetable. En CI, Quality migre son service PostgreSQL dédié, puis exécute directement Vitest intégration, le build, le smoke HTTP et Playwright. Le smoke Compose utilise son propre projet jetable et ses volumes, indépendamment des données de développement. Aucun de ces contrôles n’autorise un reset ou un seed de production.
+
+### Limite Windows distincte
+
+Le compte rendu local du 4 octobre ci-dessous conserve 17/20 intégrations, dont trois échecs `spawn pnpm ENOENT` dans les tests du seed avant son exécution. Les 20/20 Linux de cette référence prouvent le passage en CI, pas une correction du harnais Windows. Le dernier compte rendu local décrit un build et 15 E2E réussis après isolation du cache SWC et du port ; les blocages SWC/initdb plus anciens restent datés, sans être présentés comme l’état Linux courant.
+
+## Lecture de l’historique
+
+Les sections suivantes conservent les résultats de leurs dates, commits et environnements. Les preuves Linux courantes ci-dessus ne transforment pas les anciens échecs Windows ou cloud en succès locaux. Le dernier compte rendu Windows réussit le build et 15 E2E après adaptation du harnais ; ses trois échecs seed restent ouverts. Les déclarations de fourniture/appréciation des visuels sont une trace du travail, pas une preuve indépendante de leur création personnelle sans IA.
+
+## Historique — référence main du 3 octobre 2026, 19 h 29 UTC
+
+Le commit [`66787c07`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/66787c07d6fb691419c76e9c736370a03673583c), arbre `c6e0735e8549e68b7927f60d65e34499560b533e`, a passé [Quality 37146692723](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37146692723) avec 44 unitaires/13 fichiers, 20 intégrations/11 fichiers et 14 Chromium/4 fichiers, plus build/HTTP-SSE. [Local infrastructure 37146692732](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37146692732) a passé Compose et la persistance. Ces résultats restent attribués à cette ancienne référence. Ses mesures de présence localhost : arrivée 826 ms ; invité détecté à 9 834 ms/revenu à 15 168 ms ; hôte détecté à 10 333 ms/revenu à 14 646 ms.
+
+## Historique local — Frontend rétro arcade et logo fourni — 4 octobre 2026
 
 Direction : seconde maquette approuvée, puis demande explicite de frontend réutilisable. Logo CLAK! fourni ultérieurement par l’utilisateur, copié sans modification dans `public/brand/clak-logo.png`. Primitives génériques et layouts dans shared, identité de navigation injectée par composition/site ; aucune règle/transaction/route métier modifiée. Références : TECH-03, DES-04/05/06, I18N-01/02, A11Y-01/02/03/04.
 
@@ -24,7 +98,7 @@ Le harnais habituel `scripts/test-stack.ts` crée son PostgreSQL, puis échoue s
 
 **Non exécuté dans ce lot :** OAuth GitHub/Discord réel, déploiement/VPS, charge, callbacks externes, vérification du moodboard/provenance personnelle du nom/logo/croquis et favicon. Aucun statut de conformité complet n’est attribué à ces sujets. Les modifications utilisateur déjà présentes dans le checkout ont été conservées.
 
-## Corrections des pages React et du thème — 3 octobre 2026
+## Historique local — Corrections des pages React et du thème — 3 octobre 2026
 
 Rattachement : `DES-05`, `AUTH-02/03`, `TECH-10`. La composition accueil/auth possède le rendu des échecs ; identity conserve `OperationResult` et l’infrastructure partagée valide la configuration. Les limites de module et les règles de validation des secrets sont conservées.
 
@@ -41,7 +115,7 @@ Rattachement : `DES-05`, `AUTH-02/03`, `TECH-10`. La composition accueil/auth po
 Le diagnostic local confirme que `BETTER_AUTH_SECRET` ne satisfait pas son schéma. Aucun secret local modifié ou exposé : l’utilisateur doit renseigner une valeur d’au moins 32 caractères dans son fichier local puis redémarrer Next.js. Les contrôles DB utilisent exclusivement des conteneurs de test distincts ; aucune migration sur la DB utilisateur.
 
 
-## Correction du client Prisma absent au démarrage — 3 octobre 2026
+## Historique local — Correction du client Prisma absent au démarrage — 3 octobre 2026
 
 Rattachement : `TECH-04` et préparation locale `DOC-FINAL-README`. Propriétaire : outillage partagé (`package.json`), sans changement de contrat métier, schéma ni migration. Le client ignoré par Git était absent après les migrations ; les imports et le chemin du générateur étaient corrects. `dev` et `build` exécutent désormais `pnpm db:generate` avant Next.js. La génération échouée interrompt le démarrage.
 
@@ -54,7 +128,7 @@ Rattachement : `TECH-04` et préparation locale `DOC-FINAL-README`. Propriétair
 Les contrôles indépendants ont été lancés via leurs exécutables Node locaux, équivalents aux scripts pnpm, car le compte sandbox n’accède pas au verrou global pnpm. Aucun test unitaire des chaînes de scripts ajouté : la reproduction TypeScript et l’exécution réelle de génération contrôlent le défaut.
 
 
-## Lot infrastructure locale — 3 octobre 2026, 16 h 48 UTC
+## Historique — lot infrastructure locale du 3 octobre 2026, 16 h 48 UTC
 
 Branche `chore/s1-local-dev-compose`, préparée depuis main `216ea62771fb299be8e2f3380bf024ce9789418c`. Ce lot ajoute uniquement l’infrastructure de développement et sa vérification ; aucun code métier, schéma Prisma ou parcours photo n’est modifié.
 
@@ -68,7 +142,7 @@ Branche `chore/s1-local-dev-compose`, préparée depuis main `216ea62771fb299be8
 
 Guide et commandes : [DEVELOPPEMENT-LOCAL.md](DEVELOPPEMENT-LOCAL.md). Les preuves de main ci-dessous restent celles de leurs commits historiques et ne constituent pas une preuve Docker.
 
-## État faisant foi — 3 octobre 2026, 14 h 02 UTC
+## Historique — CI main du 3 octobre 2026, 14 h 02 UTC
 
 Le run GitHub Actions **Quality sur main est entièrement vert** : [37128079856](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37128079856), terminé à 14:02:21 UTC, commit [`80b7a5c2c36b800478f04cd40a3082a0df8f3cbb`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/80b7a5c2c36b800478f04cd40a3082a0df8f3cbb). Les métadonnées du run, les étapes du job et son journal ont été relus le 3 octobre. L'arbre Git vérifié est `3b9d277b223442496576c8dcc921972c6380e84a`, identique à l'arbre local `e729549176208afe3d44038e4e6459885f889f9d` avant cette mise à jour documentaire.
 
