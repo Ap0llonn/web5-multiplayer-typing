@@ -118,7 +118,7 @@ La source des codes est `src/shared/contracts/operation-result.ts` : `VALIDATION
 
 - Succès : DTO minimal sérialisable, pas de ligne Prisma complète ni de session/token. Les timestamps lobby (`joinedAt`, `lastSeenAt` interne) sont des nombres en millisecondes Unix ; `Date` reste un détail de l'adaptateur DB. Ne pas mélanger secondes, millisecondes et chaînes ISO dans un même contrat. La version de salle est un entier sérialisable.
 - Échec attendu : résultat discriminé stable. Le repository traduit les erreurs fournisseur en erreurs neutres ; le superviseur les interprète dans son opération. Il ne teste aucun code Prisma `Pxxxx`.
-- Échec imprévu : erreur générique `INTERNAL` au client et diagnostic expurgé côté serveur. Ne pas transformer une panne en liste vide ou faux succès.
+- Échec imprévu : erreur générique `INTERNAL` au client et diagnostic expurgé côté serveur. Ne pas transformer une panne en liste vide ou faux succès. Les pages accueil/auth présentent l'échec sans formulaire lorsque l'identité est indisponible ; seul `UNAUTHENTICATED` autorise le parcours de connexion. `ServerConfigurationError` identifie uniquement les noms des variables invalides dans le diagnostic serveur, jamais leurs valeurs.
 - Le transport traduit les codes en statuts HTTP cohérents ; il ne réécrit pas les règles. `401` pour session absente, `403` pour droit refusé, `404` pour absent, `409` pour conflit d'état, `429` pour limitation, `500/503` pour panne.
 - Les clés sont traduites à la présentation. Jamais de message SQL, stack trace, mot de passe, cookie, token, email ou secret dans les snapshots publics ou logs de routine.
 
@@ -239,9 +239,15 @@ Tests futurs : rejouer une seed, comparer plusieurs découpages de temps, vérif
 - Tailwind CSS est requis (`TECH-03`). Les éléments restent accessibles, clavier/mobile, avec états pending/erreur/vide réels. Aucun bouton factice.
 - `next-intl` porte `/fr` et `/en`. La sélection explicite persistée prime ; sinon utiliser la langue navigateur parmi FR/EN, avec repli FR pour les langues non prises en charge (`I18N-02`). La langue du texte de course est indépendante de celle de l'UI (`CONF-02`).
 - Tous les libellés, erreurs, états vides et métadonnées sont traduits ; nombres/dates passent par le formatage localisé. Aucun texte UI métier codé en dur.
-- `next-themes` porte clair/sombre persistant, avec préférence système au premier accès (`DES-05`) ; éviter flash du mauvais thème et divergences d'hydratation du sélecteur.
+- `next-themes` porte clair/sombre persistant, avec préférence système au premier accès (`DES-05`) ; éviter flash du mauvais thème et divergences d'hydratation du sélecteur. L'adaptateur `shared/presentation/theme/provider.tsx` conserve le bootstrap exécutable en SSR et pendant l'hydratation initiale, puis le rend inerte lors des remontages client ; les effets officiels continuent d'appliquer le thème.
 - Le nom et le logo finaux doivent venir de l'étudiant sans IA (`DES-01/02`). Aucun agent ne les invente, ne génère des croquis ou ne présente un placeholder comme identité finale.
 - Versions exactes, lockfile pnpm et Node versionnés. Variables dans `.env.example`, secrets hors Git. PostgreSQL jetable pour les tests ; ne jamais réinitialiser une base non explicitement dédiée aux tests.
+
+### Présentation rétro arcade — 4 octobre 2026
+
+La seconde maquette de cette conversation a été approuvée par l’utilisateur, puis demandée en frontend. Elle remplace la direction visuelle provisoire neutre, sans changer le périmètre métier S1. `shared/presentation/ui` possède les primitives génériques Button (type button par défaut), Card, Badge, Field/Input/Select, Icon, Brand, AuthLayout, SiteNavigation, SiteFooter et Shell. Les champs et boutons de soumission métier restent dans identity/lobby ; les submit portent explicitement leur type. `composition/site/SiteLayout` résout l’identité réelle et injecte les contrôles de compte au shell générique. `app/[locale]/layout.tsx` conserve locale/providers et délègue cet assemblage. Les boutons langue conservent chemin, query et fragment ; les thèmes continuent d’utiliser le provider existant.
+
+L’accueil anonyme garde deux entrées visuelles, mais demande la session invitée avant le code et la connexion d’un compte avant la création ; les vrais champs nom, capacité et rôle restent disponibles aux comptes. L’illustration clavier est un SVG décoratif, pas un logo. Le PNG CLAK! fourni par l’utilisateur est copié sans modification dans `public/brand/clak-logo.png`, utilisé par Brand dans la navigation et le footer. L’intégration ne certifie ni la provenance personnelle sans IA, ni l’originalité du nom, ni les croquis ou le favicon requis par DES-01/02. Les deux catalogues et les tokens clair/sombre portent la nouvelle présentation.
 
 ### Infrastructure locale de développement
 

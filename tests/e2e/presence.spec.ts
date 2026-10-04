@@ -13,7 +13,9 @@ test("participant and host reconnect within the grace period with unchanged iden
   try {
     const username = `presence${crypto.randomUUID().replaceAll("-", "").slice(0, 8)}`;
     const signup = await host.request.post("/api/auth/sign-up/email", {
-      headers: { origin: "http://localhost:3000" },
+      headers: {
+        origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+      },
       data: {
         name: username,
         username,

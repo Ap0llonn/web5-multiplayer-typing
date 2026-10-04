@@ -2,22 +2,26 @@ import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { getCurrentActor } from "@/modules/identity/server";
 import { AuthForm } from "@/modules/identity/presentation/auth-form";
-import { SignOutButton } from "@/modules/identity/presentation/sign-out-button";
 import { LobbyPanel } from "@/modules/lobby/presentation/lobby-panel";
 import { Link } from "@/shared/presentation/i18n/navigation";
+import { Card } from "@/shared/presentation/ui/card";
+import { Badge } from "@/shared/presentation/ui/badge";
+import { buttonStyles } from "@/shared/presentation/ui/button";
+import { Icon } from "@/shared/presentation/ui/icon";
+import { HomeHero } from "./home-hero";
 export async function HomePage() {
   const t = await getTranslations();
   const actor = await getCurrentActor(await headers());
   return (
     <>
-      <h1>{t("title")}</h1>
-      <p>{t("roomIntro")}</p>
+      <HomeHero
+        eyebrow={t("heroEyebrow")}
+        title={t("heroTitle")}
+        description={t("heroDescription")}
+        sticker={t("keyboardSticker")}
+      />
       {actor.ok ? (
         <div className="grid gap-5">
-          <div className="flex items-center justify-between">
-            <p>{actor.value.displayName}</p>
-            <SignOutButton />
-          </div>
           <LobbyPanel
             actor={{
               playerIdentityId: actor.value.playerIdentityId,
@@ -26,21 +30,52 @@ export async function HomePage() {
             }}
           />
         </div>
+      ) : actor.error.code !== "UNAUTHENTICATED" ? (
+        <p role="alert">{t(actor.error.messageKey)}</p>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2">
-          <section>
-            <h2>{t("login")}</h2>
-            <div className="flex gap-4">
-              <Link href="/login">{t("login")}</Link>
-              <Link href="/signup">{t("signup")}</Link>
+        <div className="action-grid">
+          <Card
+            tone="yellow"
+            aria-labelledby="create-room-title"
+            className="flex flex-col"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <Badge>{t("hostBadge")}</Badge>
+              <Icon name="spark" className="h-7 w-7" />
             </div>
-            {actor.error.code === "INTERNAL" && (
-              <p role="alert">{t("errors.INTERNAL")}</p>
-            )}
-          </section>
-          <AuthForm mode="guest" />
+            <h2 id="create-room-title" className="card-title">
+              {t("create")}
+            </h2>
+            <p className="card-description">{t("createDescription")}</p>
+            <p className="mt-3 text-sm font-medium">{t("accountRequired")}</p>
+            <div className="mt-auto grid gap-3 pt-8">
+              <Link href="/login" className={buttonStyles()}>
+                {t("login")}
+                <Icon name="arrow" />
+              </Link>
+              <Link
+                href="/signup"
+                className="text-center text-sm font-bold underline underline-offset-4"
+              >
+                {t("signup")}
+              </Link>
+            </div>
+          </Card>
+          <Card aria-labelledby="join-room-title">
+            <Badge tone="blue">{t("joinBadge")}</Badge>
+            <h2 id="join-room-title" className="card-title">
+              {t("join")}
+            </h2>
+            <p className="card-description mb-6">{t("guestDescription")}</p>
+            <AuthForm mode="guest" />
+          </Card>
         </div>
       )}
+      <p className="home-note">
+        <span className="pixel-confetti" aria-hidden="true" />
+        {t("footerTagline")}
+        <span className="pixel-confetti" aria-hidden="true" />
+      </p>
     </>
   );
 }

@@ -36,6 +36,35 @@ async function accessible(page: Page) {
   ).toEqual([]);
 }
 
+test("the supplied logo, navigation and footer stay usable and locale switching preserves the current URL", async ({
+  page,
+}) => {
+  await page.goto("/fr/login?from=invite#content");
+  const logos = page.getByRole("img", { name: fr.brandName, exact: true });
+  await expect(logos).toHaveCount(2);
+  for (const logo of await logos.all()) {
+    await expect(logo).toBeVisible();
+    await expect
+      .poll(() =>
+        logo.evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
+  }
+  await page.getByRole("button", { name: "English", exact: true }).click();
+  await expect(page).toHaveURL(/\/en\/login\?from=invite#content$/);
+  const footer = page.getByRole("contentinfo");
+  await footer.getByRole("link", { name: en.signup, exact: true }).click();
+  await expect(page).toHaveURL(/\/en\/signup$/);
+  await page
+    .getByRole("navigation")
+    .getByRole("link", { name: en.home, exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/en\/?$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    en.heroTitle,
+  );
+});
+
 test("browser locale and system theme yield to persisted explicit preferences across routes", async ({
   browser,
 }) => {
@@ -182,7 +211,9 @@ for (const [locale, messages] of [
         }
         const username = `a11y${crypto.randomUUID().replaceAll("-", "").slice(0, 10)}`;
         const signup = await context.request.post("/api/auth/sign-up/email", {
-          headers: { origin: "http://localhost:3000" },
+          headers: {
+            origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+          },
           data: {
             name: username,
             username,

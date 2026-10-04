@@ -24,7 +24,7 @@ Aucun nom candidat ni justification personnelle n'a été inventé dans ce dossi
 - [ ] Explication personnelle du concept retenu : **à fournir**
 - [ ] Source du logo final et export vectoriel ou image : **à fournir**
 - [ ] Si nettoyage/vectorisation : décrire l'outil, la transformation et conserver le croquis d'origine : **à fournir si applicable**
-- [ ] Logo intégré dans l'application : **à vérifier après réception**
+- [x] PNG fourni le 4 octobre 2026 intégré sans modification dans la navigation et le footer ; vérifié dans le navigateur. La provenance personnelle sans IA reste non vérifiée.
 - [ ] Favicon dérivé du logo : **à vérifier après réception**
 - [ ] Confirmation du caractère définitif pour le checkpoint : **à fournir**
 
@@ -54,7 +54,7 @@ Chaque référence doit servir un choix concret de composition, typographie, cou
 - [ ] Identification du joueur local, des autres humains et des bots sans dépendre seulement de la couleur
 - [ ] Capture de la palette effectivement appliquée
 
-**État :** aucune palette finale validée dans ce dossier. Des styles neutres de développement ne constituent pas la direction artistique définitive.
+**État au 4 octobre 2026 :** la seconde maquette rétro arcade de la conversation a été explicitement approuvée puis demandée en frontend. Palette implémentée : crème `#fff9ee`, encre `#171916`, surface `#fffdf8`, jaune `#ffe264`, rose `#ff7a9e`, bleu `#2457da`, menthe `#8ee3bf`. Le thème sombre emploie fond `#171b22`, surface `#242c38`, texte `#fff9ee` et contours `#fff1d9`, avec les accents conservés. La nouvelle direction ne prétend pas compléter le moodboard sourcé de 3–5 références ni antidater le socle initial.
 
 ### Typographies
 
@@ -64,11 +64,13 @@ Chaque référence doit servir un choix concret de composition, typographie, cou
 - [ ] Vérification mobile et deux thèmes
 - [ ] Capture des typographies effectivement appliquées
 
-**État :** choix finaux à fournir/valider. Aucune police n'est attribuée à tort à un choix personnel déjà fait.
+**État au 4 octobre 2026 :** pile système Trebuchet MS / Arial / Helvetica / sans-serif ; titres avec Arial Rounded MT Bold si installé, puis Trebuchet MS ; labels, badges et codes en monospace système. Aucun téléchargement de police ou nouvelle dépendance. Titres larges et serrés, labels compacts et champs d’au moins 50 px ; les polices réellement disponibles déterminent le rendu. Il s’agit du choix d’implémentation de la maquette approuvée, pas d’une justification personnelle inventée.
 
 ## 3 Contraintes d'interface déjà retenues
 
-La direction de travail approuvée est backend d'abord avec une interface initiale simple. Cela concerne l'ordre de réalisation, sans retirer les exigences graphiques du checkpoint.
+La première direction de travail était backend d’abord avec une interface initiale simple. Le 4 octobre 2026, l’utilisateur a approuvé une seconde maquette rétro arcade et demandé son implémentation : fond crème, contours épais, ombres décalées, cartes jaune/papier, accent rose/bleu, illustration clavier, navigation et footer partagés. Cette décision récente remplace les styles neutres ; les opérations réelles, les contraintes de langues/thèmes et le périmètre de salon restent inchangés.
+
+Le même jour, l’utilisateur a fourni le PNG CLAK!, intégré sans transformation dans la navigation et le footer (`public/brand/clak-logo.png`). Le nom visible est repris de ce fichier. La fourniture du PNG ne constitue pas une vérification de sa création personnelle sans IA ; les croquis, raisons du nom, contrôle d’originalité et favicon restent à documenter. Aucun concept de logo ou nom supplémentaire n’a été produit par l’agent.
 
 - Conserver clair et sombre, préférence système par défaut, sélection persistante et aucun flash du mauvais thème
 - Concevoir l'accueil autour de l'accès à une course et du code de salle, avec des états d'erreur et d'attente explicites

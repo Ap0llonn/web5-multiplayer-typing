@@ -3,7 +3,7 @@ import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/shared/presentation/i18n/routing";
 import { Theme } from "@/shared/presentation/theme/provider";
-import { Shell } from "@/shared/presentation/ui/shell";
+import { SiteLayout } from "@/composition/site/site-layout";
 import "@/shared/presentation/styles/tokens.css";
 export async function generateMetadata() {
   const t = await getTranslations();
@@ -23,7 +23,7 @@ export default async function Layout({
       <body>
         <NextIntlClientProvider messages={await getMessages()}>
           <Theme>
-            <Shell>{children}</Shell>
+            <SiteLayout>{children}</SiteLayout>
           </Theme>
         </NextIntlClientProvider>
       </body>

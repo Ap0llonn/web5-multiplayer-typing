@@ -22,6 +22,8 @@ pnpm dev
 
 Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL est utilisé par le socle ; Redis et S3 sont provisionnés pour la suite, sans intégration métier ni upload de photo à ce stade.
 
+`pnpm dev` et `pnpm build` génèrent automatiquement le client Prisma avant Next.js. Les migrations et la génération sont distinctes : `prisma migrate deploy` ne crée pas `src/generated/prisma/client.ts`. Pour les commandes de types, tests ou seed lancées seules, conserver `pnpm db:generate` comme préparation explicite.
+
 Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : quatre scénarios Chromium passent en CI, dont le parcours à deux sessions, le thème sombre après reload et l’absence de débordement horizontal de l’accueil à 360 px. La recette clavier, les contrastes, le sans-flash et la couverture mobile de toutes les pages restent à faire ; voir [les preuves et limites exactes](docs/verification.md).
 
 ## Authentification

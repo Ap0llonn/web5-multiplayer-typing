@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/shared/presentation/i18n/navigation";
 import { authClient } from "../infrastructure/auth-client";
+import { Button } from "@/shared/presentation/ui/button";
 export function SignOutButton() {
   const t = useTranslations();
   const router = useRouter();
@@ -25,9 +26,9 @@ export function SignOutButton() {
   }
   return (
     <div>
-      <button disabled={pending} onClick={signOut}>
+      <Button variant="paper" size="small" disabled={pending} onClick={signOut}>
         {t("logout")}
-      </button>
+      </Button>
       {error && <p role="alert">{t("errors.INTERNAL")}</p>}
     </div>
   );

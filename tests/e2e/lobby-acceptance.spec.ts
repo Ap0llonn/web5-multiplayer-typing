@@ -5,7 +5,9 @@ import fr from "../../src/shared/presentation/i18n/messages/fr.json" with { type
 async function account(context: BrowserContext, prefix: string) {
   const username = `${prefix}${crypto.randomUUID().replaceAll("-", "").slice(0, 10)}`;
   const response = await context.request.post("/api/auth/sign-up/email", {
-    headers: { origin: "http://localhost:3000" },
+    headers: {
+      origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    },
     data: {
       name: username,
       username,

@@ -41,3 +41,21 @@ it("enables complete pairs and rejects production HTTP", () => {
     }),
   ).toThrow("Invalid server configuration");
 });
+
+it("identifies invalid configuration keys without exposing submitted values", () => {
+  const invalidValues = {
+    ...base,
+    DATABASE_URL: "private-database-value",
+    BETTER_AUTH_SECRET: "short-private-secret",
+  };
+  let message = "";
+  try {
+    readServerEnv(invalidValues);
+  } catch (error) {
+    if (error instanceof Error) message = error.message;
+  }
+  expect(message).toContain("DATABASE_URL");
+  expect(message).toContain("BETTER_AUTH_SECRET");
+  expect(message).not.toContain(invalidValues.DATABASE_URL);
+  expect(message).not.toContain(invalidValues.BETTER_AUTH_SECRET);
+});

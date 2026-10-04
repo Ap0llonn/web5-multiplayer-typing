@@ -7,6 +7,11 @@ import type { LobbySnapshot, LobbyActor } from "../public";
 import type { OperationResult } from "@/shared/contracts/operation-result";
 import { lobbyViewReducer } from "./lobby-view-state";
 import { sendLobbyCommand } from "./lobby-command";
+import { Card } from "@/shared/presentation/ui/card";
+import { Badge } from "@/shared/presentation/ui/badge";
+import { Button } from "@/shared/presentation/ui/button";
+import { Field, Input, Select } from "@/shared/presentation/ui/field";
+import { Icon } from "@/shared/presentation/ui/icon";
 export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const t = useTranslations();
   const [view, dispatch] = useReducer(lobbyViewReducer, {
@@ -112,97 +117,148 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   }
   const messageKey = error || (view.conflictNotice ? "roomConflict" : "");
   const roleField = (
-    <label>
-      {t("role")}
-      <select name="role" defaultValue="PARTICIPANT">
+    <Field label={t("role")}>
+      <Select name="role" defaultValue="PARTICIPANT">
         <option value="PARTICIPANT">{t("PARTICIPANT")}</option>
         <option value="SPECTATOR">{t("SPECTATOR")}</option>
-      </select>
-    </label>
+      </Select>
+    </Field>
   );
   return (
     <div className="grid gap-5">
       {messageKey && <p role="alert">{t(messageKey)}</p>}
       {room ? (
-        <section>
-          <h2>{room.name}</h2>
-          <p>
-            {t(room.state)} · {t("connection")}: {t(connection)}
-          </p>
-          <p className="code" data-testid="room-code">
-            {room.code}
-          </p>
+        <Card aria-labelledby="active-room-title">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <Badge tone="mint">{t(room.state)}</Badge>
+            <span className="text-sm font-bold">
+              {t("connection")}: {t(connection)}
+            </span>
+          </div>
+          <h2 id="active-room-title" className="card-title">
+            {room.name}
+          </h2>
+          <div className="room-code-panel">
+            <p className="font-mono text-xs font-bold uppercase tracking-wider">
+              {t("code")}
+            </p>
+            <p className="code" data-testid="room-code">
+              {room.code}
+            </p>
+            <p className="text-sm">{t("shareCode")}</p>
+          </div>
           <LobbyRoster room={room} />
-          <button
+          <Button
+            variant="paper"
+            className="mt-6"
             disabled={pending}
             onClick={() => send(`/api/lobbies/${room.code}/leave`, {})}
           >
             {t("leave")}
-          </button>
-        </section>
+          </Button>
+        </Card>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="action-grid">
           {actor.kind === "account" ? (
+            <Card tone="yellow" aria-labelledby="create-room-title">
+              <form
+                className="grid h-full content-start gap-5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const data = new FormData(e.currentTarget);
+                  void send("/api/lobbies", {
+                    name: data.get("name"),
+                    capacity: Number(data.get("capacity")),
+                    role: data.get("role"),
+                  });
+                }}
+              >
+                <div>
+                  <Badge>{t("hostBadge")}</Badge>
+                  <h2 id="create-room-title" className="card-title">
+                    {t("create")}
+                  </h2>
+                  <p className="card-description">{t("createDescription")}</p>
+                </div>
+                <Field label={t("roomName")}>
+                  <Input
+                    name="name"
+                    required
+                    maxLength={60}
+                    placeholder={t("roomPlaceholder")}
+                  />
+                </Field>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field label={t("capacity")}>
+                    <Input
+                      name="capacity"
+                      type="number"
+                      min={2}
+                      max={30}
+                      defaultValue={8}
+                      required
+                    />
+                  </Field>
+                  {roleField}
+                </div>
+                <Button type="submit" disabled={pending} className="w-full">
+                  {pending ? t("pending") : t("create")}
+                  <Icon name="arrow" />
+                </Button>
+              </form>
+            </Card>
+          ) : (
+            <Card tone="yellow" aria-labelledby="create-room-title">
+              <Badge>{t("hostBadge")}</Badge>
+              <h2 id="create-room-title" className="card-title">
+                {t("create")}
+              </h2>
+              <p>{t("guestLimit")}</p>
+            </Card>
+          )}
+          <Card aria-labelledby="join-room-title">
             <form
+              className="grid h-full content-start gap-5"
               onSubmit={(e) => {
                 e.preventDefault();
                 const data = new FormData(e.currentTarget);
-                void send("/api/lobbies", {
-                  name: data.get("name"),
-                  capacity: Number(data.get("capacity")),
+                void send("/api/lobbies/join", {
+                  code: data.get("code"),
                   role: data.get("role"),
                 });
               }}
             >
-              <h2>{t("create")}</h2>
-              <label>
-                {t("roomName")}
-                <input name="name" required maxLength={60} />
-              </label>
-              <label>
-                {t("capacity")}
-                <input
-                  name="capacity"
-                  type="number"
-                  min={2}
-                  max={30}
-                  defaultValue={8}
+              <div>
+                <Badge tone="blue">{t("joinBadge")}</Badge>
+                <h2 id="join-room-title" className="card-title">
+                  {t("join")}
+                </h2>
+                <p className="card-description">{t("joinDescription")}</p>
+              </div>
+              <Field label={t("code")}>
+                <Input
+                  className="font-mono uppercase tracking-widest"
+                  placeholder={t("codePlaceholder")}
+                  name="code"
+                  minLength={6}
+                  maxLength={6}
+                  autoComplete="off"
+                  autoCapitalize="characters"
                   required
                 />
-              </label>
+              </Field>
               {roleField}
-              <button disabled={pending}>{t("create")}</button>
+              <Button
+                type="submit"
+                variant="pink"
+                disabled={pending}
+                className="w-full"
+              >
+                {pending ? t("pending") : t("join")}
+                <Icon name="arrow" />
+              </Button>
             </form>
-          ) : (
-            <section>
-              <p>{t("guestLimit")}</p>
-            </section>
-          )}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const data = new FormData(e.currentTarget);
-              void send("/api/lobbies/join", {
-                code: data.get("code"),
-                role: data.get("role"),
-              });
-            }}
-          >
-            <h2>{t("join")}</h2>
-            <label>
-              {t("code")}
-              <input
-                name="code"
-                minLength={6}
-                maxLength={6}
-                autoComplete="off"
-                autoCapitalize="characters"
-                required
-              />
-            </label>
-            {roleField}
-            <button disabled={pending}>{t("join")}</button>
-          </form>
+          </Card>
         </div>
       )}
     </div>
