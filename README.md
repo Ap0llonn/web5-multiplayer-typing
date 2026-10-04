@@ -2,7 +2,7 @@
 
 Next.js App Router, TypeScript strict, Tailwind, Better Auth, PostgreSQL/Prisma. Monolithe modulaire inspiré de Type : lire [architecture](docs/ARCHITECTURE.md) et [exigences](docs/EXIGENCES.md) avant toute modification.
 
-Le titre ci-dessus est une description fonctionnelle, pas le nom de marque. Le nom et le logo définitifs doivent être créés par l'étudiant sans IA.
+Le titre ci-dessus décrit le projet. L’interface rétro arcade utilise le PNG CLAK! fourni, dans la navigation et le footer. Son intégration ne prouve pas la création personnelle sans IA ni le caractère définitif du nom/logo ; les pièces requises restent suivies dans [la démarche créative](docs/DEMARCHE-CREATIVE.md).
 
 ## Démarrage
 
@@ -22,7 +22,9 @@ pnpm dev
 
 Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL est utilisé par le socle ; Redis et S3 sont provisionnés pour la suite, sans intégration métier ni upload de photo à ce stade.
 
-Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : 14 scénarios Chromium passent sur la référence `66787c07`, dont les salons à plusieurs sessions/onglets, la reconnexion de l’hôte et de l’invité, les préférences langue/thème, l’inscription au clavier et les pages/formulaires/salons à 360 px en FR/EN et clair/sombre. Les contrôles axe automatisés passent sur les états parcourus ; la certification WCAG exhaustive et l’absence de flash visuel au premier affichage ne sont pas établies. Voir [les preuves et limites exactes](docs/verification.md).
+`pnpm dev` et `pnpm build` génèrent automatiquement le client Prisma avant Next.js. Les migrations et la génération sont distinctes : `prisma migrate deploy` ne crée pas `src/generated/prisma/client.ts`. Pour les commandes de types, tests ou seed lancées seules, conserver `pnpm db:generate` comme préparation explicite.
+
+Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. La présentation rétro arcade conserve les opérations réelles du socle S1 : 15 scénarios Chromium passent sur la référence `25fd45a6`, dont salons à plusieurs sessions/onglets, reconnexion hôte/invité, préférences langue/thème, inscription au clavier et pages/formulaires/salons à 360 px en FR/EN et clair/sombre. Le logo chargé, les liens de navigation/footer et la conservation des paramètres/fragment au changement de langue sont aussi vérifiés. Les contrôles axe passent sur les états parcourus ; le bootstrap SSR est testé, mais la conformité WCAG exhaustive et l’absence de flash visuel au premier paint ne sont pas établies. Voir [les preuves et limites exactes](docs/verification.md).
 
 ## Authentification
 
@@ -40,7 +42,7 @@ Après les migrations, `pnpm db:seed:s1` crée deux utilisateurs synthétiques s
 
 ## Vérification
 
-Référence vérifiée : [`66787c07`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/66787c07d6fb691419c76e9c736370a03673583c), 3 octobre 2026. [Quality](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37146692723) : **44 unitaires, 20 intégrations PostgreSQL et 14 scénarios Chromium**, avec installation, Prisma/migrations, lint/types/frontières, build et smoke HTTP/SSE. [Local infrastructure](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37146692732) : validation Docker Compose et smoke PostgreSQL/Redis/S3 avec persistance après `down`/`up`. Les deux workflows sont distincts ; ces preuves locales/CI ne valident pas la production ni le Sprint 1 entier.
+Référence vérifiée : [`25fd45a6`](https://github.com/Ap0llonn/web5-multiplayer-typing/commit/25fd45a6d2b019c95f14043e92f319336b217613), 4 octobre 2026. [Quality](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335041) : **58 unitaires, 20 intégrations PostgreSQL et 15 scénarios Chromium**, avec installation, Prisma/migrations, lint/types/frontières, build et smoke HTTP/SSE. [Local infrastructure](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37208335050) : validation Docker Compose et smoke PostgreSQL/Redis/S3 avec persistance après `down`/`up`. Les deux workflows sont distincts ; ces preuves locales/CI ne valident pas la production ni le Sprint 1 entier. Le rapport distingue aussi la limite du harnais Windows : trois tests seed échouent avant exécution avec `spawn pnpm ENOENT` ; le succès Linux ne démontre pas sa correction.
 
 ```sh
 pnpm infra:validate    # validation réelle de la configuration par Docker Compose

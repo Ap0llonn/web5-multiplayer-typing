@@ -1,26 +1,36 @@
 "use client";
 import { useTranslations } from "next-intl";
 import type { LobbySnapshot } from "../public";
+import { Badge } from "@/shared/presentation/ui/badge";
 export function LobbyRoster({ room }: { room: LobbySnapshot }) {
   const t = useTranslations();
   return (
     <>
-      <h2>{t("roster")}</h2>
-      <ul>
+      <h3 className="mb-4 text-lg font-extrabold">{t("roster")}</h3>
+      <ul className="grid gap-3">
         {room.members.map((m) => (
-          <li data-testid="member-row" key={m.playerIdentityId}>
-            <span
-              aria-hidden="true"
-              className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full border font-mono"
-            >
+          <li
+            className="member-row"
+            data-testid="member-row"
+            key={m.playerIdentityId}
+          >
+            <span aria-hidden="true" className="member-avatar">
               {m.displayName.slice(0, 2).toUpperCase()}
             </span>
-            <span>{m.displayName}</span> ·{" "}
-            <span data-testid="member-kind">{t(`memberKind.${m.kind}`)}</span> ·{" "}
-            {t(m.role)}{" "}
-            {m.playerIdentityId === room.hostPlayerIdentityId &&
-              `· ${t("host")}`}{" "}
-            · {t(m.online ? "online" : "offline")}
+            <div className="min-w-0 flex-1">
+              <span className="block break-words font-bold">
+                {m.displayName}
+              </span>
+              <span className="text-sm text-muted">
+                <span data-testid="member-kind">
+                  {t(`memberKind.${m.kind}`)}
+                </span>{" "}
+                · {t(m.role)} · {t(m.online ? "online" : "offline")}
+              </span>
+            </div>
+            {m.playerIdentityId === room.hostPlayerIdentityId && (
+              <Badge tone="yellow">{t("host")}</Badge>
+            )}
           </li>
         ))}
       </ul>

@@ -4,6 +4,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/shared/presentation/i18n/navigation";
 import { authClient, signInGuest } from "../infrastructure/auth-client";
 import { mapAuthError } from "../contracts/auth-error";
+import { Button } from "@/shared/presentation/ui/button";
+import { Field, Input } from "@/shared/presentation/ui/field";
+import { Icon } from "@/shared/presentation/ui/icon";
 export function AuthForm({
   mode,
   providers = [],
@@ -60,44 +63,41 @@ export function AuthForm({
   }
   return (
     <div className="grid gap-4">
-      <form onSubmit={submit}>
+      <form onSubmit={submit} className="grid gap-5">
         {mode === "guest" ? (
-          <label>
-            {t("guestName")}
-            <input
+          <Field label={t("guestName")}>
+            <Input
               name="name"
               minLength={3}
               maxLength={20}
               autoComplete="nickname"
+              placeholder={t("guestPlaceholder")}
               required
             />
-          </label>
+          </Field>
         ) : (
           <>
-            <label>
-              {t("username")}
-              <input
+            <Field label={t("username")}>
+              <Input
                 name="username"
                 minLength={3}
                 maxLength={20}
                 autoComplete="username"
                 required
               />
-            </label>
+            </Field>
             {mode === "signup" && (
-              <label>
-                {t("email")}
-                <input
+              <Field label={t("email")}>
+                <Input
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
                 />
-              </label>
+              </Field>
             )}
-            <label>
-              {t("password")}
-              <input
+            <Field label={t("password")}>
+              <Input
                 name="password"
                 type="password"
                 minLength={12}
@@ -107,11 +107,16 @@ export function AuthForm({
                 }
                 required
               />
-            </label>
+            </Field>
           </>
         )}
         {error && <p role="alert">{t(error)}</p>}
-        <button disabled={pending}>
+        <Button
+          type="submit"
+          variant={mode === "guest" ? "pink" : "ink"}
+          disabled={pending}
+          className="w-full"
+        >
           {pending
             ? t("pending")
             : t(
@@ -121,14 +126,20 @@ export function AuthForm({
                     ? "signup"
                     : "login",
               )}
-        </button>
+          <Icon name="arrow" />
+        </Button>
         {mode === "signup" && <small>{t("noRecovery")}</small>}
       </form>
       {mode !== "guest" && (
-        <div className="grid gap-2">
+        <div className="grid gap-4">
+          <div className="auth-divider">
+            <span>{t("or")}</span>
+          </div>
           {(["github", "discord"] as const).map((provider) => (
             <div key={provider}>
-              <button
+              <Button
+                variant="paper"
+                className="w-full"
                 disabled={!providers.includes(provider) || pending}
                 onClick={async () => {
                   setPending(true);
@@ -154,9 +165,11 @@ export function AuthForm({
                 }}
               >
                 {t(provider)}
-              </button>
+              </Button>
               {!providers.includes(provider) && (
-                <small className="block">{t("providerUnavailable")}</small>
+                <small className="mt-2 block text-center">
+                  {t("providerUnavailable")}
+                </small>
               )}
             </div>
           ))}

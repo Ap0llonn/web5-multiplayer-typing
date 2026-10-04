@@ -4,6 +4,13 @@ test("browser locale and theme persist with no hydration errors", async ({
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      message.text().includes("Encountered a script tag")
+    )
+      errors.push(message.text());
+  });
   await page.goto("/fr");
   await page.getByRole("button", { name: "English" }).click();
   await expect(page).toHaveURL(/\/en/);
@@ -11,7 +18,7 @@ test("browser locale and theme persist with no hydration errors", async ({
   await page.reload();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect(
-    page.getByRole("heading", { name: "Multiplayer typing" }),
+    page.getByRole("heading", { name: "Ready, set, type!" }),
   ).toBeVisible();
   expect(errors).toEqual([]);
   await page.setViewportSize({ width: 360, height: 780 });
@@ -42,6 +49,16 @@ test("two real sessions create/join, stream roster and reconnect without duplica
   ]);
   expect(signupResponse.status()).toBe(200);
   await expect(h).toHaveURL(/\/en\/?$/);
+  await expect(
+    h
+      .getByRole("navigation")
+      .getByRole("button", { name: "Sign out", exact: true }),
+  ).toBeVisible();
+  await expect(
+    h
+      .getByRole("navigation")
+      .getByRole("link", { name: "Sign in", exact: true }),
+  ).toHaveCount(0);
   // Next renders a screen-reader route announcer with role=alert outside main.
   await expect(h.getByRole("main").getByRole("alert")).toHaveCount(0);
   await expect(h.getByLabel("Room name")).toBeVisible();
@@ -65,6 +82,21 @@ test("two real sessions create/join, stream roster and reconnect without duplica
   await expect(h.getByTestId("member-row")).toHaveCount(2);
   await g.getByRole("button", { name: "Leave room" }).click();
   await expect(h.getByTestId("member-row")).toHaveCount(1, { timeout: 10000 });
+  await h.getByRole("button", { name: "Leave room", exact: true }).click();
+  await h
+    .getByRole("navigation")
+    .getByRole("button", { name: "Sign out", exact: true })
+    .click();
+  await expect(
+    h
+      .getByRole("navigation")
+      .getByRole("link", { name: "Sign in", exact: true }),
+  ).toBeVisible();
+  await expect(
+    h
+      .getByRole("navigation")
+      .getByRole("button", { name: "Sign out", exact: true }),
+  ).toHaveCount(0);
   await host.close();
   await guest.close();
 });
@@ -88,7 +120,9 @@ test("a delayed initial room lookup cannot erase a successful creation", async (
 }) => {
   const name = `delay${Date.now().toString().slice(-8)}`;
   const signup = await page.request.post("/api/auth/sign-up/email", {
-    headers: { origin: "http://localhost:3000" },
+    headers: {
+      origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+    },
     data: {
       name,
       username: name,

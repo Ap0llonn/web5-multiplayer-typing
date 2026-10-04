@@ -33,6 +33,10 @@ pnpm dev
 
 Ouvrir http://localhost:3000. `infra:up` attend les healthchecks PostgreSQL, Redis et API S3. L’application n’est pas conteneurisée : les outils Node, Prisma et les modifications de code restent disponibles directement sur l’hôte. Le seed S1 reste optionnel et possède ses propres garde-fous : [SEED-S1.md](SEED-S1.md).
 
+`pnpm dev` et `pnpm build` exécutent `pnpm db:generate` avant Next.js, y compris après un checkout sans fichiers générés. Une migration réussie ne génère pas le client TypeScript. En cas d’erreur `Can't resolve '@/generated/prisma/client'` sur un serveur déjà lancé, l’arrêter puis relancer `pnpm dev`. Les commandes indépendantes de types, tests et seed nécessitent toujours la préparation explicite du client.
+
+`BETTER_AUTH_SECRET` est obligatoire et doit contenir au moins 32 caractères ; la valeur vide de l'exemple ne permet pas de se connecter. Si la configuration est invalide, le terminal indique uniquement les noms des variables à corriger et les pages affichent une erreur traduite. Corriger le fichier local puis redémarrer Next.js ; aucune valeur secrète ne doit être copiée dans un rapport.
+
 Les valeurs `local-…-example` sont des exemples publics réservés au développement local. Ne jamais copier des secrets de production ici. `.env` est ignoré par Git ; seul `.env.example` est versionné. Laisser OAuth vide ne valide pas la recette GitHub/Discord.
 
 Compose lit `.env`, **pas `.env.local`**. Next.js peut donner priorité à `.env.local` : s’il existe déjà, vérifier qu’il ne masque pas `DATABASE_URL` ou l’origine locale. `infra:validate` et `test:compose` utilisent toujours les exemples, jamais les secrets de `.env`.
