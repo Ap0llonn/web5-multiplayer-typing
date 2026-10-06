@@ -13,6 +13,7 @@ const env = {
   POSTGRES_PORT: "0",
   REDIS_PORT: "0",
   S3_PORT: "0",
+  APP_PORT: "0",
 };
 const base = [
   "compose",

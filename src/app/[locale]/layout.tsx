@@ -1,10 +1,15 @@
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
+import localFont from "next/font/local";
 import { routing } from "@/shared/presentation/i18n/routing";
 import { Theme } from "@/shared/presentation/theme/provider";
-import { SiteLayout } from "@/composition/site/site-layout";
 import "@/shared/presentation/styles/tokens.css";
+const nunito = localFont({
+  src: "../../../public/fonts/nunito-variable.ttf",
+  variable: "--font-nunito",
+  display: "swap",
+});
 export async function generateMetadata() {
   const t = await getTranslations();
   return { title: t("title"), description: t("roomIntro") };
@@ -20,11 +25,9 @@ export default async function Layout({
   if (!hasLocale(routing.locales, locale)) notFound();
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body>
+      <body className={nunito.variable}>
         <NextIntlClientProvider messages={await getMessages()}>
-          <Theme>
-            <SiteLayout>{children}</SiteLayout>
-          </Theme>
+          <Theme>{children}</Theme>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -21,14 +21,20 @@ async function createRoom(
   page: Page,
   messages: typeof en,
   name: string,
-  role = "PARTICIPANT",
+  role: "PARTICIPANT" | "SPECTATOR" = "PARTICIPANT",
 ) {
   const form = page.locator("form").filter({
     has: page.getByRole("heading", { name: messages.create, exact: true }),
   });
   await form.getByLabel(messages.roomName).fill(name);
   await form.getByLabel(messages.capacity).fill("2");
-  await form.getByLabel(messages.role).selectOption(role);
+  await form
+    .getByRole("combobox", { name: messages.role, exact: true })
+    .click();
+  await page
+    .getByRole("listbox", { name: messages.role, exact: true })
+    .getByRole("option", { name: messages[role], exact: true })
+    .click();
   await form
     .getByRole("button", { name: messages.create, exact: true })
     .click();

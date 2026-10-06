@@ -1,0 +1,22 @@
+# Dokploy production app. PostgreSQL, Redis and S3 are external services.
+# Configure the required variables in Dokploy before deploying.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL to the production PostgreSQL connection string}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set a random secret of at least 32 characters}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set the public HTTPS application URL}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+    expose:
+      - "3000"
+    restart: unless-stopped

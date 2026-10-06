@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import en from "../../src/shared/presentation/i18n/messages/en.json" with { type: "json" };
 test("browser locale and theme persist with no hydration errors", async ({
   page,
 }) => {
@@ -18,7 +19,7 @@ test("browser locale and theme persist with no hydration errors", async ({
   await page.reload();
   await expect(page.locator("html")).toHaveClass(/dark/);
   await expect(
-    page.getByRole("heading", { name: "Ready, set, type!" }),
+    page.getByRole("heading", { name: en.heroTitle, exact: true }),
   ).toBeVisible();
   expect(errors).toEqual([]);
   await page.setViewportSize({ width: 360, height: 780 });

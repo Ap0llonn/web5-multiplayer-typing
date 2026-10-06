@@ -85,7 +85,37 @@ services:
       start_period: 15s
     stop_grace_period: 30s
 
+  app:
+    build:
+      context: .
+      target: development
+    command: ["pnpm", "dev"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:?Copy .env.example to .env}:${POSTGRES_PASSWORD:?Set a local-only PostgreSQL password}@postgres:5432/${POSTGRES_DB:?Set the local database name}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set a local-only auth secret}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:-}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
+      NODE_ENV: development
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    volumes:
+      - .:/app
+      - app-node-modules:/app/node_modules
+      - app-next-cache:/app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   redis-data:
   s3-data:
+  app-node-modules:
+  app-next-cache:

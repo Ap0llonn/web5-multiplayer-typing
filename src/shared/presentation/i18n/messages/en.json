@@ -8,12 +8,37 @@
   "switchToEnglish": "English",
   "switchToFrench": "Français",
   "heroEyebrow": "Where keyboards meet",
-  "heroTitle": "Ready, set, type!",
-  "heroDescription": "Create a room or join your friends.",
-  "keyboardSticker": "TAP TAP TAP",
-  "hostBadge": "You’re the host",
+  "heroTitle": "Good keys. Great company.",
+  "heroDescription": "Create a room, share the code and gather your crew. Good times are better together.",
+  "keyboardSticker": "TAP. TAP. TOGETHER!",
+  "keyboardCaption": "The more keys, the merrier.",
+  "participantRange": "2–30 participants",
+  "guestsWelcome": "Guests welcome",
+  "pickYourSide": "Meet you in a room?",
+  "howLink": "How does it work?",
+  "noAccountNeeded": "No account needed to join",
+  "hostPerkCode": "One code to share with your whole crew",
+  "hostPerkRole": "Your choice: take part or watch",
+  "newHere": "First time here?",
+  "howItWorks": {
+    "eyebrow": "As easy as one, two, three",
+    "title": "Your crew starts here.",
+    "choose": {
+      "title": "Pick your way in",
+      "description": "A nickname to join. An account to create your own room."
+    },
+    "share": {
+      "title": "Pass the code around",
+      "description": "Six characters to share, and your friends can find you."
+    },
+    "meet": {
+      "title": "Gather your crew",
+      "description": "See your friends arrive in your room in real time."
+    }
+  },
+  "hostBadge": "Send out the invites",
   "joinBadge": "Saved you a spot",
-  "createDescription": "Invite your friends to join you.",
+  "createDescription": "Your room, your crew. Bring everyone together around the keyboard.",
   "joinDescription": "Enter the code shared by your host.",
   "guestDescription": "Pick a nickname. Then you can enter the room code.",
   "accountRequired": "Sign in to an account to create your room.",
@@ -89,5 +114,61 @@
   "memberKind": {
     "account": "Account",
     "guest": "Guest"
+  },
+  "playPreview": {
+    "navigationLabel": "Lobby preview",
+    "prototypeBadge": "DEMO",
+    "prototypeNote": "Preview room · sample players and race settings",
+    "entryEyebrow": "A spot at the starting line",
+    "entryTitle": "Meet your crew.",
+    "entryDescription": "One room. Your people. Find your way in.",
+    "joinButton": "Let’s go",
+    "lobbyEyebrow": "Your keyboard clubhouse",
+    "leaveButton": "Leave room",
+    "waitingForHost": "Waiting at the starting line",
+    "stageCaption": "Good keys. Great company.",
+    "ticketLabel": "Your player pass",
+    "editorTitle": "Make yourself at home.",
+    "editorDescription": "Choose your nickname and a character. Then meet the crew.",
+    "nicknameLabel": "Your nickname",
+    "nicknamePlaceholder": "What should we call you?",
+    "nicknameHint": "3–20 characters. Make it yours.",
+    "styleLabel": "Pick your character",
+    "styles": {
+      "cobalt": "Blue",
+      "coral": "Coral",
+      "mint": "Mint",
+      "butter": "Sunny"
+    },
+    "readyButton": "I’m ready!",
+    "updatePlayer": "Save changes",
+    "rosterTitle": "The crew",
+    "playerCount": "{count, plural, one {# player} other {# players}}",
+    "you": "You",
+    "samplePlayer": "Sample player",
+    "sampleNames": {
+      "one": "Milo",
+      "two": "Nora",
+      "three": "Jules",
+      "four": "Luna"
+    },
+    "settingsTitle": "On the starting line",
+    "settings": {
+      "language": "Text language",
+      "languageValue": "French",
+      "length": "Length",
+      "lengthValue": "50 words",
+      "difficulty": "Difficulty",
+      "difficultyValue": "Normal",
+      "bonuses": "Bonuses",
+      "bonusesValue": "Off"
+    },
+    "roomCodeLabel": "Room code",
+    "roomCodePlaceholder": "e.g. ABC234",
+    "roomCodeHint": "Enter your host’s 6-character code. No 0, O, 1, I or L.",
+    "roomTitle": "Room",
+    "editPlayer": "Edit",
+    "cancelEdit": "Cancel",
+    "backButton": "Back"
   }
 }

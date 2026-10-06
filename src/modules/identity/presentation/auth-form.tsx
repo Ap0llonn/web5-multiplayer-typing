@@ -5,8 +5,12 @@ import { useRouter } from "@/shared/presentation/i18n/navigation";
 import { authClient, signInGuest } from "../infrastructure/auth-client";
 import { mapAuthError } from "../contracts/auth-error";
 import { Button } from "@/shared/presentation/ui/button";
-import { Field, Input } from "@/shared/presentation/ui/field";
 import { Icon } from "@/shared/presentation/ui/icon";
+import { CredentialFields, GuestNameField } from "./auth-fields";
+import {
+  SocialSignInButtons,
+  type SocialProvider,
+} from "./social-sign-in-buttons";
 export function AuthForm({
   mode,
   providers = [],
@@ -61,59 +65,41 @@ export function AuthForm({
       setPending(false);
     }
   }
+
+  async function signInSocial(provider: SocialProvider) {
+    setPending(true);
+    try {
+      const result = await authClient.signIn.social({
+        provider,
+        callbackURL: `/${locale}`,
+      });
+      if (result.error)
+        setError(
+          mapAuthError(
+            "code" in result.error && typeof result.error.code === "string"
+              ? result.error.code
+              : undefined,
+          ),
+        );
+    } catch {
+      setError("errors.INTERNAL");
+    } finally {
+      setPending(false);
+    }
+  }
+
   return (
     <div className="grid gap-4">
       <form onSubmit={submit} className="grid gap-5">
         {mode === "guest" ? (
-          <Field label={t("guestName")}>
-            <Input
-              name="name"
-              minLength={3}
-              maxLength={20}
-              autoComplete="nickname"
-              placeholder={t("guestPlaceholder")}
-              required
-            />
-          </Field>
+          <GuestNameField />
         ) : (
-          <>
-            <Field label={t("username")}>
-              <Input
-                name="username"
-                minLength={3}
-                maxLength={20}
-                autoComplete="username"
-                required
-              />
-            </Field>
-            {mode === "signup" && (
-              <Field label={t("email")}>
-                <Input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                />
-              </Field>
-            )}
-            <Field label={t("password")}>
-              <Input
-                name="password"
-                type="password"
-                minLength={12}
-                maxLength={128}
-                autoComplete={
-                  mode === "signup" ? "new-password" : "current-password"
-                }
-                required
-              />
-            </Field>
-          </>
+          <CredentialFields mode={mode} />
         )}
         {error && <p role="alert">{t(error)}</p>}
         <Button
           type="submit"
-          variant={mode === "guest" ? "pink" : "ink"}
+          variant={mode === "guest" ? "blue" : "ink"}
           disabled={pending}
           className="w-full"
         >
@@ -131,49 +117,11 @@ export function AuthForm({
         {mode === "signup" && <small>{t("noRecovery")}</small>}
       </form>
       {mode !== "guest" && (
-        <div className="grid gap-4">
-          <div className="auth-divider">
-            <span>{t("or")}</span>
-          </div>
-          {(["github", "discord"] as const).map((provider) => (
-            <div key={provider}>
-              <Button
-                variant="paper"
-                className="w-full"
-                disabled={!providers.includes(provider) || pending}
-                onClick={async () => {
-                  setPending(true);
-                  try {
-                    const result = await authClient.signIn.social({
-                      provider,
-                      callbackURL: `/${locale}`,
-                    });
-                    if (result.error)
-                      setError(
-                        mapAuthError(
-                          "code" in result.error &&
-                            typeof result.error.code === "string"
-                            ? result.error.code
-                            : undefined,
-                        ),
-                      );
-                  } catch {
-                    setError("errors.INTERNAL");
-                  } finally {
-                    setPending(false);
-                  }
-                }}
-              >
-                {t(provider)}
-              </Button>
-              {!providers.includes(provider) && (
-                <small className="mt-2 block text-center">
-                  {t("providerUnavailable")}
-                </small>
-              )}
-            </div>
-          ))}
-        </div>
+        <SocialSignInButtons
+          providers={providers}
+          pending={pending}
+          onSignIn={signInSocial}
+        />
       )}
     </div>
   );

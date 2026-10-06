@@ -18,7 +18,3 @@ export function Field({
 export function Input({ className = "", ...props }: ComponentProps<"input">) {
   return <input className={`arcade-input ${className}`} {...props} />;
 }
-
-export function Select({ className = "", ...props }: ComponentProps<"select">) {
-  return <select className={`arcade-input ${className}`} {...props} />;
-}

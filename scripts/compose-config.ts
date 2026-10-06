@@ -34,6 +34,7 @@ const schema = z.object({
     ),
     redis: service("redis:8.2.10-alpine", 6379, "redis-data", "/data"),
     s3: service("chrislusf/seaweedfs:4.48", 8333, "s3-data", "/data"),
+    app: z.unknown().optional(),
   }),
   volumes: z.object({
     "postgres-data": z.object({}),

@@ -1,0 +1,133 @@
+---
+# Copy into Foundry as config.yml. One environment, public HTTPS Dokploy.
+# Supply vault_dokploy_admin_password through Ansible Vault, never plaintext.
+# SSH inventory: ubuntu@149.56.96.110, key ~/.ssh/ansible.
+# DNS: dokploy.samuelcourchesne.ca and production-web.samuelcourchesne.ca
+# must point to 149.56.96.110 before requesting certificates.
+vm_ip: "149.56.96.110"
+
+project:
+  name: typing
+  resource_prefix: ""
+
+environments:
+  - name: production
+
+networking:
+  stale_network_policy: report
+  overlay_migration_approved: false
+
+domains:
+  base: samuelcourchesne.ca
+  environment_style: hyphen
+  dokploy_label: dokploy
+  service_names: [web]
+  cloudflare:
+    enabled: false
+    proxied: false
+    security:
+      enabled: false
+
+runtime:
+  docker:
+    enabled: true
+    legacy_package_migration_approved: false
+    logging:
+      driver: json-file
+      max_size: 10m
+      max_files: 3
+
+os:
+  operation_mode: bootstrap
+  maintenance:
+    approved: false
+  reboot:
+    enabled: false
+    approved: false
+
+identity:
+  groups: []
+  default_admin_sudo:
+    mode: passwordless
+  users:
+    - name: ubuntu
+      state: present
+      admin: true
+      groups: []
+      ssh_keys:
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEZb0s+q3VSFrShxwDo2c3uUcHpGvCBGwkoPy0qJehRC samuelcourchesne@Mac"
+      sudo:
+        mode: inherit
+
+network:
+  # Foundry itself plans the public Traefik ports 80/TCP, 443/TCP and 443/UDP.
+  exposure:
+    - {name: ssh, port: 22, protocol: tcp, scope: management}
+
+management:
+  allow_from_anywhere: false
+  restrict_by_cidr: true
+  # Current controller's public IP; update if your connection changes.
+  allowed_cidrs: [66.131.150.186/32]
+
+database_access:
+  enabled: false
+
+observability:
+  enabled: false
+
+security:
+  ssh:
+    enabled: true
+    port: 22
+    root_login: false
+    password_authentication: false
+    public_key_authentication: true
+    accept_host_key_change: false
+  firewall:
+    enabled: true
+    default_incoming: deny
+    default_outgoing: allow
+    unexpected_listener_policy: fail
+  updates:
+    automatic_security_updates: true
+    automatic_reboot: false
+
+services:
+  postgres:
+    enabled: true
+    environments: [production]
+    major: 17
+    user: typing
+    database: typing
+    credentials: {}
+    backup:
+      enabled: false
+  redis:
+    enabled: false
+  object_storage:
+    enabled: false
+
+platform:
+  swarm:
+    enabled: true
+  traefik:
+    enabled: true
+    tls:
+      enabled: true
+      mode: public_acme
+      # Email from the local Git identity; change if needed.
+      email: samuelcourchesne2004@gmail.com
+  dokploy:
+    enabled: true
+    dashboard_access: public
+    credentials: {}
+    bootstrap:
+      email: samuelcourchesne2004@gmail.com
+      password: "{{ vault_dokploy_admin_password }}"
+      name: ubuntu
+      last_name: Admin
+
+infrastructure_services:
+  minio:
+    enabled: false

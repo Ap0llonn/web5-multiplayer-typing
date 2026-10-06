@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Badge } from "./badge";
 import { Card } from "./card";
+import { DecorativeImage } from "./decorative-image";
 
 export function AuthLayout({
   title,
@@ -17,13 +18,16 @@ export function AuthLayout({
 }) {
   return (
     <div className="auth-layout">
-      <div className="mb-8 text-center">
+      <div className="auth-intro">
         <Badge tone="blue">{badge}</Badge>
         <h1 className="auth-title">{title}</h1>
         <p className="text-muted">{description}</p>
+        <DecorativeImage kind="friends" eager className="auth-illustration" />
       </div>
-      <Card>{children}</Card>
-      <div className="mt-8 text-center text-sm font-semibold">{footer}</div>
+      <div className="auth-form-panel">
+        <Card>{children}</Card>
+        <div className="mt-8 text-center text-sm font-semibold">{footer}</div>
+      </div>
     </div>
   );
 }

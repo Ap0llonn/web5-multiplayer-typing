@@ -2,6 +2,12 @@
 
 La liste rend maintenant distinctement compte/invité, participant/spectateur, hôte et présence, en français et en anglais. Les données viennent du snapshot serveur existant ; aucune identité ni autorisation n’est déduite du libellé navigateur. Le composant de présentation `lobby-roster.tsx` n’accède ni à la DB ni aux sessions.
 
+## Recette locale du 5 octobre 2026
+
+La demande actuelle porte sur la validation **locale** de #9 et #10. Sur le checkout `main`, base `25fd45a6d2b019c95f14043e92f319336b217613` avec modifications non commitées, les **35 E2E Chromium** du vrai build de production passent. Le scénario `presence.spec.ts` mesure une arrivée en **823 ms**, une perte détectée chez l'invité en **10 413 ms** et chez l'hôte en **10 414 ms**, puis des reprises en **15 268 ms** / **14 261 ms** depuis le début des coupures. La salle, les identités, l'hôte et les deux adhésions restent les mêmes, sans rafraîchissement manuel.
+
+Les six nouveaux tests `tests/integration/lobby-rate-limit.test.ts` couvrent aussi une présence existante après épuisement des tentatives par IP : lecture, douze heartbeats consécutifs et départ restent autorisés. Les deux E2E FR/EN de limitation prouvent qu'un refus 429 n'ajoute pas de membre, même après reload. [Rapport de cette recette](verification.md#stories-9-et-10--recette-locale-du-5-octobre-2026). Ces observations correspondent à localhost, avec comptes/invités Better Auth réels et PostgreSQL jetable ; le protocole HTTPS ci-dessous reste à exécuter à la livraison de #11.
+
 ## Correction après premier run Chromium
 
 Le run [37136241829](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37136241829) a échoué sur la première coupure invitée : la présence restait Online pendant vingt secondes. La preuve PostgreSQL a confirmé que les observations SSE renouvelaient à tort le timestamp serveur. [ADR 0002](adr/0002-client-presence.md) sépare désormais lecture SSE et heartbeat HTTP du navigateur ; le test de réseau est conservé sans augmenter son délai ni simuler un succès. Les runs suivants [PR 37137711735](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37137711735) et [push 37137708939](https://github.com/Ap0llonn/web5-multiplayer-typing/actions/runs/37137708939) sont verts sur `91e24c225aa169482ac4b463201958a444ce0c53` : la recette réseau inchangée passe avec mêmes identités, même hôte et aucun doublon.

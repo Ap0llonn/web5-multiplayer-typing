@@ -8,12 +8,37 @@
   "switchToEnglish": "English",
   "switchToFrench": "Français",
   "heroEyebrow": "Le rendez-vous des claviers",
-  "heroTitle": "À vos claviers !",
-  "heroDescription": "Crée une salle ou rejoins tes amis.",
-  "keyboardSticker": "TAP TAP TAP",
-  "hostBadge": "C’est toi l’hôte",
-  "joinBadge": "On te garde une place",
-  "createDescription": "Invite tes amis à te rejoindre.",
+  "heroTitle": "À vos claviers, les amis !",
+  "heroDescription": "Crée ta salle, partage le code et retrouve ta bande. Les bonnes touches, ça se partage.",
+  "keyboardSticker": "TAP. TAP. ENSEMBLE !",
+  "keyboardCaption": "Plus on est de touches, plus on rit.",
+  "participantRange": "2–30 participants",
+  "guestsWelcome": "Invités bienvenus",
+  "pickYourSide": "On se retrouve dans une salle ?",
+  "howLink": "Comment ça marche ?",
+  "noAccountNeeded": "Pas besoin de compte pour rejoindre",
+  "hostPerkCode": "Un code à partager à toute ta bande",
+  "hostPerkRole": "À toi de choisir : participer ou regarder",
+  "newHere": "Première visite ?",
+  "howItWorks": {
+    "eyebrow": "Simple comme trois touches",
+    "title": "La bande se retrouve ici.",
+    "choose": {
+      "title": "Choisis ton entrée",
+      "description": "Un pseudo pour rejoindre. Un compte pour créer ta salle."
+    },
+    "share": {
+      "title": "Fais passer le code",
+      "description": "Six caractères à partager, et tes amis te retrouvent."
+    },
+    "meet": {
+      "title": "Retrouve ta bande",
+      "description": "Les arrivées s’affichent en direct dans ta salle."
+    }
+  },
+  "hostBadge": "Lance les invitations",
+  "joinBadge": "On t’a gardé une place",
+  "createDescription": "Ta salle, ta bande. Réunis tout le monde autour du clavier.",
   "joinDescription": "Entre le code partagé par ton hôte.",
   "guestDescription": "Choisis ton pseudo. Tu pourras ensuite entrer le code de la salle.",
   "accountRequired": "Connecte-toi à un compte pour créer ta salle.",
@@ -89,5 +114,61 @@
   "memberKind": {
     "account": "Compte",
     "guest": "Invité"
+  },
+  "playPreview": {
+    "navigationLabel": "Salon démo",
+    "prototypeBadge": "DÉMO",
+    "prototypeNote": "Salon de démonstration · joueurs et réglages d’exemple",
+    "entryEyebrow": "Une place sur la ligne de départ",
+    "entryTitle": "Retrouve ta bande.",
+    "entryDescription": "Une salle. Tes amis. C’est parti.",
+    "joinButton": "C’est parti",
+    "lobbyEyebrow": "Le clubhouse des claviers",
+    "leaveButton": "Quitter la salle",
+    "waitingForHost": "On attend sur la ligne de départ",
+    "stageCaption": "Les bonnes touches, ça se partage.",
+    "ticketLabel": "Ton billet de joueur",
+    "editorTitle": "Prends ta place.",
+    "editorDescription": "Choisis ton pseudo et ton personnage. Puis retrouve la bande.",
+    "nicknameLabel": "Ton pseudo",
+    "nicknamePlaceholder": "Comment on t’appelle ?",
+    "nicknameHint": "3–20 caractères. À toi de jouer.",
+    "styleLabel": "Choisis ton personnage",
+    "styles": {
+      "cobalt": "Bleu",
+      "coral": "Corail",
+      "mint": "Menthe",
+      "butter": "Soleil"
+    },
+    "readyButton": "Je suis prêt !",
+    "updatePlayer": "Enregistrer",
+    "rosterTitle": "La bande",
+    "playerCount": "{count, plural, one {# joueur} other {# joueurs}}",
+    "you": "Toi",
+    "samplePlayer": "Joueur d’exemple",
+    "sampleNames": {
+      "one": "Milo",
+      "two": "Nora",
+      "three": "Jules",
+      "four": "Luna"
+    },
+    "settingsTitle": "Sur la ligne de départ",
+    "settings": {
+      "language": "Langue du texte",
+      "languageValue": "Français",
+      "length": "Longueur",
+      "lengthValue": "50 mots",
+      "difficulty": "Difficulté",
+      "difficultyValue": "Normal",
+      "bonuses": "Bonus",
+      "bonusesValue": "Désactivés"
+    },
+    "roomCodeLabel": "Code de la salle",
+    "roomCodePlaceholder": "ex. ABC234",
+    "roomCodeHint": "Entre le code de 6 caractères de ton hôte. Sans 0, O, 1, I ou L.",
+    "roomTitle": "Salon",
+    "editPlayer": "Modifier",
+    "cancelEdit": "Annuler",
+    "backButton": "Retour"
   }
 }

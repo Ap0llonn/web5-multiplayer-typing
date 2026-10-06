@@ -1,0 +1,659 @@
+.pp-shell {
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  background: var(--bg);
+}
+.pp-header {
+  display: flex;
+  width: min(100%, 1480px);
+  margin-inline: auto;
+  padding: 1.4rem clamp(1.25rem, 4vw, 3.5rem);
+  align-items: center;
+  gap: 1rem;
+}
+.pp-header .brand-link {
+  width: 120px;
+}
+.pp-demo-label {
+  border: 1px solid var(--control-border);
+  border-radius: 7px;
+  padding: 0.25rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+.pp-header-controls {
+  display: flex;
+  margin-left: auto;
+  align-items: center;
+  gap: 0.8rem;
+}
+.pp-main {
+  width: min(100%, 1480px);
+  margin-inline: auto;
+  padding: 1rem clamp(1.25rem, 4vw, 3.5rem) 2rem;
+  flex: 1;
+  outline: none;
+}
+.pp-footer {
+  padding: 1rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  text-align: center;
+}
+.pp-entry {
+  position: relative;
+  display: flex;
+  min-height: 72svh;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0 5rem;
+  overflow: hidden;
+}
+.pp-entry-content {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 620px);
+  text-align: center;
+}
+.pp-eyebrow {
+  margin: 0 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.pp-entry-title {
+  margin: 0;
+  outline: none;
+  font-size: clamp(3rem, 6.3vw, 5.8rem);
+  line-height: 1.02;
+  font-weight: 950;
+  letter-spacing: -0.065em;
+}
+.pp-entry-description {
+  margin: 1.4rem 0 2.5rem;
+  color: var(--muted);
+  font-size: 1rem;
+}
+.pp-entry-form {
+  text-align: left;
+}
+.pp-field-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+.pp-entry-control {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.6rem;
+  border: 2px solid var(--control-border);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: 0 6px 0 var(--shadow);
+}
+.pp-entry-control .arcade-input {
+  border: 0;
+  padding-inline: 0.8rem;
+  background: transparent;
+  box-shadow: none;
+}
+.pp-code-input {
+  font-family: monospace;
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.pp-entry-control .arcade-button {
+  flex-shrink: 0;
+  padding-inline: 1.4rem;
+}
+.pp-entry-hint {
+  margin-top: 1.1rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+.pp-entry-art {
+  position: absolute;
+  z-index: 1;
+  width: clamp(160px, 21vw, 260px);
+  height: auto;
+  right: -0.5rem;
+  bottom: 0;
+  transform: rotate(8deg);
+}
+.pp-entry-track {
+  position: absolute;
+  z-index: 0;
+  left: -100px;
+  bottom: 40px;
+  width: 340px;
+  height: 220px;
+  border: 2px dashed var(--border);
+  border-radius: 80px;
+  transform: rotate(-15deg);
+}
+.pp-room-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.5rem;
+}
+.pp-room-heading h1 {
+  margin: 0;
+  max-width: 24ch;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.7rem, 3.6vw, 2.8rem);
+  font-weight: 950;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  outline: none;
+}
+.pp-room-code {
+  font-family: monospace;
+  letter-spacing: 0.08em;
+}
+.pp-room-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+.pp-leave-button {
+  flex-shrink: 0;
+}
+.pp-lobby-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1.5rem;
+}
+.pp-clubhouse {
+  position: relative;
+  min-width: 0;
+  min-height: 470px;
+  overflow: hidden;
+  border: 2px solid #b5c5e0;
+  border-radius: 28px;
+  background: #f7efdf;
+  color: #202944;
+  box-shadow: 0 6px 0 var(--shadow);
+}
+.pp-clubhouse-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+.pp-stage-topline {
+  position: absolute;
+  z-index: 2;
+  left: 1.2rem;
+  top: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 2.4rem);
+  border: 1px solid #bcc8db;
+  border-radius: 999px;
+  padding: 0.55rem 0.85rem;
+  background: #fffdf5;
+  color: #202944;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.pp-waiting-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2455d8;
+  flex-shrink: 0;
+}
+.pp-player-roster {
+  position: relative;
+  z-index: 1;
+  padding: 8rem 2rem 4rem;
+}
+.pp-roster-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.pp-roster-heading .pp-panel-title,
+.pp-player-count {
+  border-radius: 10px;
+  background: #fffdf5;
+  color: #202944;
+  padding: 0.35rem 0.65rem;
+}
+.pp-panel-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 950;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.pp-player-count {
+  font-size: 0.72rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.pp-roster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pp-player-card {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 106px;
+  padding: 1rem;
+  border: 2px solid #bdc7d5;
+  border-radius: 18px;
+  background: #fffdf5;
+  box-shadow: 0 4px 0 #d6cbb7;
+}
+.pp-player-card--local {
+  border-color: #2455d8;
+  background: #eaf0ff;
+  box-shadow: 0 4px 0 #b7c9f6;
+}
+.pp-avatar {
+  display: block;
+  width: 64px;
+  height: auto;
+  flex-shrink: 0;
+}
+.pp-player-info {
+  min-width: 0;
+}
+.pp-player-name {
+  display: block;
+  font-size: 1rem;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+.pp-player-status {
+  display: block;
+  margin-top: 0.2rem;
+  color: #59637a;
+  font-size: 0.63rem;
+  font-weight: 700;
+}
+.pp-player-status.arcade-badge {
+  display: inline-flex;
+  color: var(--on-color);
+  padding: 0.2rem 0.5rem;
+  font-size: 0.58rem;
+}
+.pp-stage-caption {
+  position: absolute;
+  z-index: 2;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0.8rem;
+  border-radius: 12px;
+  padding: 0.5rem;
+  background: #fffdf5;
+  color: #59637a;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.pp-stage-caption svg {
+  width: 14px;
+  height: 14px;
+}
+.pp-setup {
+  display: flex;
+  align-items: center;
+  width: min(100%, 620px);
+  min-height: 70svh;
+  margin-inline: auto;
+  padding-block: 1.5rem 3rem;
+}
+.pp-player-pass {
+  --pp-pass-padding: clamp(1.25rem, 3vw, 2.25rem);
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  padding: var(--pp-pass-padding);
+  background: var(--panel);
+  box-shadow: 0 6px 0 var(--shadow);
+}
+.pp-ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 calc(-1 * var(--pp-pass-padding)) 1.75rem;
+  padding: 0 var(--pp-pass-padding) 1.2rem;
+  border-bottom: 2px dashed var(--border);
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.pp-player-editor {
+  display: grid;
+  gap: 1.5rem;
+}
+.pp-setup-heading {
+  margin: 0;
+  font-size: clamp(2rem, 4.8vw, 3rem);
+  font-weight: 950;
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  outline: none;
+}
+.pp-panel-description {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.pp-field-hint {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.pp-style-fieldset {
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+}
+.pp-style-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.pp-style-choice {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.8rem 0.4rem;
+  border: 2px solid var(--control-border);
+  border-radius: 16px;
+  background: var(--panel);
+  cursor: pointer;
+}
+.pp-style-choice--selected {
+  border-color: var(--accent);
+  background: var(--hero);
+  box-shadow: 0 3px 0 var(--shadow);
+}
+.pp-style-choice:has(input:focus-visible) {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+.pp-style-choice .pp-avatar {
+  width: 100%;
+  max-width: 88px;
+}
+.pp-style-name {
+  max-width: 100%;
+  color: var(--fg);
+  font-size: 0.8rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+.pp-ready-button {
+  width: 100%;
+}
+.pp-editor-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+}
+.pp-race-settings {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 1.8rem;
+  padding: 1.2rem 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel);
+}
+.pp-race-settings .pp-panel-title {
+  width: 155px;
+  flex-shrink: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.pp-settings-list {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+.pp-setting {
+  min-width: 0;
+  border-left: 1px solid var(--border);
+  padding-left: 1.2rem;
+}
+.pp-setting dt {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+.pp-setting dd {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1100px) {
+  .pp-player-roster {
+    padding-inline: 1rem;
+  }
+  .pp-player-card {
+    gap: 0.4rem;
+    padding-inline: 0.5rem;
+  }
+  .pp-player-card .pp-avatar {
+    width: 50px;
+  }
+  .pp-player-name {
+    font-size: 0.9rem;
+  }
+}
+@media (max-width: 900px) {
+  .pp-roster-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pp-clubhouse {
+    min-height: 430px;
+  }
+  .pp-player-card .pp-avatar {
+    width: 64px;
+  }
+  .pp-player-roster {
+    padding-top: 7rem;
+  }
+  .pp-race-settings {
+    gap: 1rem;
+  }
+  .pp-race-settings .pp-panel-title {
+    width: 100px;
+  }
+  .pp-setting {
+    padding-left: 0.6rem;
+  }
+  .pp-entry-art {
+    width: 180px;
+    opacity: 0.4;
+    right: -40px;
+    bottom: 0;
+  }
+}
+@media (max-width: 560px) {
+  .pp-header {
+    flex-wrap: wrap;
+    padding-block: 1rem;
+    gap: 0.6rem;
+  }
+  .pp-header .brand-link {
+    width: 96px;
+  }
+  .pp-header-controls {
+    gap: 0.4rem;
+  }
+  .pp-header-controls .arcade-button--small {
+    padding-inline: 0.6rem;
+  }
+  .pp-demo-label {
+    font-size: 0.56rem;
+    padding-inline: 0.35rem;
+  }
+  .pp-main {
+    padding-top: 0.75rem;
+  }
+  .pp-entry {
+    min-height: 70svh;
+    padding-block: 2rem 5rem;
+  }
+  .pp-entry-title {
+    font-size: 3rem;
+  }
+  .pp-entry-description {
+    font-size: 0.87rem;
+    margin-bottom: 2rem;
+  }
+  .pp-entry-control {
+    flex-direction: column;
+    padding: 0.5rem;
+  }
+  .pp-entry-control .arcade-button {
+    width: 100%;
+  }
+  .pp-entry-art {
+    width: 130px;
+    right: -25px;
+  }
+  .pp-entry-hint {
+    font-size: 0.7rem;
+  }
+  .pp-room-heading {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+  }
+  .pp-room-heading .pp-eyebrow {
+    font-size: 0.57rem;
+    letter-spacing: 0.07em;
+  }
+  .pp-room-heading h1 {
+    font-size: 1.8rem;
+  }
+  .pp-room-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .pp-leave-button {
+    font-size: 0.68rem;
+    padding: 0.65rem;
+  }
+  .pp-leave-button svg {
+    display: none;
+  }
+  .pp-setup {
+    min-height: auto;
+    padding-block: 1rem 2rem;
+  }
+  .pp-editor-actions {
+    grid-template-columns: 1fr;
+  }
+  .pp-panel-title {
+    font-size: 1.35rem;
+  }
+  .pp-style-choice {
+    border-radius: 12px;
+    padding-inline: 0.25rem;
+  }
+  .pp-style-grid {
+    gap: 0.5rem;
+  }
+  .pp-style-name {
+    font-size: 0.7rem;
+  }
+  .pp-player-roster {
+    padding: 7rem 0.8rem 3.8rem;
+  }
+  .pp-clubhouse {
+    min-height: 460px;
+  }
+  .pp-roster-heading {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .pp-roster-grid {
+    gap: 0.5rem;
+  }
+  .pp-player-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    padding: 0.75rem;
+  }
+  .pp-player-card .pp-avatar {
+    width: 52px;
+  }
+  .pp-player-name {
+    font-size: 0.95rem;
+  }
+  .pp-player-status {
+    font-size: 0.62rem;
+  }
+  .pp-stage-topline {
+    font-size: 0.63rem;
+  }
+  .pp-stage-caption {
+    font-size: 0.62rem;
+  }
+  .pp-race-settings {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 1.2rem;
+  }
+  .pp-race-settings .pp-panel-title {
+    width: auto;
+  }
+  .pp-settings-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
+  }
+  .pp-setting {
+    padding-left: 0;
+    border: 0;
+  }
+}

@@ -1,0 +1,13 @@
+.git
+.next
+node_modules
+playwright-report
+test-results
+coverage
+.data
+.env
+.env.*
+!.env.example
+!.env.production.example
+src/generated
+*.tsbuildinfo

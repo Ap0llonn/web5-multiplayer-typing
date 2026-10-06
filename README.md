@@ -6,7 +6,7 @@ Le titre ci-dessus est une description fonctionnelle, pas le nom de marque. Le n
 
 ## Démarrage
 
-Node 24.19.0 et pnpm 11.19.0. Docker Engine/Desktop avec Compose v2 fournit PostgreSQL 18.4, Redis et un stockage S3 local pour les futures images. Next.js reste lancé sur la machine avec rechargement à chaud. [Guide de développement local](docs/DEVELOPPEMENT-LOCAL.md). Les scripts sont en TypeScript.
+Node 24.19.0 et pnpm 11.19.0. Docker Engine/Desktop avec Compose v2 fournit PostgreSQL 18.4, Redis, un stockage S3 local pour les futures images et Next.js avec rechargement à chaud. [Guide de développement local et Dokploy](docs/DEVELOPPEMENT-LOCAL.md). Les scripts sont en TypeScript.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -14,10 +14,8 @@ cp -n .env.example .env  # Ne pas écraser un fichier existant
 # Définir BETTER_AUTH_SECRET dans .env : openssl rand -base64 32
 # Les autres valeurs fournies sont des exemples réservés au développement.
 pnpm infra:up
-pnpm db:generate
 # Vérifier que DATABASE_URL pointe bien vers PostgreSQL local.
 pnpm exec prisma migrate deploy
-pnpm dev
 ```
 
 Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL est utilisé par le socle ; Redis et S3 sont provisionnés pour la suite, sans intégration métier ni upload de photo à ce stade.
@@ -59,6 +57,6 @@ Le harnais DB embarqué est limité à localhost et une base typing_test. Il uti
 
 ## Déploiement et limites
 
-VPS public HTTPS obligatoire ; aucun VPS, compte ou secret de production n'a été créé par ce commit. Sur le VPS approuvé : installer Node, fournir variables, appliquer migrations, build, exécuter `pnpm start` derrière Nginx. Exemple [reverse proxy](deploy/nginx.conf.example) à adapter, DOIT écraser X-Forwarded-For, désactiver buffering SSE, limiter corps et isoler port3000. Les callbacks OAuth doivent correspondre exactement au domaine HTTPS. Faire le test réel depuis deux sessions séparées avant validation de la remise. Ne pas exposer directement Next derrière un proxy qui conserve un X-Forwarded-For fourni par le client.
+Le dépôt fournit `Dockerfile` et `compose.production.yaml` pour lancer l’application sous Dokploy avec PostgreSQL externe ; aucun VPS, compte ou secret de production n'a été créé par ce commit. Le modèle des variables de production est [.env.production.example](.env.production.example). Appliquer les migrations de façon contrôlée avant le trafic et configurer le domaine HTTPS/callbacks OAuth dans Dokploy. La production réelle et les callbacks ne sont pas démontrés par la présence de ces fichiers. L’exemple [reverse proxy](deploy/nginx.conf.example) reste utile pour un VPS géré manuellement : il DOIT écraser X-Forwarded-For, désactiver buffering SSE, limiter corps et isoler port3000. Faire le test réel depuis deux sessions séparées avant validation de la remise.
 
 [Preuves et limites](docs/verification.md) · [Checkpoint](docs/CHECKPOINT_1.md) · [ADR](docs/adr/0001-data-realtime.md)

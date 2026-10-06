@@ -2,7 +2,7 @@
 
 ## Périmètre
 
-Ce lot répond à la demande de développement local avec PostgreSQL, Redis et un stockage S3 pour les images (`TECH-04`, `TECH-10`, `DOC-FINAL-README`). L’infrastructure est indépendante des modules métier : Next.js tourne sur l’hôte avec `pnpm dev` ; PostgreSQL est déjà utilisé par Prisma. Redis et S3 sont disponibles pour les prochaines fonctionnalités, **sans connexion applicative, client SDK ni upload de photo implémentés**. Ce Compose ne constitue pas un déploiement de production.
+Ce lot répond à la demande de développement local avec PostgreSQL, Redis et un stockage S3 pour les images (`TECH-04`, `TECH-10`, `DOC-FINAL-README`). `compose.yaml` lance Next.js en mode développement avec rechargement à chaud et PostgreSQL, Redis et S3. PostgreSQL est utilisé par Prisma ; Redis et S3 sont disponibles pour les prochaines fonctionnalités, **sans connexion applicative, client SDK ni upload de photo implémentés**. Ce Compose ne constitue pas un déploiement de production.
 
 Services épinglés :
 
@@ -25,19 +25,17 @@ openssl rand -base64 32
 # Copier le résultat dans BETTER_AUTH_SECRET, dans .env uniquement.
 pnpm infra:validate
 pnpm infra:up
-pnpm db:generate
 # Vérifier que DATABASE_URL pointe bien vers PostgreSQL local.
 pnpm exec prisma migrate deploy
-pnpm dev
 ```
 
-Ouvrir http://localhost:3000. `infra:up` attend les healthchecks PostgreSQL, Redis et API S3. L’application n’est pas conteneurisée : les outils Node, Prisma et les modifications de code restent disponibles directement sur l’hôte. Le seed S1 reste optionnel et possède ses propres garde-fous : [SEED-S1.md](SEED-S1.md).
+Ouvrir http://localhost:3000. `infra:up` attend les healthchecks PostgreSQL, Redis et API S3, ainsi que le démarrage du conteneur applicatif. Le service applicatif monte le code du checkout et conserve ses dépendances/cache dans des volumes Docker. Le seed S1 reste optionnel et possède ses propres garde-fous : [SEED-S1.md](SEED-S1.md).
 
 `pnpm dev` et `pnpm build` exécutent `pnpm db:generate` avant Next.js, y compris après un checkout sans fichiers générés. Une migration réussie ne génère pas le client TypeScript. En cas d’erreur `Can't resolve '@/generated/prisma/client'` sur un serveur déjà lancé, l’arrêter puis relancer `pnpm dev`. Les commandes indépendantes de types, tests et seed nécessitent toujours la préparation explicite du client.
 
-`BETTER_AUTH_SECRET` est obligatoire et doit contenir au moins 32 caractères ; la valeur vide de l'exemple ne permet pas de se connecter. Si la configuration est invalide, le terminal indique uniquement les noms des variables à corriger et les pages affichent une erreur traduite. Corriger le fichier local puis redémarrer Next.js ; aucune valeur secrète ne doit être copiée dans un rapport.
+`BETTER_AUTH_SECRET` est obligatoire et doit contenir au moins 32 caractères. La valeur versionnée est un exemple public réservé au développement ; remplacez-la par une valeur aléatoire locale avant d'utiliser l'authentification. Si la configuration est invalide, le terminal indique uniquement les noms des variables à corriger et les pages affichent une erreur traduite. Corriger le fichier local puis redémarrer Next.js ; aucune valeur secrète ne doit être copiée dans un rapport.
 
-Les valeurs `local-…-example` sont des exemples publics réservés au développement local. Ne jamais copier des secrets de production ici. `.env` est ignoré par Git ; seul `.env.example` est versionné. Laisser OAuth vide ne valide pas la recette GitHub/Discord.
+Les valeurs `local-…-example` sont des exemples publics réservés au développement local. Ne jamais copier des secrets de production ici. `.env` est ignoré par Git ; seuls `.env.example` (local) et `.env.production.example` (modèle Dokploy avec marqueurs à remplacer) sont versionnés. Laisser OAuth vide ne valide pas la recette GitHub/Discord.
 
 Compose lit `.env`, **pas `.env.local`**. Next.js peut donner priorité à `.env.local` : s’il existe déjà, vérifier qu’il ne masque pas `DATABASE_URL` ou l’origine locale. `infra:validate` et `test:compose` utilisent toujours les exemples, jamais les secrets de `.env`.
 
@@ -48,6 +46,14 @@ Compose lit `.env`, **pas `.env.local`**. Next.js peut donner priorité à `.env
 - S3 : http://127.0.0.1:8333, région `us-east-1`, bucket `typing-images` ; clés `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`
 
 Le futur SDK S3 devra utiliser cet endpoint, la région et `forcePathStyle: true`. Les objets restent privés : pas de politique de lecture anonyme, pas de clé `NEXT_PUBLIC_*`. Les URLs signées/contrôles de type réel, taille, droits et nettoyage devront être ajoutés avec la fonctionnalité photo. Les consoles administratives SeaweedFS, WebDAV et catalogues ne sont pas publiés ; la télémétrie master est désactivée.
+
+## Production avec Dokploy
+
+`compose.production.yaml` ne lance que l’application Next.js. Il attend un PostgreSQL externe et n’installe ni PostgreSQL, ni Redis, ni stockage S3. Dans Dokploy, choisir le déploiement Docker Compose, utiliser ce fichier et configurer les variables de [.env.production.example](../.env.production.example) dans l’environnement du service. `DATABASE_URL` doit pointer vers le PostgreSQL de production accessible depuis le réseau Dokploy ; `BETTER_AUTH_URL` doit être l’origine HTTPS publique exacte. L’application écoute sur le port interne 3000, à associer au domaine HTTPS dans Dokploy.
+
+Remplacer tous les `CHANGE_ME`, générer un `BETTER_AUTH_SECRET` distinct avec `openssl rand -base64 32`, et enregistrer les callbacks GitHub/Discord sous `BETTER_AUTH_URL/api/auth/callback/github` et `/discord`. Ne pas téléverser le fichier d’exemple avec de vraies valeurs. Redis et S3 apparaissent dans le modèle pour documenter les services envisagés, mais l’application ne les consomme pas actuellement.
+
+Les migrations de production ne sont pas lancées automatiquement au démarrage. Avant de router le trafic vers une nouvelle version, appliquer `prisma migrate deploy` une fois depuis le conteneur de l’application ou une tâche de release Dokploy, avec la vraie `DATABASE_URL` et après validation/sauvegarde de la base cible. Ne jamais utiliser une base inconnue ou de production pour les tests locaux.
 
 Pour inspecter l’infrastructure :
 

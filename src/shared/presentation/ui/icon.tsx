@@ -2,6 +2,21 @@ import type { ComponentProps, ReactNode } from "react";
 
 const paths = {
   arrow: <path d="M4 12h16m-6-6 6 6-6 6" />,
+  enter: <path d="M20 5v8a3 3 0 0 1-3 3H4m5-5-5 5 5 5" />,
+  plus: <path d="M12 4v16M4 12h16" />,
+  eye: (
+    <>
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  people: (
+    <>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2" />
+    </>
+  ),
+  check: <path d="m5 12 4 4L19 6" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />

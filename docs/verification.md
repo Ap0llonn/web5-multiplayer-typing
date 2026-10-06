@@ -1,5 +1,127 @@
 # Vérification du socle Sprint 1
 
+## Stories #9 et #10 — recette locale du 5 octobre 2026
+
+Demande : compléter création/entrée « Sur code » (#9) et présence/reconnexion (#10), avec **validation en local** confirmée par l'utilisateur. Référence : `SALLE-01/02/05/06/09/10`, socle `TECH-06` et `SEC-01`. Checkout `main`, base `25fd45a6d2b019c95f14043e92f319336b217613`, avec les modifications antérieures et ce lot non commitées. Node 24.19.0, Next 16.3.8, Chrome installé sur macOS ; chaque contrôle DB utilise un PostgreSQL 18.4 jetable neuf sur 127.0.0.1:55432, migrations depuis zéro puis replay, suppression à la fin. Le build et les tests utilisent les variables locales de ce harnais.
+
+### Changement et preuve du défaut
+
+La création, l'entrée par code et la présence réelle étaient déjà implémentées. Le point local manquant de #9 était la preuve de la limitation des codes. Six tests d'intégration passant par la vraie session Better Auth, la composition HTTP et PostgreSQL ont été ajoutés dans `tests/integration/lobby-rate-limit.test.ts`. Avant correction : **5 PASS / 1 FAIL**, la tentative à exactement 60 000 ms obtenait 429 au lieu de 404 pour un code inconnu. Le compteur comparait strictement la date de début au seuil. `shared/infrastructure/http/rate-limit.ts` réinitialise désormais à la frontière inclusive ; aucune nouvelle règle de salle, migration ou traduction n'est nécessaire.
+
+La valeur retenue reste 10 tentatives par IP/opération et fenêtre fixe de 60 secondes, sans prolongation sur refus. Tests : budget partagé entre compte/invité et codes, IP distinctes, séparation création/entrée, dix admissions sur vingt commandes concurrentes, JSON/codes invalides comptés, origine étrangère/session absente refusées avant compteur, frontière exacte, lookup/heartbeat/départ disponibles après épuisement. Deux vrais parcours navigateur FR/EN dans `tests/e2e/lobby-rate-limit.spec.ts` prouvent le HTTP 429 traduit, l'absence de siège et la persistance de la limite après reload.
+
+### Contrôles finaux
+
+| Contrôle | Résultat et portée |
+| --- | --- |
+| Lint, types, frontières | **PASS** : `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` ; types repassés après restauration du fichier généré `next-env.d.ts` à son état présent avant le build |
+| Unitaires | **58 PASS / 16 fichiers** |
+| Intégration PostgreSQL | **26 PASS / 12 fichiers**, dont les six nouveaux ; deux migrations depuis zéro et replay sans migration en attente |
+| Build de production | **PASS** : client Prisma généré, compilation et types, routes réelles et maquette préexistante |
+| E2E du build local | **35 PASS / 35**, environ 1,6 minute ; deux nouveaux scénarios et 33 régressions existantes |
+| Création/entrée réelles | Compte/invité, interdiction de création invitée, rôle spectateur hors capacité, conflit d'onglet, Quitter explicite, codes invalides/inconnus, salles pleines/fermées, rechargement sans doublon ; FR/EN PASS |
+| Présence réelle #10 | `tests/e2e/presence.spec.ts` : deux sessions, vrai SSE/heartbeat, coupures réseau invité puis hôte, mêmes identités/salle/hôte et deux membres après reprise, sans reload ; PASS |
+| HTTP/SSE | `scripts/smoke-http.ts` sur une autre DB neuve et le même build : compte/invité, CSRF, schémas, création/entrée, deuxième personne visible dans le stream, adhésion répétée, récupération et **révocation réelle d'une session terminant le stream** ; PASS |
+
+Mesures localhost, en millisecondes depuis chaque coupure pour la reprise : arrivée **823** ; invité, perte détectée **10 413**, reprise **15 268** ; hôte, perte détectée **10 414**, reprise **14 261**. La reprise reste dans la grâce de 30 secondes ; aucune garantie de performance ou de pleine charge n'est déduite de ces mesures.
+
+**Échecs intermédiaires :** le sandbox empêchait `initdb` de créer sa mémoire partagée ; le contrôle a été exécuté avec l'autorisation locale nécessaire. Le test de frontière était rouge avant le correctif décrit ci-dessus. **Échecs finaux : aucun.**
+
+**Non exécutés :** VPS public HTTPS/proxy réel, callbacks OAuth externes, mesure de charge et Lighthouse. La recette locale de #9 et #10 est terminée ; leurs critères de production restent ouverts jusqu'à la livraison de #11. Le parcours de maquette `/play` préexistant conserve son statut de démonstration. Aucune base utilisateur n'a été migrée ou réinitialisée.
+
+## Parcours code et joueur sur pages dédiées — 5 octobre 2026
+
+La dernière demande remplace le nom de salle par un code et sépare le pseudo/personnage du salon. [Contrat et captures](play-preview.md#correction-demandée--trois-pages-et-code-de-salle). `app` expose `/[locale]/play`, `/play/player` et `/play/room` ; `composition/play` assemble le shell, et le provider/vues de `lobby/presentation` conservent uniquement un état en mémoire. Code canonique de six caractères, pseudo de 3–20 caractères, quatre personnages ; le salon affiche code, liste, réglages de démonstration et Modifier/Quitter. Modifier ouvre la page préremplie, Annuler préserve le joueur confirmé, Enregistrer le remplace sans doublon, Quitter réinitialise. Aucune API, session, DB, SSE ou course nouvelle ; les statuts métier restent inchangés.
+
+Node 24.19.0, Next 16.3.8, Chrome installé sur macOS, état local non commité et changements antérieurs conservés. Contrôles finaux terminés vers 15 h 01 UTC.
+
+| Contrôle sur l’état final | Résultat et portée |
+| --- | --- |
+| Lint et frontières | PASS : `pnpm lint`, `pnpm check:boundaries` |
+| Types stricts | PASS : `pnpm typecheck`, après rafraîchissement des définitions de routes dev générées ; imports initiaux de `next-env.d.ts` préservés |
+| Formatage et diff | PASS : Prettier des sources/tests de ce lot et `git diff --check` |
+| Unitaires | PASS : **58 tests / 16 fichiers** |
+| Intégration | PASS : **20 tests / 11 fichiers**, PostgreSQL 18.4 jetable ; migrations depuis zéro et replay PASS |
+| Build production final | PASS : génération Prisma, compilation, types et les trois routes attendues |
+| E2E production final | PASS : **33/33**, environ 1,2 minute, serveur 3108 et PostgreSQL jetable ; huit scénarios du prototype et 25 existants |
+| Parcours du prototype | FR/EN : code/pseudo invalides, trim et majuscules, trois URLs, quatre radios et clavier, confirmation, brouillons, Modifier/Annuler/Enregistrer, historique, reset, gardes d’URL directe/reload et focus ; aucun appel API ou cookie Better Auth |
+| Accessibilité et dimensions | **36 contrôles axe WCAG A/AA** : FR/EN × clair/sombre × 360/820/1440 px × trois pages, sans débordement ; mouvement réduit |
+| Régression réelle | Compte/invité, commandes de salle, rôle/capacité, présence/reconnexion, conflits, langues/thèmes, formulaires et Select personnalisé PASS |
+| Revue et inspection | Revue indépendante sans autre défaut actionnable. Code, setup et édition préremplie inspectés ; salon sombre à 1440 et 360 px. [Captures actuelles](play-preview.md#inspection-du-parcours-à-trois-pages) |
+
+**Rouge avant réalisation :** le test attendait `/fr/play/player` après la saisie du code, alors que l’ancienne vue restait sur `/fr/play`. **Échec intermédiaire de types :** les fichiers générés `.next/dev/types/routes.d.ts` décrivaient seulement le layout de locale, tandis que le build décrivait aussi `/[locale]/play` ; le contrôle séparé signalait TS2344 dans le validateur généré. Ce cache uniquement a été régénéré avec les fonctions de la version Next installée, puis `pnpm typecheck` passe. Le helper temporaire est supprimé ; aucune suppression de type ni modification de `tsconfig.json`, AGENTS, `next-env.d.ts`, BUILD_ID ou des types de production. **Échecs finaux : aucun.**
+
+**Non exécutés :** lecteur d’écran et appareil tactile réels, Firefox/WebKit, OAuth GitHub/Discord externe, déploiement, charge et Lighthouse. Aucun succès réel de salle ou course n’est revendiqué. Les DB de contrôle sont arrêtées/supprimées après chaque run ; une prévisualisation de production reste disponible sur une autre DB jetable : [anglais](http://localhost:3108/en/play), [français](http://localhost:3108/fr/play).
+
+## Salon de démonstration — 5 octobre 2026 (historique avant pages dédiées)
+
+Nouvelle demande autorisant des mocks : un champ de nom de salle, puis pseudo, personnage, liste de joueurs et petit résumé des réglages. [Contrat et réalisation](play-preview.md), [architecture](ARCHITECTURE.md#prototype-isolé-de-salon--5-octobre-2026), [portée dans la matrice](EXIGENCES.md#prototype-de-présentation-isolé--5-octobre-2026). Routes `/fr/play` et `/en/play`, assemblage dans `composition/play`, état local et composants dans `lobby/presentation`. Aucune commande auth/lobby, session, persistance ou course ajoutée ; badge et fixtures explicites. Les parcours réels restent accessibles avec les mêmes URLs dans `(site)`.
+
+État local non commité, Node 24.19.0, Next 16.3.8 et Chrome installé sur macOS. Contrôles finaux terminés vers 14 h 03 UTC ; les changements déjà présents dans le checkout sont conservés.
+
+| Contrôle sur l’état final | Résultat et portée |
+| --- | --- |
+| Lint, types stricts, frontières | PASS : `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` |
+| Formatage et diff | PASS : Prettier des sources/tests de ce lot et `git diff --check` |
+| Unitaires | PASS : **58 tests / 16 fichiers** |
+| Intégration | PASS : **20 tests / 11 fichiers**, PostgreSQL 18.4 jetable sur 55433 ; migrations depuis zéro et replay PASS |
+| Build production final | PASS : génération Prisma, compilation, types et nouvelle route `/[locale]/play` |
+| E2E production final | PASS : **31/31**, environ 1,1 minute, serveur 3108 et PostgreSQL jetable ; six nouveaux scénarios et 25 existants |
+| Comportement du prototype | FR/EN : entrée, pseudo invalidé et bouton désactivé, quatre radios et flèches clavier, ajout d’un joueur, brouillon distinct, sauvegarde sans doublon, sortie avec reset et focus des titres ; aucun appel API ou cookie Better Auth |
+| Accessibilité et dimensions | FR/EN × clair/sombre × 360/820/1440 px : absence de débordement et axe WCAG A/AA sur entrée, salon avant et après confirmation ; préférence de mouvement réduit |
+| Régression réelle | Parcours existants : compte/invité, commandes de salle, rôle/capacité, présence/reconnexion, conflits, langues/thèmes, formulaires et Select personnalisé PASS après le déplacement dans `(site)` |
+| Revue et inspection | Revue indépendante ; focus au retour et contraste du badge local corrigés. Entrée et salon bureau clair, salon sombre à 360 px inspectés dans le navigateur. [Captures historiques](play-preview.md#inspection-initiale-dans-le-navigateur-historique) |
+
+**Rouge avant réalisation :** `/fr/play` renvoyait 404. **Échecs intermédiaires :** le premier build compilait l’application mais rencontrait les anciens imports du cache `.next/dev/types/validator.ts` vers les routes déplacées. Seul ce cache généré a été régénéré ; le build final passe. Le premier run navigateur terminait à 29/31 : les deux nouveaux parcours essayaient de cliquer directement les radios visuellement masquées, recouvertes par le SVG. Les clics ciblent désormais les libellés visibles et conservent les assertions sur la vraie radio ; suite complète finale 31/31, sans modification produit pour satisfaire ces sélecteurs. **Échecs finaux : aucun.**
+
+Les DB de contrôle sont temporaires, distinctes de toute base utilisateur, arrêtées et supprimées après chaque run. Le cache dev régénéré inclut `(site)` et `/play` ; les imports de développement initiaux de `next-env.d.ts` ont été restaurés, puis types repassés. Les ajouts automatiques de Next dans AGENTS ont été retirés sans modifier les instructions originales ; `tsconfig.json` reste intact. Une nouvelle prévisualisation de production sur DB jetable est ouverte sur [localhost:3108/fr/play](http://localhost:3108/fr/play), avec [version anglaise](http://localhost:3108/en/play).
+
+**Non exécutés :** lecteur d’écran et appareil tactile réels, Firefox/WebKit, OAuth externe, déploiement, charge et Lighthouse. Les joueurs/réglages de cette page sont des exemples ; aucun moteur de course, présence multijoueur, réglage serveur, bonus ou bot n’est livré par cette maquette. Aucun statut officiel AUTH/SALLE/CONF/COURSE n’est relevé.
+
+## Composants et sélecteur personnalisé — 4 octobre 2026
+
+Demande suivante : extraire les blocs de présentation et remplacer le menu natif du rôle. Contrat et propriété : [direction UI](ui-playful.md) et [architecture](ARCHITECTURE.md). Primitives partagées pour Select, langue et thème ; cartes anonymes dans composition ; champs/providers dans identity ; formulaires, rôle et salle active dans lobby. Les commandes, validations serveur, règles de salle et Better Auth restent identiques. Node 24.19.0, Next 16.3.8, Chrome installé, état local non commité.
+
+| Contrôle sur l’état final | Résultat et portée |
+| --- | --- |
+| Lint, types stricts, frontières | PASS : `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` |
+| Formatage et diff | PASS : Prettier des sources/tests de ce lot et `git diff --check` |
+| Unitaires | PASS : **58 tests / 16 fichiers** |
+| Intégration | PASS : **20 tests / 11 fichiers**, PostgreSQL 18.4 jetable ; dernière exécution après le correctif CSS sur le port 55433, migrations initiales et replay PASS |
+| Build production final | PASS après correction du layout ; génération Prisma, compilation et vérification TypeScript |
+| E2E production final | PASS : **25/25**, environ 1,3 minute, port 3107 et PostgreSQL jetable ; serveur de développement 3000 laissé intact |
+| Sélecteur personnalisé | Six scénarios : menu DOM et options accessibles, IDs indépendants, focus, clic, Home/End, recherche par caractères, Tab confirme et avance, Échap annule, clic extérieur ferme ; création réelle en spectateur constatée dans `/api/lobbies/me` |
+| Thèmes, langues, dimensions | Axe WCAG A/AA menu ouvert FR/EN × clair/sombre à 360 px ; valeurs, chevrons et menus dans leurs limites en FR/EN à 768/820/900 px ; suites existantes auth, langues/thèmes persistants, invités, conflits et temps réel PASS |
+| Revue et inspection | Revue indépendante sans autre défaut confirmé. Menus français inspectés dans la prévisualisation sur surface jaune et sombre : [création](images/custom-role-menu.jpg), [rejoindre](images/custom-role-menu-dark.jpg) |
+
+**Rouge avant Select :** le test attendait `aria-expanded` et une vraie liste DOM ; le `<select>` natif n’avait pas cet attribut. **Rouge de layout :** après les 24 premiers E2E verts, le test tablette complémentaire a détecté un chevron dépassant de 10,23 px à 820 px et de 22,20 px à 768 px. Les champs capacité/rôle passent désormais sur deux colonnes seulement à partir de 400 px intérieurs dans la carte. Rebuild et suite complète finale : 25/25. **Échecs finaux : aucun.**
+
+**Non exécutés :** lecteur d’écran et appareil tactile réels, OAuth GitHub/Discord réel, déploiement, charge et Lighthouse. Axe, focus accessible constaté et tests Chrome ne certifient pas ces contrôles. Aucun schéma, migration ni traduction nouvelle nécessaire ; tous les libellés du menu viennent des catalogues existants. Le fichier de types Next généré par le build a été remis à son état de développement présent avant ce lot, puis typecheck repassé. Les stacks de test sont arrêtées/supprimées ; une prévisualisation locale sur une autre DB jetable reste ouverte pour consultation.
+
+## Terrain de jeu des claviers — 4 octobre 2026
+
+Nouvelle demande utilisateur : recherche de références ludiques, thème distinct, composants et illustrations originales. [Direction et sources](ui-playful.md), [moodboard et palette](DEMARCHE-CREATIVE.md), [PNG et prompts finaux](../public/illustrations/README.md). Aucun changement de règle métier, schéma, migration, secret ou protocole ; logo utilisateur conservé. État local non commité, Node 24.19.0, Next 16.3.8, Chrome installé sur macOS.
+
+| Contrôle final | Résultat et portée |
+| --- | --- |
+| `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` | PASS ; types stricts et frontières conservées |
+| Formatage et `git diff --check` | PASS sur les sources et tests modifiés |
+| `pnpm test:unit` | PASS : **58 tests / 16 fichiers** |
+| `pnpm test:integration` | PASS : **20 tests / 11 fichiers**, PostgreSQL 18.4 jetable ; les trois tests seed passent ici |
+| Migrations | PASS : deux migrations depuis une DB vide, puis replay sans migration en attente |
+| `node --import tsx scripts/test-stack.ts run build` | PASS : génération Prisma, compilation de production, types et routes attendues |
+| Playwright sur le build final | PASS : **19/19**, 57,1 s, PostgreSQL jetable neuf et Chrome système |
+| Accessibilité et responsive | PASS : axe WCAG A/AA accueil, connexion, inscription, formulaires compte et salle en FR/EN × clair/sombre à 360 px ; clavier, focus, préférences et absence de débordement couverts par la suite existante |
+| Nouvelle régression `playful-ui.spec.ts` | PASS : quatre combinaisons FR/EN × 360/1440 px, PNG du clavier chargé, alt vide et absence dans la recherche accessible, mouvement réduit, navigation connexion et vraie session invitée |
+| Revue | Deux points corrigés : description de création neutre pour comptes déjà connectés ; token distinct pour bordures de champs (3,48:1 clair, 4,78:1 sombre, 3,56:1 surface jaune) |
+| Inspection visuelle | Accueil français clair bureau, sombre mobile 360 px et formulaires mobiles ; connexion anglaise bureau avec seconde illustration. PNG transparents et police locale effectivement chargés. [Capture finale de production](images/playful-ui-desktop.jpg) |
+
+**Rouge avant implémentation :** le scénario français à 360 px échouait sur l’illustration absente. **Essais intermédiaires échoués :** premier run final 14/19, car un ancien test cherchait le titre anglais précédent et les quatre nouveaux tests confondaient rôle intrinsèque d’image et présence dans l’arbre accessible. Le titre est maintenant lu depuis le catalogue ; la recherche par rôle ignore correctement l’image masquée. Le code produit n’a pas été modifié pour satisfaire ces assertions ; la suite complète repassée termine à 19/19. **Échecs finaux : aucun.**
+
+Les stacks de test sont temporaires, indépendantes de la base du projet, arrêtées et supprimées après exécution. Le sandbox empêchait initialement `initdb` de créer sa mémoire partagée ; l’exécution locale autorisée a permis les contrôles sans utiliser de base inconnue. Pour reproduire, placer Node 24 dans le PATH, définir `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` vers Chrome installé, puis exécuter `node --import tsx scripts/test-stack.ts exec playwright test --reporter=line` après le build.
+
+**Non exécuté dans ce lot :** OAuth GitHub/Discord réel, déploiement public/VPS, charge et Lighthouse, validation personnelle du nom/logo/croquis et favicon. Les pages de course, bonus et bots restent futures. Une prévisualisation locale sur une DB jetable peut être conservée pour consultation ; elle n’est pas un déploiement.
+
 ## Frontend rétro arcade et logo fourni — 4 octobre 2026
 
 Direction : seconde maquette approuvée, puis demande explicite de frontend réutilisable. Logo CLAK! fourni ultérieurement par l’utilisateur, copié sans modification dans `public/brand/clak-logo.png`. Primitives génériques et layouts dans shared, identité de navigation injectée par composition/site ; aucune règle/transaction/route métier modifiée. Références : TECH-03, DES-04/05/06, I18N-01/02, A11Y-01/02/03/04.
