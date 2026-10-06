@@ -1,19 +1,17 @@
 "use client";
-import { startLobbyHeartbeat } from "./lobby-heartbeat";
-import { useEffect, useRef, useState, useReducer } from "react";
-import { useTranslations } from "next-intl";
-import type { LobbySnapshot, LobbyActor } from "../public";
-import type { OperationResult } from "@/shared/contracts/operation-result";
-import { lobbyViewReducer } from "./lobby-view-state";
-import { sendLobbyCommand } from "./lobby-command";
-import { ActiveRoomCard } from "./active-room-card";
+
+import { useEffect, useReducer, useRef, useState } from "react";
 import {
-  CreateRoomCard,
-  GuestCreateCard,
-  JoinRoomCard,
-} from "./lobby-entry-cards";
-export function LobbyPanel({ actor }: { actor: LobbyActor }) {
-  const t = useTranslations();
+  failure,
+  type OperationResult,
+} from "@/shared/contracts/operation-result";
+import type { LobbySnapshot } from "../../public";
+import { startLobbyHeartbeat } from "../transport/lobby-heartbeat";
+import { sendLobbyCommand } from "../transport/lobby-command";
+import { lobbyViewReducer } from "./lobby-view-state";
+
+export function useLobbyRoom() {
+  const [loaded, setLoaded] = useState(false);
   const [view, dispatch] = useReducer(lobbyViewReducer, {
     room: null,
     generation: 0,
@@ -23,7 +21,7 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
   const [pending, setPending] = useState(false);
   const [stream, setStream] = useState("connecting");
   const [presence, setPresence] = useState("connecting");
-  const connection =
+  const connection: "connected" | "connecting" | "disconnected" =
     stream === "connected" && presence === "connected"
       ? "connected"
       : stream === "disconnected" || presence === "disconnected"
@@ -41,6 +39,9 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
       })
       .catch(() => {
         if (active) setError("errors.INTERNAL");
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
       });
     return () => {
       active = false;
@@ -90,71 +91,36 @@ export function LobbyPanel({ actor }: { actor: LobbyActor }) {
     events.addEventListener("transient-error", () => setStream("disconnected"));
     return () => events.close();
   }, [code]);
-  async function send(path: string, body: unknown) {
-    if (lock.current) return;
+  async function send(
+    path: string,
+    body: unknown,
+  ): Promise<OperationResult<LobbySnapshot>> {
+    if (lock.current) return failure("CONFLICT");
     lock.current = true;
     setPending(true);
     setError("");
     const generation = view.generation;
     try {
       const { result, currentRoom } = await sendLobbyCommand(path, body);
-      if (result.ok)
+      if (result.ok) {
         dispatch({
           type: "command",
           room: path.endsWith("/leave") ? null : result.value,
         });
-      else {
+      } else {
         if (currentRoom)
           dispatch({ type: "recovered", generation, room: currentRoom });
         else setError(result.error.messageKey);
       }
+      return result;
     } catch {
       setError("errors.INTERNAL");
+      return failure("INTERNAL");
     } finally {
       lock.current = false;
       setPending(false);
     }
   }
   const messageKey = error || (view.conflictNotice ? "roomConflict" : "");
-  return (
-    <div className="grid gap-5">
-      {messageKey && <p role="alert">{t(messageKey)}</p>}
-      {room ? (
-        <ActiveRoomCard
-          room={room}
-          connection={connection}
-          pending={pending}
-          onLeave={() => {
-            void send(`/api/lobbies/${room.code}/leave`, {});
-          }}
-        />
-      ) : (
-        <div className="action-grid">
-          <JoinRoomCard
-            pending={pending}
-            onSubmit={(data) => {
-              void send("/api/lobbies/join", {
-                code: data.get("code"),
-                role: data.get("role"),
-              });
-            }}
-          />
-          {actor.kind === "account" ? (
-            <CreateRoomCard
-              pending={pending}
-              onSubmit={(data) => {
-                void send("/api/lobbies", {
-                  name: data.get("name"),
-                  capacity: Number(data.get("capacity")),
-                  role: data.get("role"),
-                });
-              }}
-            />
-          ) : (
-            <GuestCreateCard />
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return { room, loaded, pending, connection, messageKey, send };
 }

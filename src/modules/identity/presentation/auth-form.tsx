@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/shared/presentation/i18n/navigation";
 import { authClient, signInGuest } from "../infrastructure/auth-client";
@@ -14,9 +14,13 @@ import {
 export function AuthForm({
   mode,
   providers = [],
+  onAuthenticated,
+  children,
 }: {
   mode: "login" | "signup" | "guest";
   providers?: string[];
+  onAuthenticated?: () => Promise<void>;
+  children?: ReactNode;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -56,6 +60,10 @@ export function AuthForm({
         );
         return;
       }
+      if (onAuthenticated) {
+        await onAuthenticated();
+        return;
+      }
       router.push("/");
       router.refresh();
     } catch {
@@ -91,11 +99,14 @@ export function AuthForm({
   return (
     <div className="grid gap-4">
       <form onSubmit={submit} className="grid gap-5">
-        {mode === "guest" ? (
-          <GuestNameField />
-        ) : (
-          <CredentialFields mode={mode} />
-        )}
+        <fieldset className="contents" disabled={pending}>
+          {mode === "guest" ? (
+            <GuestNameField />
+          ) : (
+            <CredentialFields mode={mode} />
+          )}
+          {children}
+        </fieldset>
         {error && <p role="alert">{t(error)}</p>}
         <Button
           type="submit"

@@ -26,18 +26,17 @@ test("participant and host reconnect within the grace period with unchanged iden
     expect(signup.status()).toBe(200);
     const h = await host.newPage();
     const g = await guest.newPage();
-    await h.goto("/en");
+    await h.goto("/en/play/create");
     await h.getByLabel("Room name").fill("Presence test");
     await h.getByRole("button", { name: "Create room", exact: true }).click();
     await expect(h.getByTestId("room-code")).toBeVisible();
     const code = await h.getByTestId("room-code").innerText();
-    await g.goto("/en");
-    await g.getByLabel("Guest nickname").fill("Presence Guest");
-    await g.getByRole("button", { name: "Continue as guest" }).click();
-    await expect(g.getByLabel("Room code")).toBeVisible();
+    await g.goto("/en/play");
     await g.getByLabel("Room code").fill(code);
+    await g.getByRole("button", { name: "Let’s go", exact: true }).click();
+    await g.getByLabel("Guest nickname").fill("Presence Guest");
     const arrivalStarted = Date.now();
-    await g.getByRole("button", { name: "Join room", exact: true }).click();
+    await g.getByRole("button", { name: "Continue as guest" }).click();
     await expect(h.getByTestId("member-row")).toHaveCount(2);
     const arrivalMs = Date.now() - arrivalStarted;
     const timings: Record<
@@ -94,7 +93,7 @@ test("participant and host reconnect within the grace period with unchanged iden
       JSON.stringify({ arrivalMs, ...timings }),
     );
     await h.getByRole("button", { name: "Français", exact: true }).click();
-    await expect(h).toHaveURL(/\/fr\/?$/);
+    await expect(h).toHaveURL(/\/fr\/play\/room\/?$/);
     await expect(
       h.getByTestId("member-row").filter({ hasText: username }),
     ).toContainText("Compte");

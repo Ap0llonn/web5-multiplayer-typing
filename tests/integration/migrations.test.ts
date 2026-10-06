@@ -7,6 +7,7 @@ it("has exactly the versioned migrations and rejects impossible capacity at the 
   expect(rows.map((r) => r.migration_name)).toEqual([
     "20261003120000_identity",
     "20261003124000_lobby",
+    "20261006142000_lobby_character",
   ]);
   expect(rows.every((r) => r.finished_at)).toBe(true);
   const constraints = await prisma.$queryRaw<

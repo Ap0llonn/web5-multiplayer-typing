@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import en from "../../src/shared/presentation/i18n/messages/en.json" with { type: "json" };
 import fr from "../../src/shared/presentation/i18n/messages/fr.json" with { type: "json" };
+test.use({ trace: "off" });
 
 for (const [locale, messages] of [
   ["en", en],
@@ -34,19 +35,19 @@ for (const [locale, messages] of [
       expect(signup.status()).toBe(200);
       const h = await host.newPage();
       const g = await guest.newPage();
-      await h.goto(`/${locale}`);
+      await h.goto(`/${locale}/play/create`);
       await h.getByLabel(messages.roomName).fill("Rate limit acceptance");
       await h
         .getByRole("button", { name: messages.create, exact: true })
         .click();
       await expect(h.getByTestId("room-code")).toBeVisible();
       const code = await h.getByTestId("room-code").innerText();
-      await g.goto(`/${locale}`);
-      await g.getByLabel(messages.guestName).fill("Rate limit guest");
-      await g
-        .getByRole("button", { name: messages.guest, exact: true })
-        .click();
-      await expect(g.getByLabel(messages.code)).toBeVisible();
+      const session = await guest.request.post("/api/auth/sign-in/anonymous", {
+        headers: { origin },
+        data: { name: "Rate limit guest" },
+      });
+      expect(session.status()).toBe(200);
+      await g.goto(`/${locale}/play/player?code=${code}`);
       for (let n = 0; n < 10; n++) {
         const refused = await guest.request.post("/api/lobbies/join", {
           headers: { origin },
@@ -56,7 +57,6 @@ for (const [locale, messages] of [
       }
       for (const reload of [false, true]) {
         if (reload) await g.reload();
-        await g.getByLabel(messages.code).fill(code);
         const reply = g.waitForResponse(
           (response) =>
             new URL(response.url()).pathname === "/api/lobbies/join" &&

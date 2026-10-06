@@ -13,7 +13,7 @@ export function SiteFooter() {
         </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm font-bold">
           <Link href="/">{t("home")}</Link>
-          <Link href="/play">{t("playPreview.navigationLabel")}</Link>
+          <Link href="/play">{t("play.navigationLabel")}</Link>
           <Link href="/login">{t("login")}</Link>
           <Link href="/signup">{t("signup")}</Link>
         </div>

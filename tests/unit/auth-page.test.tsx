@@ -6,6 +6,7 @@ import { getCurrentActor } from "@/modules/identity/server";
 import { failure } from "@/shared/contracts/operation-result";
 import { AuthPage } from "@/composition/auth/auth-page";
 import { HomePage } from "@/composition/home/home-page";
+import { CreatePage } from "@/composition/play/create-page";
 import en from "@/shared/presentation/i18n/messages/en.json";
 import fr from "@/shared/presentation/i18n/messages/fr.json";
 
@@ -29,7 +30,7 @@ for (const [locale, messages] of [
   ["en", en],
   ["fr", fr],
 ] as const) {
-  it(`offers labelled account and guest entry cards in ${locale} without bypassing guest authentication`, async () => {
+  it(`offers labelled links to dedicated room pages in ${locale}`, async () => {
     translations.locale = locale;
     vi.mocked(getCurrentActor).mockResolvedValue(failure("UNAUTHENTICATED"));
     const html = renderToStaticMarkup(
@@ -43,14 +44,10 @@ for (const [locale, messages] of [
     );
     expect(html).toContain(`aria-labelledby="create-room-title"`);
     expect(html).toContain(`aria-labelledby="join-room-title"`);
-    expect(html).toContain(messages.guestName);
-    expect(html).toMatch(/autocomplete="nickname"/i);
-    expect(html).toContain('minLength="3"');
-    expect(html).toContain('maxLength="20"');
-    expect(html).toContain(messages.login);
-    expect(html).toContain(messages.signup);
-    expect(html.match(/<form/g)).toHaveLength(1);
-    expect(html).not.toContain('name="code"');
+    expect(html).toContain(messages.join);
+    expect(html).toContain(messages.create);
+    expect(html).not.toContain("<form");
+    expect(html).not.toContain("<input");
   });
 }
 
@@ -77,7 +74,7 @@ for (const [locale, messages] of [
   ["en", en],
   ["fr", fr],
 ] as const) {
-  it(`does not offer guest authentication on the home page in ${locale} when the server is unavailable`, async () => {
+  it(`does not offer room creation in ${locale} when the server is unavailable`, async () => {
     translations.locale = locale;
     vi.stubEnv("BETTER_AUTH_SECRET", "");
     vi.mocked(getCurrentActor).mockResolvedValue(failure("INTERNAL"));
@@ -87,7 +84,7 @@ for (const [locale, messages] of [
         messages={messages}
         timeZone="UTC"
       >
-        {await HomePage()}
+        {await CreatePage()}
       </NextIntlClientProvider>,
     );
     expect(html).toContain('role="alert"');

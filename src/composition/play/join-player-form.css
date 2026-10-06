@@ -1,0 +1,43 @@
+.join-player-code {
+  font-family: monospace;
+  letter-spacing: 0.08em;
+}
+.join-player-page {
+  display: flex;
+  align-items: center;
+  width: min(100%, 620px);
+  min-height: 70svh;
+  margin-inline: auto;
+  padding-block: 1.5rem 3rem;
+}
+.join-player-card {
+  --join-card-padding: clamp(1.25rem, 3vw, 2.25rem);
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  border: 2px solid var(--border);
+  border-radius: 24px;
+  padding: var(--join-card-padding);
+  background: var(--panel);
+  box-shadow: 0 6px 0 var(--shadow);
+}
+.join-player-ticket {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 calc(-1 * var(--join-card-padding)) 1.75rem;
+  padding: 0 var(--join-card-padding) 1.2rem;
+  border-bottom: 2px dashed var(--border);
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+@media (max-width: 560px) {
+  .join-player-page {
+    min-height: auto;
+    padding-block: 1rem 2rem;
+  }
+}

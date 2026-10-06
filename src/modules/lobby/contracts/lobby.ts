@@ -4,6 +4,7 @@ export type LobbyActor = {
   displayName: string;
 };
 export type LobbyRole = "PARTICIPANT" | "SPECTATOR";
+export type LobbyCharacter = "cobalt" | "coral" | "mint" | "butter";
 export type LobbyState =
   | "WAITING"
   | "COUNTDOWN"
@@ -14,12 +15,14 @@ export type CreateLobbyInput = {
   name: string;
   capacity: number;
   role: LobbyRole;
+  character?: LobbyCharacter;
 };
 export type LobbyMember = {
   playerIdentityId: string;
   kind: "guest" | "account";
   displayName: string;
   role: LobbyRole;
+  character: LobbyCharacter;
   joinedAt: number;
   lastSeenAt: number;
 };

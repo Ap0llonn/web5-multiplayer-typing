@@ -2,7 +2,7 @@ import {
   failure,
   type OperationResult,
 } from "@/shared/contracts/operation-result";
-import type { LobbySnapshot } from "../public";
+import type { LobbySnapshot } from "../../public";
 type BrowserRequest = (path: string, init?: RequestInit) => Promise<Response>;
 type LobbyCommandFeedback = {
   result: OperationResult<LobbySnapshot>;

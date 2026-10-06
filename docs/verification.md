@@ -302,3 +302,76 @@ Vérifications locales après correction :23 unitaires,14 intégrations PostgreS
 Sur les runs push37127372748 et PR37127525137 du correctif, intégration/build/HTTP passent. Le contexte DOM retenu confirme signup200, URL/en, utilisateur connecté et formulaire Room name visible. L'unique alerte est vide, après le footer. Le code Next16.3.8 installé crée précisément un annonceur de navigation accessible `role=alert` hors du landmark main. L'assertion globale ajoutée pour diagnostiquer les erreurs comptait cet annonceur.
 
 Correction ciblée des tests uniquement : rechercher les erreurs dans main. Le test de mauvais mot de passe exige désormais le texte traduit réel, empêchant aussi un faux positif dû à l'annonceur. La navigation et le composant d'accessibilité restent inchangés. Lint/types/frontières, collection des4 tests Playwright,23 unitaires et14 intégrations passent localement ; exécution navigateur complète à confirmer par CI.
+
+## Entrée `/play` réservée au code et adhésion réelle — 6 octobre 2026
+
+Demande utilisateur : `/play` sert uniquement à rejoindre, comme le champ de code de la maquette ; retirer les mentions de démonstration. Le formulaire de création reste à l’accueil. Le code conserve les six caractères alphanumériques de `SALLE-02`, avec normalisation et exclusion de `0 O 1 I L`.
+
+Le parcours réel est `/play` → `/play/player?code=…` → `/play/room`. La première page ne crée ni session ni adhésion. La composition valide le paramètre côté serveur et résout l’acteur ; le formulaire invité appelle Better Auth puis la commande lobby avec la session cookie réelle. La route salle est ouverte seulement après une adhésion réussie. Un échec reste traduit sur la page du joueur ; un conflit propose un retour à la salle existante sans départ automatique. La room utilise la roster PostgreSQL, SSE et heartbeat existants, et le départ explicite retourne à `/play`. Aucune fixture de joueur ni réglage de course simulé n’est monté.
+
+| Contrôle | Résultat courant |
+| --- | --- |
+| Test de régression avant modification | Les deux cas FR/EN échouaient sur deux formulaires au lieu du champ de code seul ; même pour un compte |
+| Lint, typecheck, frontières | PASS |
+| Unitaires | PASS : 60 tests / 17 fichiers, dont les deux nouvelles régressions `/play` |
+| Intégrations | PASS : 26 tests / 12 fichiers, PostgreSQL 18.4 jetable, migrations depuis zéro puis rejouées |
+| Build standard `pnpm build` (Turbopack) | ÉCHEC d’environnement : traitement CSS incapable de créer son port temporaire ; aucune correction de Turbopack revendiquée |
+| Build `pnpm exec next build --webpack` | PASS : production et routes code/joueur/salle compilées |
+| Recette ciblée `play-join.spec.ts` | PASS : 6 E2E FR/EN, Chrome installé et DB jetable |
+| Suite navigateur complète | PASS : 33/33 E2E, dont 6 nouveaux scénarios FR/EN du parcours `/play` |
+
+La recette ciblée vérifie le champ unique sans création ni mention de démonstration, codes invalides, accès directs gardés, absence de mutation avant le pseudo, création de session avant l’adhésion, roster commune à deux sessions, rechargement sans doublon, départ réel et erreur de salle inconnue sans faux salon. La page de code passe aussi axe AA dans les deux langues. `tests/e2e/play-preview.spec.ts` est remplacé par les scénarios réels de `play-join.spec.ts`.
+
+Conditions locales : Node 25.6.0 (le projet demande Node 24), cache SWC temporaire via `SWC_NATIVE_BINDING_CACHE=/private/tmp/clak-swc-native-cache`, Chrome installé via `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`, et serveur de test isolé à `PLAYWRIGHT_BASE_URL=http://localhost:3400`. Le port 3000 était déjà utilisé ; `playwright.config.ts` honore désormais l’origine locale configurée sans réutiliser ni interrompre ce serveur. Le navigateur embarqué de Playwright était absent ; aucun téléchargement n’a été nécessaire. Le démarrage de PostgreSQL dans le sandbox a d’abord échoué sur la mémoire partagée ; la recette a ensuite été exécutée avec l’autorisation d’exécution nécessaire, toujours sur une base créée puis supprimée par `test-stack.ts`.
+
+Ces preuves locales ne certifient ni OAuth réel ni déploiement. Les fonctionnalités de course, bonus, bots, configuration et personnalisation persistante ne sont pas livrées par ce changement ; les statuts officiels de la matrice ne sont pas relevés artificiellement.
+
+## Rangement de la présentation lobby — 6 octobre 2026
+
+Demande utilisateur : nettoyer les fichiers de présentation du lobby et les ranger par responsabilité. Cette modification conserve le parcours code → identité/pseudo → salle et la création à l’accueil. Elle relève de `TECH-01/02` ; les statuts métier de la matrice restent inchangés.
+
+- `presentation/entry` possède le champ de code, les cartes rejoindre/créer et le champ de rôle.
+- `presentation/room` possède la carte active, la roster, le panel, le reducer et le hook `useLobbyRoom`.
+- `presentation/transport` possède les commandes HTTP navigateur et le heartbeat.
+- Le wrapper du champ de code est fusionné dans `RoomCodeEntry`; les sept composants/contextes de démonstration non référencés sont supprimés. Aucun ancien export de maquette ne reste dans le code actif.
+- Le shell et le billet joueur conservent leurs styles sous `composition/play`; les styles du champ sont colocalisés dans le module. Les règles CSS actives sont conservées, les règles inutilisées retirées, et le catalogue FR/EN est réduit aux clés actives sous `play`.
+
+`LobbyPanel` assemble désormais les vues en 76 lignes ; `useLobbyRoom` porte lecture initiale, verrou de commande, récupération après conflit, snapshots ordonnés, heartbeat et nettoyage des connexions. Les superviseurs, repositories, API et migrations ne changent pas. Les consommateurs et les imports de tests suivent les nouveaux chemins publics.
+
+| Contrôle | Résultat final |
+| --- | --- |
+| Régressions ciblées avant rangement | PASS : 21 tests dans 6 fichiers |
+| Lint, typecheck, frontières, diff sans erreurs d’espacement | PASS |
+| Unitaires | PASS : 60 tests / 17 fichiers |
+| Intégrations | PASS : 26 tests / 12 fichiers, migrations appliquées puis rejouées sur PostgreSQL jetable |
+| Build Next avec Webpack | PASS, toutes les routes existantes compilées |
+| Suite navigateur de production | PASS : 33/33 E2E, FR/EN, création/adhésion, conflits, requête initiale retardée, reload, départ, reconnexion et présence partagée |
+| Styles du champ de code déplacés | PASS : axe et absence de débordement à 360 et 1440 px, FR/EN dans `play-join.spec.ts` |
+| Build Turbopack par défaut | NON RÉEXÉCUTÉ : limitation de l’environnement déjà documentée dans la recette précédente ; le rangement est compilé et testé avec Webpack |
+
+Les deux échecs initiaux du refactor sont corrigés : type de connexion élargi par le retour du hook, puis test de rendu appelant directement un composant contenant désormais ses hooks. L’union de connexion est explicite ; le test monte `<PlayPage />` dans son provider. Les fichiers `next-env.d.ts` générés par le build sont remis à leurs imports initiaux, puis typecheck passe à nouveau.
+
+La recette utilise les mêmes conditions locales que le parcours précédent : Chrome installé avec profil de test isolé, serveur à `localhost:3400`, cache SWC temporaire et DB PostgreSQL créée puis supprimée par `test-stack.ts`. Le serveur de développement sur 3000 n’est pas utilisé pour les tests. Node 25.6.0 reste hors de la version 24 demandée par le projet. Aucun déploiement ni callback OAuth réel n’est vérifié par ce rangement.
+
+## Lobby autonome, personnages partagés et accueil de présentation — 6 octobre 2026
+
+Décisions utilisateur : conserver la scène de clubhouse approuvée, afficher le lobby sur sa propre page, partager les personnages réellement choisis et afficher son identifiant ; puis retirer tous les formulaires de salle de l’accueil. L’accueil propose maintenant deux liens, `/play` (code seul) et `/play/create` (création pour les comptes). La salle et son roster graphique restent à `/play/room`. Le choix de personnage est persisté dans l’adhésion, validé serveur et publié via SSE. Le nom/logo fourni est conservé.
+
+**Contrôle initial :** les deux nouveaux tests de l’accueil ont échoué sur la présence des formulaires avant leur retrait, puis passent après implementation. Les anciennes attentes de formulaires d’accueil ont été mises à jour pour les parcours demandés ; le cas de panne d’identité protège maintenant la page de création.
+
+| Contrôle final sur l’arbre local | Résultat |
+| --- | --- |
+| Lint, TypeScript et frontières | PASS |
+| Unitaires | PASS : 68 tests / 20 fichiers |
+| Intégrations PostgreSQL jetable | PASS : 27 tests / 13 fichiers, trois migrations depuis zéro puis replay |
+| Build Next.js Webpack | PASS : nouvelle route `/[locale]/play/create` et toutes les routes compilées |
+| Navigateur Chromium de production | PASS : 35/35 scénarios, pages dédiées FR/EN, compte/invité, création, adhésion, refus, conflits, personnages partagés/modifiés, rechargement, départ et reconnexion |
+| Mobile/accessibilité | PASS : absence de débordement à 360 px, thèmes clair/sombre, radios clavier, menus et axe AA automatisé |
+| Diff sans erreurs d’espacement | PASS |
+| Turbopack et OAuth réel | NON EXÉCUTÉS dans ce lot ; aucune nouvelle preuve de déploiement |
+
+Le contrôle visuel précédent a trouvé les utilitaires Tailwind absents et des icônes surdimensionnées : le chargeur de configuration de la version Next installée ignore `postcss.config.ts`. `.postcssrc.json` remplace ce fichier ; après purge du seul cache Webpack généré, le build produit réellement les classes `.h-5`/`.w-5`. Les tests contrôlent maintenant aussi les dimensions des icônes. Les contrastes des personnages sélectionnés et du changement de thème ont été corrigés ; les trois derniers échecs après activation réelle de Tailwind portaient sur un débordement de navigation FR à 360 px, corrigé par l’espacement mobile. La suite finale ci-dessus passe avec Tailwind actif.
+
+Captures locales ignorées par Git : `test-results/lobby-en-desktop.png` et `test-results/lobby-en-mobile.png`. Les E2E de sessions n’enregistrent pas les cookies dans leurs traces. Serveur de recette isolé à `localhost:3400`, profil Chrome de test, DB `typing_test` créée puis supprimée par `test-stack.ts`. Le serveur local à 3000 est conservé. La migration additive `20261006142000_lobby_character` a également été appliquée à la base de développement documentée `typing_dev`, après vérification de son hôte local, nom, utilisateur et migrations ; aucun reset et aucune base inconnue ou de production ne sont utilisés.
+
+Limite d’environnement conservée : Node 25.6.0 au lieu de la version 24 demandée ; les résultats ci-dessus sont ceux de cette exécution locale. Les fonctionnalités de course, bonus et bots ne sont pas ajoutées, et les statuts officiels ne sont pas relevés artificiellement.

@@ -20,11 +20,17 @@ function fromRow(row: Row): Lobby {
     version: row.version,
     members: row.members
       .filter((m) => m.activePlayerIdentityId !== null)
+      .sort(
+        (a, b) =>
+          a.joinedAt.getTime() - b.joinedAt.getTime() ||
+          a.playerIdentityId.localeCompare(b.playerIdentityId),
+      )
       .map((m) => ({
         playerIdentityId: m.playerIdentityId,
         kind: m.kind === "account" ? "account" : "guest",
         displayName: m.displayName,
         role: m.role,
+        character: m.character,
         joinedAt: m.joinedAt.getTime(),
         lastSeenAt: m.lastSeenAt.getTime(),
       })),
@@ -37,6 +43,7 @@ function memberData(member: Lobby["members"][number]) {
     kind: member.kind,
     displayName: member.displayName,
     role: member.role,
+    character: member.character,
     joinedAt: new Date(member.joinedAt),
     lastSeenAt: new Date(member.lastSeenAt),
   };
@@ -114,6 +121,7 @@ export class PrismaLobbyRepository implements LobbyRepository {
                   old.activePlayerIdentityId === member.playerIdentityId &&
                   old.lastSeenAt.getTime() === member.lastSeenAt &&
                   old.role === member.role &&
+                  old.character === member.character &&
                   old.displayName === member.displayName
                 )
                   continue;

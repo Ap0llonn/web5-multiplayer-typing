@@ -1,6 +1,7 @@
 import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 import en from "../../src/shared/presentation/i18n/messages/en.json" with { type: "json" };
 import fr from "../../src/shared/presentation/i18n/messages/fr.json" with { type: "json" };
+test.use({ trace: "off" });
 
 async function account(context: BrowserContext, prefix: string) {
   const username = `${prefix}${crypto.randomUUID().replaceAll("-", "").slice(0, 10)}`;
@@ -41,12 +42,18 @@ async function createRoom(
   await expect(page.getByTestId("room-code")).toBeVisible();
   return page.getByTestId("room-code").innerText();
 }
-async function join(page: Page, messages: typeof en, code: string) {
-  const form = page.locator("form").filter({
-    has: page.getByRole("heading", { name: messages.join, exact: true }),
-  });
-  await form.getByLabel(messages.code).fill(code);
-  await form.getByRole("button", { name: messages.join, exact: true }).click();
+async function join(
+  page: Page,
+  messages: typeof en,
+  code: string,
+  locale = "en",
+) {
+  await page.goto(`/${locale}/play`);
+  await page.getByLabel(messages.play.roomCodeLabel).fill(code);
+  await page
+    .getByRole("button", { name: messages.play.joinButton, exact: true })
+    .click();
+  await page.getByRole("button", { name: messages.join, exact: true }).click();
 }
 
 test("a stale tab recovers its real room and requires an explicit leave before joining another", async ({
@@ -65,14 +72,14 @@ test("a stale tab recovers its real room and requires an explicit leave before j
     const stale = await owner.newPage();
     const target = await other.newPage();
     const initialLookup = stale.waitForResponse("**/api/lobbies/me");
-    await stale.goto("/en");
+    await stale.goto("/en/play/create");
     expect(await (await initialLookup).json()).toMatchObject({
       ok: true,
       value: null,
     });
-    await first.goto("/en");
+    await first.goto("/en/play/create");
     const originalCode = await createRoom(first, en, "Original room");
-    await target.goto("/en");
+    await target.goto("/en/play/create");
     const targetCode = await createRoom(target, en, "Target room");
     const mutations: string[] = [];
     stale.on("request", (request) => {
@@ -83,9 +90,8 @@ test("a stale tab recovers its real room and requires an explicit leave before j
     await expect(stale.getByRole("main").getByRole("alert")).toHaveText(
       en.roomConflict,
     );
-    await expect(stale.getByTestId("room-code")).toHaveText(originalCode);
     await expect(
-      stale.getByRole("button", { name: en.leave, exact: true }),
+      stale.getByRole("link", { name: en.returnToRoom, exact: true }),
     ).toBeVisible();
     // Recovery renews presence in the original room, but must not change rooms.
     expect(
@@ -96,6 +102,10 @@ test("a stale tab recovers its real room and requires an explicit leave before j
     expect(
       await (await owner.request.get("/api/lobbies/me")).json(),
     ).toMatchObject({ ok: true, value: { code: originalCode } });
+    await stale
+      .getByRole("link", { name: en.returnToRoom, exact: true })
+      .click();
+    await expect(stale.getByTestId("room-code")).toHaveText(originalCode);
     await stale.getByRole("button", { name: en.leave, exact: true }).click();
     await expect(stale.getByTestId("room-code")).toHaveCount(0);
     await join(stale, en, targetCode);
@@ -132,7 +142,7 @@ for (const [locale, messages] of [
       const pages = await Promise.all(
         contexts.map((context) => context.newPage()),
       );
-      await pages[0].goto(`/${locale}`);
+      await pages[0].goto(`/${locale}/play/create`);
       const code = await createRoom(
         pages[0],
         messages,
@@ -143,42 +153,47 @@ for (const [locale, messages] of [
         messages.SPECTATOR,
       );
       for (let n = 1; n < pages.length; n++) {
-        await pages[n].goto(`/${locale}`);
-        await pages[n].getByLabel(messages.guestName).fill(`Guest ${n}`);
-        await pages[n]
-          .getByRole("button", { name: messages.guest, exact: true })
-          .click();
-        await expect(pages[n].getByText(messages.guestLimit)).toBeVisible();
+        const session = await contexts[n].request.post(
+          "/api/auth/sign-in/anonymous",
+          {
+            headers: {
+              origin:
+                process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+            },
+            data: { name: `Guest ${n}` },
+          },
+        );
+        expect(session.status()).toBe(200);
       }
       const visitor = pages[3];
-      await join(visitor, messages, "OOOOOO");
-      await expect(visitor.getByRole("main").getByRole("alert")).toHaveText(
-        messages.errors.VALIDATION,
-      );
-      await join(visitor, messages, "ZZZZZZ");
+      await join(visitor, messages, "ZZZZZZ", locale);
       await expect(visitor.getByRole("main").getByRole("alert")).toHaveText(
         messages.errors.NOT_FOUND,
       );
-      await join(pages[1], messages, code);
+      await join(pages[1], messages, code, locale);
       await expect(pages[1].getByTestId("room-code")).toHaveText(code);
-      await join(pages[2], messages, code);
+      await join(pages[2], messages, code, locale);
       await expect(pages[0].getByTestId("member-row")).toHaveCount(3);
-      await join(visitor, messages, code);
+      await join(visitor, messages, code, locale);
       await expect(visitor.getByRole("main").getByRole("alert")).toHaveText(
         messages.errors.ROOM_FULL,
       );
       await expect(visitor.getByTestId("room-code")).toHaveCount(0);
-      await expect(visitor).toHaveURL(new RegExp(`/${locale}/?$`));
+      await expect(visitor).toHaveURL(
+        new RegExp(`/${locale}/play/player\\?code=${code}$`),
+      );
       await pages[0]
         .getByRole("button", { name: messages.leave, exact: true })
         .click();
       await expect(pages[0].getByTestId("room-code")).toHaveCount(0);
-      await join(visitor, messages, code);
+      await join(visitor, messages, code, locale);
       await expect(visitor.getByRole("main").getByRole("alert")).toHaveText(
         messages.errors.ROOM_CLOSED,
       );
       await expect(visitor.getByTestId("room-code")).toHaveCount(0);
-      await expect(visitor).toHaveURL(new RegExp(`/${locale}/?$`));
+      await expect(visitor).toHaveURL(
+        new RegExp(`/${locale}/play/player\\?code=${code}$`),
+      );
     } finally {
       await Promise.all(contexts.map((context) => context.close()));
     }

@@ -70,6 +70,7 @@ export async function handleLobbyCommand(
             parsed.data.code,
             parsed.data.role,
             actor.value,
+            parsed.data.character,
           )
         : failure("VALIDATION"),
     );

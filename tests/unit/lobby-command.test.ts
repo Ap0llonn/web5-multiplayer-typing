@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { sendLobbyCommand } from "@/modules/lobby/presentation/lobby-command";
+import { sendLobbyCommand } from "@/modules/lobby/presentation/transport/lobby-command";
 import { failure, success } from "@/shared/contracts/operation-result";
 import type { LobbySnapshot } from "@/modules/lobby/public";
 const currentRoom: LobbySnapshot = {

@@ -2,11 +2,11 @@ import {
   failure,
   type OperationResult,
 } from "@/shared/contracts/operation-result";
-import type { LobbySnapshot } from "../public";
+import type { LobbySnapshot } from "../../public";
 import {
   HEARTBEAT_INTERVAL_MS,
   HEARTBEAT_TIMEOUT_MS,
-} from "../contracts/presence";
+} from "../../contracts/presence";
 type BrowserRequest = (path: string, init?: RequestInit) => Promise<Response>;
 export function startLobbyHeartbeat(
   code: string,

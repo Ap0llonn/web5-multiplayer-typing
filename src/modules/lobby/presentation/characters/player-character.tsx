@@ -1,20 +1,20 @@
-export type PreviewStyle = "cobalt" | "coral" | "mint" | "butter";
+import type { LobbyCharacter } from "../../public";
 
 const colors = {
   cobalt: { face: "#7397ff", edge: "#4164c6", top: "#b5c8ff" },
   coral: { face: "#ffab98", edge: "#d4796b", top: "#ffdbcc" },
   mint: { face: "#92ddbd", edge: "#5aa78e", top: "#cdf4df" },
   butter: { face: "#ffdb7e", edge: "#d2a64d", top: "#fff0bc" },
-} satisfies Record<PreviewStyle, { face: string; edge: string; top: string }>;
+} satisfies Record<LobbyCharacter, { face: string; edge: string; top: string }>;
 
-export function PreviewAvatar({
-  style,
+export function PlayerCharacter({
+  character,
   className = "",
 }: {
-  style: PreviewStyle;
+  character: LobbyCharacter;
   className?: string;
 }) {
-  const color = colors[style];
+  const color = colors[character];
 
   return (
     <svg
@@ -22,8 +22,8 @@ export function PreviewAvatar({
       fill="none"
       aria-hidden="true"
       focusable="false"
-      data-style={style}
-      className={`pp-avatar pp-avatar--${style} ${className}`}
+      data-character={character}
+      className={`player-character ${className}`}
     >
       <ellipse cx="64" cy="125" rx="39" ry="6" fill="#202944" opacity="0.1" />
       <path

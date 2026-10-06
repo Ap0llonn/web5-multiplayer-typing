@@ -128,8 +128,16 @@ model LobbyMember {
  kind String
  displayName String
  role LobbyRole
+ character LobbyCharacter @default(cobalt)
  joinedAt DateTime
  lastSeenAt DateTime
  @@unique([lobbyId,playerIdentityId])
  @@index([lobbyId,activePlayerIdentityId])
+}
+
+enum LobbyCharacter {
+ cobalt
+ coral
+ mint
+ butter
 }

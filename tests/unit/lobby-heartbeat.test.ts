@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { startLobbyHeartbeat } from "@/modules/lobby/presentation/lobby-heartbeat";
+import { startLobbyHeartbeat } from "@/modules/lobby/presentation/transport/lobby-heartbeat";
 import {
   success,
   failure,

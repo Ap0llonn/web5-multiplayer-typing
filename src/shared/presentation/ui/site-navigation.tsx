@@ -34,7 +34,7 @@ export function SiteNavigation({
             href="/play"
             aria-current={path === "/play" ? "page" : undefined}
           >
-            {t("playPreview.navigationLabel")}
+            {t("play.navigationLabel")}
           </Link>
         </div>
         <div className="nav-controls">

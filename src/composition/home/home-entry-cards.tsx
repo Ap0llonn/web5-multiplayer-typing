@@ -1,5 +1,4 @@
 import { useTranslations } from "next-intl";
-import { AuthForm } from "@/modules/identity/presentation/auth-form";
 import { Link } from "@/shared/presentation/i18n/navigation";
 import { ActionHeading } from "@/shared/presentation/ui/action-heading";
 import { buttonStyles } from "@/shared/presentation/ui/button";
@@ -16,10 +15,13 @@ export function HomeEntryCards() {
           id="join-room-title"
           badge={t("joinBadge")}
           title={t("join")}
-          description={t("guestDescription")}
+          description={t("joinDescription")}
           icon="enter"
         />
-        <AuthForm mode="guest" />
+        <Link href="/play" className={buttonStyles({ variant: "pink" })}>
+          {t("join")}
+          <Icon name="arrow" />
+        </Link>
         <p className="card-footnote">
           <Icon name="check" />
           {t("noAccountNeeded")}
@@ -49,19 +51,14 @@ export function HomeEntryCards() {
           </span>
         </div>
         <div className="mt-auto grid gap-3 pt-5">
-          <Link href="/login" className={buttonStyles({ variant: "ink" })}>
-            {t("login")}
+          <Link
+            href="/play/create"
+            className={buttonStyles({ variant: "ink" })}
+          >
+            {t("create")}
             <Icon name="arrow" />
           </Link>
-          <p className="card-footnote">
-            {t("newHere")}{" "}
-            <Link
-              href="/signup"
-              className="font-extrabold underline underline-offset-4"
-            >
-              {t("signup")}
-            </Link>
-          </p>
+          <p className="card-footnote">{t("accountRequired")}</p>
         </div>
       </Card>
     </div>

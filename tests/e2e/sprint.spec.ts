@@ -62,19 +62,19 @@ test("two real sessions create/join, stream roster and reconnect without duplica
   ).toHaveCount(0);
   // Next renders a screen-reader route announcer with role=alert outside main.
   await expect(h.getByRole("main").getByRole("alert")).toHaveCount(0);
+  await h.getByRole("link", { name: "Create room", exact: true }).click();
   await expect(h.getByLabel("Room name")).toBeVisible();
   await h.getByLabel("Room name").fill("Test room");
   await h.getByRole("button", { name: "Create room", exact: true }).click();
   await expect(h.getByTestId("room-code")).toBeVisible();
   const code = await h.getByTestId("room-code").innerText();
-  await g.goto("/en");
+  await g.goto("/en/play");
+  await g.getByLabel(en.play.roomCodeLabel).fill(code);
+  await g
+    .getByRole("button", { name: en.play.joinButton, exact: true })
+    .click();
   await g.getByLabel("Guest nickname").fill("Test Guest");
   await g.getByRole("button", { name: "Continue as guest" }).click();
-  await expect(
-    g.getByText("Guests can join a room, but cannot create one."),
-  ).toBeVisible();
-  await g.getByLabel("Room code").fill(code);
-  await g.getByRole("button", { name: "Join room", exact: true }).click();
   await expect(h.getByText("Test Guest", { exact: true })).toBeVisible({
     timeout: 10000,
   });
@@ -140,12 +140,17 @@ test("a delayed initial room lookup cannot erase a successful creation", async (
   const requestSeen = new Promise<void>((r) => {
     intercepted = r;
   });
+  let lookups = 0;
   await page.route("**/api/lobbies/me", async (route) => {
+    if (++lookups > 1) {
+      await route.continue();
+      return;
+    }
     intercepted();
     await waiting;
     await route.fulfill({ json: { ok: true, value: null } });
   });
-  await page.goto("/en");
+  await page.goto("/en/play/create");
   await requestSeen;
   await page.getByLabel("Room name").fill("Delayed lookup");
   await page.getByRole("button", { name: "Create room", exact: true }).click();

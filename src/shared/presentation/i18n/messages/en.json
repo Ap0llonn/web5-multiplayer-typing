@@ -25,7 +25,7 @@
     "title": "Your crew starts here.",
     "choose": {
       "title": "Pick your way in",
-      "description": "A nickname to join. An account to create your own room."
+      "description": "Join with a code or open the creation page to host your own room."
     },
     "share": {
       "title": "Pass the code around",
@@ -40,7 +40,7 @@
   "joinBadge": "Saved you a spot",
   "createDescription": "Your room, your crew. Bring everyone together around the keyboard.",
   "joinDescription": "Enter the code shared by your host.",
-  "guestDescription": "Pick a nickname. Then you can enter the room code.",
+  "guestDescription": "Enter your room code, then pick a nickname and a character.",
   "accountRequired": "Sign in to an account to create your room.",
   "guestPlaceholder": "Your nickname",
   "roomPlaceholder": "Friends’ room",
@@ -115,60 +115,35 @@
     "account": "Account",
     "guest": "Guest"
   },
-  "playPreview": {
-    "navigationLabel": "Lobby preview",
-    "prototypeBadge": "DEMO",
-    "prototypeNote": "Preview room · sample players and race settings",
+  "returnToRoom": "Return to my room",
+  "play": {
+    "navigationLabel": "Join a room",
     "entryEyebrow": "A spot at the starting line",
     "entryTitle": "Meet your crew.",
     "entryDescription": "One room. Your people. Find your way in.",
     "joinButton": "Let’s go",
-    "lobbyEyebrow": "Your keyboard clubhouse",
-    "leaveButton": "Leave room",
-    "waitingForHost": "Waiting at the starting line",
-    "stageCaption": "Good keys. Great company.",
     "ticketLabel": "Your player pass",
-    "editorTitle": "Make yourself at home.",
-    "editorDescription": "Choose your nickname and a character. Then meet the crew.",
-    "nicknameLabel": "Your nickname",
-    "nicknamePlaceholder": "What should we call you?",
-    "nicknameHint": "3–20 characters. Make it yours.",
-    "styleLabel": "Pick your character",
-    "styles": {
+    "roomCodeLabel": "Room code",
+    "roomCodePlaceholder": "e.g. ABC234",
+    "roomCodeHint": "Enter your host’s 6-character code. No 0, O, 1, I or L.",
+    "roomTitle": "Room",
+    "backButton": "Back",
+    "characterLabel": "Pick your character",
+    "characters": {
       "cobalt": "Blue",
       "coral": "Coral",
       "mint": "Mint",
       "butter": "Sunny"
     },
-    "readyButton": "I’m ready!",
-    "updatePlayer": "Save changes",
+    "editorTitle": "Make yourself at home.",
+    "editorDescription": "Choose your character, then meet the crew.",
+    "saveCharacter": "Save changes",
+    "editCharacter": "My character",
+    "lobbyEyebrow": "Your keyboard clubhouse",
     "rosterTitle": "The crew",
-    "playerCount": "{count, plural, one {# player} other {# players}}",
+    "playerCount": "{count, plural, one {# person} other {# people}}",
     "you": "You",
-    "samplePlayer": "Sample player",
-    "sampleNames": {
-      "one": "Milo",
-      "two": "Nora",
-      "three": "Jules",
-      "four": "Luna"
-    },
-    "settingsTitle": "On the starting line",
-    "settings": {
-      "language": "Text language",
-      "languageValue": "French",
-      "length": "Length",
-      "lengthValue": "50 words",
-      "difficulty": "Difficulty",
-      "difficultyValue": "Normal",
-      "bonuses": "Bonuses",
-      "bonusesValue": "Off"
-    },
-    "roomCodeLabel": "Room code",
-    "roomCodePlaceholder": "e.g. ABC234",
-    "roomCodeHint": "Enter your host’s 6-character code. No 0, O, 1, I or L.",
-    "roomTitle": "Room",
-    "editPlayer": "Edit",
-    "cancelEdit": "Cancel",
-    "backButton": "Back"
+    "stageCaption": "Good keys. Great company.",
+    "createTitle": "Get your crew together."
   }
 }

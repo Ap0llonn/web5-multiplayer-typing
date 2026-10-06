@@ -164,6 +164,7 @@ test("keyboard signup and a maximum-length room name remain usable at 360px", as
     ).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/en\/?$/);
+    await page.getByRole("link", { name: en.create, exact: true }).click();
     await expect(page.getByLabel(en.roomName)).toBeVisible();
     await fitsViewport(page);
     const longName = "W".repeat(60);
@@ -176,7 +177,7 @@ test("keyboard signup and a maximum-length room name remain usable at 360px", as
     await fitsViewport(page);
     await page.getByRole("button", { name: en.leave, exact: true }).focus();
     await page.keyboard.press("Enter");
-    await expect(page.getByLabel(en.roomName)).toBeVisible();
+    await expect(page.getByLabel(en.play.roomCodeLabel)).toBeVisible();
   } finally {
     await context.close();
   }
@@ -222,7 +223,7 @@ for (const [locale, messages] of [
           },
         });
         expect(signup.status()).toBe(200);
-        await page.goto(`/${locale}`);
+        await page.goto(`/${locale}/play/create`);
         await expect(page.getByLabel(messages.roomName)).toBeVisible();
         await fitsViewport(page);
         await accessible(page);

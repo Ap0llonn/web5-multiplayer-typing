@@ -11,8 +11,12 @@ import type {
   LobbyActor,
   LobbyRole,
   LobbySnapshot,
+  LobbyCharacter,
 } from "../contracts/lobby";
-import { validateCreateInput } from "../contracts/lobby-schemas";
+import {
+  characterSchema,
+  validateCreateInput,
+} from "../contracts/lobby-schemas";
 export function createCode() {
   const alphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
   return Array.from(
@@ -37,7 +41,15 @@ export function createRoom(
     hostPlayerIdentityId: actor.playerIdentityId,
     state: "WAITING",
     version: 1,
-    members: [{ ...actor, role: input.role, joinedAt: now, lastSeenAt: now }],
+    members: [
+      {
+        ...actor,
+        role: input.role,
+        character: parsed.data.character ?? "cobalt",
+        joinedAt: now,
+        lastSeenAt: now,
+      },
+    ],
   });
 }
 export function joinRoom(
@@ -45,7 +57,10 @@ export function joinRoom(
   actor: LobbyActor,
   role: LobbyRole,
   now: number,
+  character?: LobbyCharacter,
 ): OperationResult<Lobby> {
+  if (character !== undefined && !characterSchema.safeParse(character).success)
+    return failure("VALIDATION");
   for (const member of [...room.members])
     if (now - member.lastSeenAt > PRESENCE_GRACE_MS)
       leaveRoom(room, member.playerIdentityId, now);
@@ -56,6 +71,7 @@ export function joinRoom(
   );
   if (existing) {
     existing.lastSeenAt = now;
+    if (character !== undefined) existing.character = character;
     return success(room);
   }
   if (
@@ -63,7 +79,13 @@ export function joinRoom(
     room.members.filter((m) => m.role === "PARTICIPANT").length >= room.capacity
   )
     return failure("ROOM_FULL");
-  room.members.push({ ...actor, role, joinedAt: now, lastSeenAt: now });
+  room.members.push({
+    ...actor,
+    role,
+    character: character ?? "cobalt",
+    joinedAt: now,
+    lastSeenAt: now,
+  });
   return success(room);
 }
 export function leaveRoom(

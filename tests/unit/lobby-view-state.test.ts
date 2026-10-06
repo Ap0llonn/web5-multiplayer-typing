@@ -1,5 +1,5 @@
 import { it, expect } from "vitest";
-import { lobbyViewReducer } from "@/modules/lobby/presentation/lobby-view-state";
+import { lobbyViewReducer } from "@/modules/lobby/presentation/room/lobby-view-state";
 import type { LobbySnapshot } from "@/modules/lobby/public";
 const room: LobbySnapshot = {
   id: "room",

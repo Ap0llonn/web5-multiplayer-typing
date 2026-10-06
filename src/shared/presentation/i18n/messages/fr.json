@@ -25,7 +25,7 @@
     "title": "La bande se retrouve ici.",
     "choose": {
       "title": "Choisis ton entrée",
-      "description": "Un pseudo pour rejoindre. Un compte pour créer ta salle."
+      "description": "Rejoins avec un code ou ouvre la page de création pour accueillir ta bande."
     },
     "share": {
       "title": "Fais passer le code",
@@ -40,7 +40,7 @@
   "joinBadge": "On t’a gardé une place",
   "createDescription": "Ta salle, ta bande. Réunis tout le monde autour du clavier.",
   "joinDescription": "Entre le code partagé par ton hôte.",
-  "guestDescription": "Choisis ton pseudo. Tu pourras ensuite entrer le code de la salle.",
+  "guestDescription": "Entre le code de ta salle, puis choisis ton pseudo et ton personnage.",
   "accountRequired": "Connecte-toi à un compte pour créer ta salle.",
   "guestPlaceholder": "Ton pseudo",
   "roomPlaceholder": "La salle des amis",
@@ -115,60 +115,35 @@
     "account": "Compte",
     "guest": "Invité"
   },
-  "playPreview": {
-    "navigationLabel": "Salon démo",
-    "prototypeBadge": "DÉMO",
-    "prototypeNote": "Salon de démonstration · joueurs et réglages d’exemple",
+  "returnToRoom": "Revenir à ma salle",
+  "play": {
+    "navigationLabel": "Rejoindre",
     "entryEyebrow": "Une place sur la ligne de départ",
     "entryTitle": "Retrouve ta bande.",
     "entryDescription": "Une salle. Tes amis. C’est parti.",
     "joinButton": "C’est parti",
-    "lobbyEyebrow": "Le clubhouse des claviers",
-    "leaveButton": "Quitter la salle",
-    "waitingForHost": "On attend sur la ligne de départ",
-    "stageCaption": "Les bonnes touches, ça se partage.",
     "ticketLabel": "Ton billet de joueur",
-    "editorTitle": "Prends ta place.",
-    "editorDescription": "Choisis ton pseudo et ton personnage. Puis retrouve la bande.",
-    "nicknameLabel": "Ton pseudo",
-    "nicknamePlaceholder": "Comment on t’appelle ?",
-    "nicknameHint": "3–20 caractères. À toi de jouer.",
-    "styleLabel": "Choisis ton personnage",
-    "styles": {
+    "roomCodeLabel": "Code de la salle",
+    "roomCodePlaceholder": "ex. ABC234",
+    "roomCodeHint": "Entre le code de 6 caractères de ton hôte. Sans 0, O, 1, I ou L.",
+    "roomTitle": "Salon",
+    "backButton": "Retour",
+    "characterLabel": "Choisis ton personnage",
+    "characters": {
       "cobalt": "Bleu",
       "coral": "Corail",
       "mint": "Menthe",
       "butter": "Soleil"
     },
-    "readyButton": "Je suis prêt !",
-    "updatePlayer": "Enregistrer",
+    "editorTitle": "Prends ta place.",
+    "editorDescription": "Choisis ton personnage, puis retrouve la bande.",
+    "saveCharacter": "Enregistrer",
+    "editCharacter": "Mon personnage",
+    "lobbyEyebrow": "Le clubhouse des claviers",
     "rosterTitle": "La bande",
-    "playerCount": "{count, plural, one {# joueur} other {# joueurs}}",
+    "playerCount": "{count, plural, one {# personne} other {# personnes}}",
     "you": "Toi",
-    "samplePlayer": "Joueur d’exemple",
-    "sampleNames": {
-      "one": "Milo",
-      "two": "Nora",
-      "three": "Jules",
-      "four": "Luna"
-    },
-    "settingsTitle": "Sur la ligne de départ",
-    "settings": {
-      "language": "Langue du texte",
-      "languageValue": "Français",
-      "length": "Longueur",
-      "lengthValue": "50 mots",
-      "difficulty": "Difficulté",
-      "difficultyValue": "Normal",
-      "bonuses": "Bonus",
-      "bonusesValue": "Désactivés"
-    },
-    "roomCodeLabel": "Code de la salle",
-    "roomCodePlaceholder": "ex. ABC234",
-    "roomCodeHint": "Entre le code de 6 caractères de ton hôte. Sans 0, O, 1, I ou L.",
-    "roomTitle": "Salon",
-    "editPlayer": "Modifier",
-    "cancelEdit": "Annuler",
-    "backButton": "Retour"
+    "stageCaption": "Les bonnes touches, ça se partage.",
+    "createTitle": "Rassemble ta bande."
   }
 }

@@ -4,6 +4,7 @@ import type {
   CreateLobbyInput,
   LobbyActor,
   LobbyRole,
+  LobbyCharacter,
 } from "../../contracts/lobby";
 import {
   createRoom,
@@ -31,9 +32,14 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
     const result = await this.repository.create(created.value);
     return result.ok ? success(snapshot(result.value, this.now())) : result;
   }
-  async joinLobby(code: string, role: LobbyRole, actor: LobbyActor) {
+  async joinLobby(
+    code: string,
+    role: LobbyRole,
+    actor: LobbyActor,
+    character?: LobbyCharacter,
+  ) {
     const result = await this.repository.mutate(code, (room) =>
-      joinRoom(room, actor, role, this.now()),
+      joinRoom(room, actor, role, this.now(), character),
     );
     return result.ok ? success(snapshot(result.value, this.now())) : result;
   }

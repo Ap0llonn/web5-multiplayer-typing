@@ -12,7 +12,7 @@ Le cahier des charges « Web V — Course de frappe multijoueur en temps réel �
 
 Les modules actuels sont `identity` et `lobby`. Course, bots, bonus, corpus et historique sont des extensions futures ; les décrire ne justifie ni faux services opérationnels, ni tables inutilisées, ni succès simulés.
 
-La demande du 5 octobre 2026 autorise séparément un prototype de présentation à `/fr/play` et `/en/play`, signalé comme démonstration. La correction utilisateur du même jour fixe trois étapes routées : code à `/play`, pseudo/personnage à `/play/player`, puis salon à `/play/room`, sous chaque locale. Cette exception bornée concerne uniquement des états locaux de maquette ; elle ne remplace aucun contrat ni succès du parcours réel. Son périmètre et ses divergences sont décrits dans [play-preview.md](play-preview.md) et dans la section dédiée ci-dessous.
+Le 6 octobre 2026, l’utilisateur demande le vrai lobby et précise ensuite que `/[locale]/play` sert uniquement à rejoindre : un champ de code de six caractères, comme dans la maquette, sans création et sans mention de démonstration. La création est désormais proposée à `/play/create` depuis la décision utilisateur suivante. `/play/player?code=…` valide le code côté serveur, résout l’identité et assemble la session invitée officielle puis l’adhésion lobby réelle ; `/play/room` affiche la salle active et sa présence HTTP/SSE. Le format alphanumérique de la maquette et de `SALLE-02` est conservé. La course, les bots, les bonus et la configuration restent futurs.
 
 ### Audit borné de la référence Type
 
@@ -295,6 +295,59 @@ Cette correction conserve l’exception de présentation autorisée : aucun comp
 
 Le 5 octobre 2026, la correction passe lint, frontières, **58 unitaires**, **20 intégrations / 11 fichiers**, le build de production avec les trois routes et **33 E2E / 33** : huit scénarios de démonstration et 25 régressions existantes. La recette vérifie code, routes, accès directs, navigation, modification/annulation, reset au rechargement et à la sortie, clavier/focus et absence d’activité auth/lobby ; ses **36 combinaisons axe** couvrent les trois pages × FR/EN × clair/sombre × 360/820/1440 px. L’inspection CUA confirme les trois étapes, le formulaire prérempli en modification et le salon à 1440 et 360 px, avec thème sombre conservé ; les captures correspondantes sont enregistrées. Le contrôle de types autonome passe après régénération du seul cache `.next/dev/types` ; les imports initiaux de `next-env.d.ts`, le code source, `tsconfig.json` et le build de production restent inchangés. Le [rapport courant](verification.md#parcours-code-et-joueur-sur-pages-dédiées--5-octobre-2026) et l’[inspection du parcours à trois pages](play-preview.md#inspection-du-parcours-à-trois-pages) portent cette preuve ; les 31 E2E précédents restent historiques.
 
+### Parcours de connexion à une salle — 6 octobre 2026
+
+La correction utilisateur remplace le premier montage de `LobbyPanel` dans `/play` : cette route doit rester une entrée par code uniquement, sans formulaire de création ni résolution de session préalable. `composition/play/PlayPage` réutilise le champ et les styles de la maquette ; le code normalisé est transmis à `/play/player?code=…` sans création d’identité ni adhésion à ce stade. Le schéma serveur valide aussi le paramètre sur la page du joueur ; un paramètre absent, dupliqué ou invalide revient à `/play`.
+
+`composition/play/PlayerPage` lit l’acteur réel. Un invité sans session choisit son pseudo dans `identity/presentation/AuthForm`, qui appelle le protocole Better Auth officiel. Son callback de succès permet à `composition/play/JoinPlayerForm` d’appeler la commande publique de présentation lobby. Un acteur déjà connecté confirme simplement l’adhésion. La composition coordonne les deux modules ; les modules ne s’importent pas. L’entrée se fait comme participant. L’accès spectateur reste disponible dans le parcours de l’accueil.
+
+La navigation vers `/play/room` suit uniquement une adhésion réussie. Un code absent ou une salle pleine/fermée reste un échec traduit ; aucun faux joueur n’est ajouté. Un conflit avec une salle existante propose de revenir à cette salle, sans départ automatique. `RoomPage` résout encore l’acteur serveur et monte `LobbyPanel` en mode salle uniquement : salle active, roster serveur, heartbeat, snapshots SSE, sortie explicite vers `/play`. Ni création ni fixtures n’y sont affichées. Le rechargement relit la session et l’état PostgreSQL.
+
+Le shell de `/play` conserve la présentation compacte, la marque fournie, les langues et les thèmes ; le badge et la note de démonstration sont retirés. Les liens du shell principal s’appellent désormais « Rejoindre ». Les anciens fichiers de maquette non montés ont été retirés pendant le rangement ci-dessous ; `play-preview.md` et leurs preuves restent historiques et ne valident pas le parcours réel. La recette courante est consignée dans `verification.md`.
+
+### Organisation de la présentation lobby — 6 octobre 2026
+
+Le rangement demandé par l’utilisateur rattache les fichiers aux responsabilités de `TECH-01/02`, tout en conservant le parcours code/pseudo/salle et les contrats `JOIN`, `SALLE` et présence. Les fichiers de maquette non montés sont supprimés, plutôt que déplacés dans une seconde implémentation de salon.
+
+```text
+modules/lobby/presentation/
+  entry/
+    room-code-entry.tsx + .css    Entrée publique de /play, code uniquement
+    create-room-card.tsx          Formulaire de création dédié
+    create-room-panel.tsx         Commande et navigation de /play/create
+    lobby-role-field.tsx          Champ participant/spectateur
+  room/
+    lobby-room.tsx                Page de lobby avec scène et code
+    lobby-roster.tsx              Présentation des membres réels
+    use-lobby-room.ts             Cycle client : lecture, commandes, SSE, heartbeat
+    lobby-view-state.ts           Ordre des snapshots et récupération des conflits
+  transport/
+    lobby-command.ts             Entrée publique navigateur de commande HTTP
+    lobby-heartbeat.ts           Transport et arrêt du heartbeat
+```
+
+La composition importe les composants publics `entry/room-code-entry` et `room/lobby-panel`, ou `transport/lobby-command` pour coordonner l’adhésion après Better Auth. Elle ne consomme pas le hook ni le reducer privés. `LobbyPanel` garde l’assemblage et la navigation après départ ; `useLobbyRoom` porte l’état client et le nettoyage des connexions. Ses commandes retournent `OperationResult`, avec les mêmes refus et récupération de salle active. Les droits, règles et transactions restent serveur.
+
+Le wrapper d’entrée de maquette est fusionné dans `RoomCodeEntry`. Les noms `Preview*`, le contexte local, les avatars/rosters/réglages de démonstration et leurs traductions inutilisées sont retirés. Le catalogue actif est désormais `play` en FR/EN. Les styles du champ vivent dans `entry/room-code-entry.css`; le shell et le billet joueur sont dans `composition/play/play-layout.css` et `join-player-form.css`. `shared` conserve les primitives et tokens génériques. Les règles de style actives sont conservées avec des classes nommées pour ces vues ; les styles de maquette ne sont pas maintenus dans le bundle.
+
+Les anciens noms de fichiers cités dans les sections historiques et `play-preview.md` décrivent seulement les réalisations passées. Les chemins actifs et les preuves du rangement sont suivis dans `EXIGENCES.md` et `verification.md`.
+
+### Lobby visuel dédié et personnages partagés — 6 octobre 2026
+
+La correction suivante de l’utilisateur précise que le rangement ne devait pas retirer l’interface approuvée : scène de clubhouse, personnages sélectionnables, roster graphique et identifiant du lobby. Cette décision remplace le rendu compact `LobbyPanel`/`ActiveRoomCard`, désormais supprimé. Les fichiers restent rangés par responsabilité.
+
+`/[locale]/play/room` est la page complète du lobby : `composition/play/RoomPage` résout l’acteur puis monte l’entrée publique `lobby/presentation/room/LobbyRoom`. La scène réutilise `typing-clubhouse.png` et les quatre SVG de keycaps de la maquette. Le nom et le code réel à six caractères sont affichés, avec les membres réellement présents et leurs rôles/états. Aucun joueur d’exemple n’est réintroduit. L’accueil présente les liens vers les parcours dédiés ; un succès de création ou d’adhésion ouvre `/play/room`, sans scène de lobby intégrée à l’accueil.
+
+Le dossier `presentation/characters` contient `PlayerCharacter`, `CharacterPicker` et leurs styles. Le choix est proposé avant l’adhésion dans `/play/player`, et dans le formulaire réel de `/play/create` ; le membre peut le modifier depuis le lobby. La composition garde le workflow Better Auth → lobby. `AuthForm` reçoit un slot de présentation générique, sans import lobby ; la session et le pseudo restent validés par le protocole officiel. Pendant une modification d’un membre déjà présent, l’adaptateur navigateur public `transport/startLobbyHeartbeat` garde sa place vivante ; quitter l’éditeur arrête ce heartbeat.
+
+**Contrat :** `LobbyCharacter` est l’union fermée `cobalt | coral | mint | butter`. Création et adhésion acceptent un `character` optionnel validé serveur. Une nouvelle adhésion sans choix reçoit `cobalt`; une adhésion existante conserve son choix si le champ est absent. Un choix explicite modifie uniquement le membre correspondant à l’acteur de session, sans modifier son rôle ni doubler sa place. Les états joignables et les limites de capacité s’appliquent toujours. L’édition utilise la même commande d’adhésion et le même budget IP que celle-ci. Identifiants de membre supplémentaires et valeurs arbitraires restent refusés.
+
+**Données :** `LobbyMember.character` est un enum PostgreSQL non nul avec défaut `cobalt`, ajouté par `20261006142000_lobby_character`. Il appartient à l’adhésion, pas au profil Better Auth : aucun upload, photo de profil ou historique public invité n’est ajouté. Le repository traduit ce champ, verrouille la mutation et incrémente la version ; le snapshot le publie via SSE. Les membres sont ordonnés par date d’arrivée puis identité stable afin que les cartes ne changent pas d’ordre pendant les heartbeats. Le client affiche uniquement la valeur serveur, y compris au rechargement.
+
+Entrées publiques : `entry/create-room-panel`, `entry/room-code-entry`, `characters/character-picker`, `room/lobby-room`, `transport/lobby-command` et `transport/lobby-heartbeat`. Le hook de salle et le reducer restent internes au module. Les routes restent dans `app`; aucun accès Prisma ou règle de salle n’y est déplacé.
+
+La page demeure FR/EN, claire/sombre, avec radios natives, labels, focus et image décorative. Le contraste des choix sélectionnés utilise les tokens de leur carte ; les boutons changent leurs couleurs de thème immédiatement pour éviter un texte clair momentanément affiché sur fond clair. La marque fournie est inchangée. Les preuves et l’application de la migration locale sont consignées dans `verification.md`.
+
 ### Infrastructure locale de développement
 
 `compose.yaml` fournit PostgreSQL 18.4, Redis 8.2.10 (AOF), SeaweedFS 4.48 (API S3, bucket privé pour images) et Next.js en développement. Les ports des services de développement sont limités à `127.0.0.1` et les données utilisent des volumes nommés. `compose.production.yaml` lance seulement Next.js et attend un PostgreSQL externe. Cette infrastructure ne crée aucun module métier : PostgreSQL reste la source de vérité du socle, Redis et S3 ne sont pas encore consommés par l’application. Les futurs adaptateurs resteront serveur uniquement, derrière les contrats du module propriétaire. Aucune dépendance SDK inutilisée, aucun changement de transport du lobby et aucune validation d’upload revendiquée. Configuration, cycle de vie et limites : [développement local](DEVELOPPEMENT-LOCAL.md).
@@ -313,3 +366,11 @@ Tout code applicatif et nouveau script est TypeScript, avec `strict: true`, `no-
 ## Précision après revue de concurrence
 
 Les commandes structurelles de salon verrouillent la ligne Lobby en exclusif (FOR UPDATE) sous READ COMMITTED. Les heartbeats la verrouillent en partagé (FOR SHARE), ne réécrivent que le membre concerné et ne changent pas la version structurelle. Cela conserve la transaction d’adhésion/capacité tout en évitant de sérialiser trente mises à jour de présence sur la même ligne. Le superviseur déclenche séparément la réconciliation des expirations ; le repository possède ces primitives de persistance. Une erreur temporaire ne quitte pas le salon côté UI. Voir ADR0001 et les tests présence/reconnexion.
+
+### Accueil et parcours dédiés — décision utilisateur du 6 octobre 2026
+
+L’utilisateur demande que l’adhésion et la création passent exclusivement par leurs pages dédiées. Cette décision remplace les formulaires auparavant intégrés à l’accueil. `composition/home` affiche une présentation, les deux liens `/play` et `/play/create`, et les étapes explicatives ; aucun formulaire d’identité ou de lobby, aucune commande lobby et aucun roster n’y sont montés. `/play` reste le code seul ; `/play/player` garde la composition identité → adhésion ; `/play/room` reste la salle autonome.
+
+La nouvelle route `app/[locale]/play/create/page.tsx` délègue à `composition/play/CreatePage`. La composition résout la session officielle : les comptes voient l’entrée publique `entry/CreateRoomPanel`, les invités et visiteurs voient les liens de connexion/inscription, une panne présente l’erreur traduite. Le formulaire `entry/CreateRoomCard` contient nom, capacité, rôle et personnage. Les contrats HTTP et les droits serveur sont conservés ; la création réussie ouvre `/play/room`. Une adhésion existante propose de revenir à la salle ou de la quitter explicitement. Le formulaire alternatif `JoinRoomCard` et `HomeEntryPanel` sont supprimés pour conserver une seule entrée de chaque opération.
+
+Le shell reste partagé avec `/play`, en FR/EN et clair/sombre. La configuration PostCSS déclarative `.postcssrc.json` est reconnue par la version Next installée et remplace `postcss.config.ts`, ignoré par son chargeur ; les classes Tailwind sont réellement générées. Les liens de navigation ont un espacement réduit sur mobile pour tenir à 360 px. Les tests de navigation suivent maintenant les pages dédiées.

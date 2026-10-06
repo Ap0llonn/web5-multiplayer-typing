@@ -1,4 +1,4 @@
-import type { LobbySnapshot } from "../public";
+import type { LobbySnapshot } from "../../public";
 export type LobbyViewState = {
   room: LobbySnapshot | null;
   generation: number;

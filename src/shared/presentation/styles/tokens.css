@@ -221,8 +221,7 @@ small {
   text-decoration: none;
   transition:
     transform 150ms ease,
-    box-shadow 150ms ease,
-    background-color 150ms ease;
+    box-shadow 150ms ease;
 }
 .arcade-button--ink {
   background: #202944;
@@ -873,6 +872,10 @@ small {
   .site-navigation > div:first-child {
     width: 100%;
     justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .nav-home {
+    padding-inline: 0.6rem;
   }
   .nav-controls {
     width: 100%;

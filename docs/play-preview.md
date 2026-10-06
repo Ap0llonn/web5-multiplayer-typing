@@ -1,5 +1,8 @@
 # Entrée et salon de démonstration — 5 octobre 2026
 
+> Historique : ce contrat de maquette a été remplacé le 6 octobre 2026 par le parcours réel code → session/pseudo → adhésion à la salle. `/play` reste réservé au code ; la création est à l’accueil. Voir `ARCHITECTURE.md` et `verification.md` pour le comportement courant.
+
+
 ## Correction demandée : trois pages et code de salle
 
 La demande suivante remplace l’entrée par nom et le formulaire inclus dans le salon : `/play` reçoit un code de six caractères, `/play/player` est une page dédiée au pseudo/personnage, puis `/play/room` affiche seulement la liste, les réglages et un bouton Modifier (avec Quitter). Le format du code reprend `roomCodeSchema` du module lobby, avec trim et mise en majuscules, sans `0 O 1 I L`. Cette validation locale ne vérifie pas l’existence d’une salle.

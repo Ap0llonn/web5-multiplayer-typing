@@ -23,7 +23,7 @@ async function createAccount(context: BrowserContext) {
 }
 
 // A11Y-02/04 and SALLE-05: custom role controls keep native form semantics.
-test("role menus support keyboard selection, cancellation and independent form values", async ({
+test("creation role menu supports keyboard selection, cancellation and submission", async ({
   browser,
 }) => {
   const context = await browser.newContext({
@@ -32,21 +32,14 @@ test("role menus support keyboard selection, cancellation and independent form v
   try {
     await createAccount(context);
     const page = await context.newPage();
-    await page.goto("/en");
+    await page.goto("/en/play/create");
     await expect(
       page.getByRole("combobox", { name: en.role, exact: true }),
-    ).toHaveCount(2);
+    ).toHaveCount(1);
     const createForm = page.locator("form").filter({
       has: page.getByRole("heading", { name: en.create, exact: true }),
     });
-    const joinForm = page.locator("form").filter({
-      has: page.getByRole("heading", { name: en.join, exact: true }),
-    });
     const createRole = createForm.getByRole("combobox", {
-      name: en.role,
-      exact: true,
-    });
-    const joinRole = joinForm.getByRole("combobox", {
       name: en.role,
       exact: true,
     });
@@ -78,7 +71,6 @@ test("role menus support keyboard selection, cancellation and independent form v
     await expect(menu).toBeHidden();
     await expect(createRole).toBeFocused();
     await expect(createRole).toContainText(en.SPECTATOR);
-    await expect(joinRole).toContainText(en.PARTICIPANT);
 
     await page.keyboard.press("Space");
     await expect(menu).toBeVisible();
@@ -104,16 +96,23 @@ test("role menus support keyboard selection, cancellation and independent form v
     await expect(menu).toBeHidden();
     await expect(createRole).toContainText(en.PARTICIPANT);
     await expect(
+      createForm.getByRole("radio", {
+        name: en.play.characters.cobalt,
+        exact: true,
+      }),
+    ).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(
+      createForm.getByRole("radio", {
+        name: en.play.characters.coral,
+        exact: true,
+      }),
+    ).toBeChecked();
+    await page.keyboard.press("Tab");
+    await expect(
       createForm.getByRole("button", { name: en.create, exact: true }),
     ).toBeFocused();
 
-    await joinRole.click();
-    await expect(menu).toBeVisible();
-    expect(await menu.getAttribute("id")).not.toBe(menuId);
-    await menu.getByRole("option", { name: en.SPECTATOR, exact: true }).click();
-    await expect(joinRole).toBeFocused();
-    await expect(joinRole).toContainText(en.SPECTATOR);
-    await expect(createRole).toContainText(en.PARTICIPANT);
     await createRole.focus();
     await page.keyboard.press("Space");
     await page.keyboard.press("End");
@@ -129,7 +128,7 @@ test("role menus support keyboard selection, cancellation and independent form v
       await (await context.request.get("/api/lobbies/me")).json(),
     ).toMatchObject({
       ok: true,
-      value: { members: [{ role: "SPECTATOR" }] },
+      value: { members: [{ role: "SPECTATOR", character: "coral" }] },
     });
   } finally {
     await context.close();
@@ -150,7 +149,7 @@ test("role values and chevrons remain inside their controls at tablet widths", a
       ["fr", fr],
       ["en", en],
     ] as const) {
-      await page.goto(`/${locale}`);
+      await page.goto(`/${locale}/play/create`);
       for (const width of [820, 768, 900]) {
         await page.setViewportSize({ width, height: 900 });
         for (const control of await page
@@ -221,7 +220,7 @@ for (const [locale, messages] of [
       try {
         await createAccount(context);
         const page = await context.newPage();
-        await page.goto(`/${locale}`);
+        await page.goto(`/${locale}/play/create`);
         await expect(page.locator("html")).toHaveClass(new RegExp(theme));
         const form = page.locator("form").filter({
           has: page.getByRole("heading", {

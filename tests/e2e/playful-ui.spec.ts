@@ -66,7 +66,13 @@ for (const [locale, messages] of [
           .toBe(0);
 
         const main = page.getByRole("main");
+        await expect(main.locator("form, input")).toHaveCount(0);
         await main
+          .getByRole("link", { name: messages.create, exact: true })
+          .click();
+        await expect(page).toHaveURL(new RegExp(`/${locale}/play/create$`));
+        await page
+          .getByRole("main")
           .getByRole("link", { name: messages.login, exact: true })
           .click();
         await expect(page).toHaveURL(new RegExp(`/${locale}/login$`));
@@ -75,12 +81,12 @@ for (const [locale, messages] of [
 
         await page.goto(`/${locale}`);
         await page
-          .getByLabel(messages.guestName)
-          .fill(`Playful-${locale}-${width}`);
-        await page
-          .getByRole("button", { name: messages.guest, exact: true })
+          .getByRole("link", { name: messages.join, exact: true })
           .click();
-        await expect(page.getByLabel(messages.code)).toBeVisible();
+        await expect(
+          page.getByLabel(messages.play.roomCodeLabel),
+        ).toBeVisible();
+        await expect(page.getByLabel(messages.guestName)).toHaveCount(0);
         await expect(page.getByLabel(messages.roomName)).toHaveCount(0);
         await expectNoHorizontalOverflow(page);
       } finally {

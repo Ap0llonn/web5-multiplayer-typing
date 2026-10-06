@@ -4,6 +4,7 @@ import type {
   LobbyActor,
   LobbySnapshot,
   LobbyRole,
+  LobbyCharacter,
 } from "../../contracts/lobby";
 export interface LobbySupervisor {
   createLobby(
@@ -14,6 +15,7 @@ export interface LobbySupervisor {
     code: string,
     role: LobbyRole,
     actor: LobbyActor,
+    character?: LobbyCharacter,
   ): Promise<OperationResult<LobbySnapshot>>;
   leaveLobby(
     code: string,
