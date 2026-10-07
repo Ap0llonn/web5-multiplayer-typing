@@ -375,3 +375,72 @@ Le contrôle visuel précédent a trouvé les utilitaires Tailwind absents et de
 Captures locales ignorées par Git : `test-results/lobby-en-desktop.png` et `test-results/lobby-en-mobile.png`. Les E2E de sessions n’enregistrent pas les cookies dans leurs traces. Serveur de recette isolé à `localhost:3400`, profil Chrome de test, DB `typing_test` créée puis supprimée par `test-stack.ts`. Le serveur local à 3000 est conservé. La migration additive `20261006142000_lobby_character` a également été appliquée à la base de développement documentée `typing_dev`, après vérification de son hôte local, nom, utilisateur et migrations ; aucun reset et aucune base inconnue ou de production ne sont utilisés.
 
 Limite d’environnement conservée : Node 25.6.0 au lieu de la version 24 demandée ; les résultats ci-dessus sont ceux de cette exécution locale. Les fonctionnalités de course, bonus et bots ne sont pas ajoutées, et les statuts officiels ne sont pas relevés artificiellement.
+
+## Construction Docker Apple Silicon — 7 octobre 2026
+
+Signalement utilisateur : le service applicatif échoue à `Dockerfile:7`, `pnpm install --frozen-lockfile`. Reproduction avec `docker build --target dependencies --progress=plain` : l’installation télécharge correctement les paquets, puis refuse `@embedded-postgres/linux-arm64@18.4.0-beta.17` avec `ERR_PNPM_IGNORED_BUILDS`. Docker Desktop utilise Linux ARM64 sur ce poste ; cette variante manquait à la liste explicite `allowBuilds` alors que Linux x64 et macOS y figuraient.
+
+Correction : ajout de `@embedded-postgres/linux-arm64: true` à `pnpm-workspace.yaml`. Le paquet et le lockfile restent inchangés. Le postinstall observé exécute `scripts/hydrate-symlinks.js` et se termine correctement. Pas d’autorisation globale de scripts.
+
+| Contrôle | Résultat |
+| --- | --- |
+| Régression de politique avant correction | ÉCHEC attendu : entrée ARM64 absente |
+| Régression après correction et suite unitaire | PASS : 69 tests / 21 fichiers |
+| Lint, TypeScript, frontières et diff | PASS |
+| `pnpm infra:validate` | PASS : parseur Compose, ports loopback, healthchecks et volumes |
+| `docker build --target development --progress=plain --tag typing-local-app .` | PASS : install frozen, postinstall ARM64, copie du code et export complet de l’image Linux ARM64 |
+| Production Next, intégrations DB et E2E applicatifs | NON RÉEXÉCUTÉS : seul le droit d’exécution du postinstall d’un paquet optionnel change |
+| Démarrage complet des services et migrations | NON EXÉCUTÉS dans ce correctif ; aucune donnée ni volume local modifié |
+
+Les premières commandes pnpm sur l’hôte ont déclenché une vérification de fraîcheur puis un accès registre bloqué par le sandbox, et refusé une réinstallation sans terminal interactif. La validation Compose avec les droits réseau nécessaires a resynchronisé les métadonnées de dépendances ; les vérifications finales ont appelé les outils locaux directement et passent. Le cache `.pnpm-store` vide créé par cette tentative a été supprimé ; le store existant de l’utilisateur est conservé. Node hôte reste 25.6.0 ; la construction Docker utilise Node 24 comme prévu.
+
+## Accueil minimal — 7 octobre 2026
+
+Décision utilisateur : simplifier l’accueil, retirer la création et proposer un CTA pour rejoindre. `composition/home/home-page.tsx` affiche maintenant un titre, une courte description, un seul lien vers `/play` et la note sans compte. Les cartes, l’illustration et les étapes sont retirées, avec leurs composants, styles exclusifs et traductions inutilisées. Les textes FR/EN, le shell, le logo fourni et les thèmes sont conservés. La création reste sur sa page dédiée et les règles serveur ne changent pas.
+
+**Régression avant correction :** les deux tests unitaires FR/EN échouent sur le lien `/play/create` encore présent. Après correction, ils vérifient un seul lien, un seul titre, le CTA traduit et l’absence de création, formulaire, illustration et étapes. Les anciennes attentes de navigation depuis la carte de création passent maintenant directement par `/play/create`.
+
+| Contrôle final sur l’arbre local | Résultat |
+| --- | --- |
+| Lint, TypeScript strict et frontières | PASS |
+| Unitaires | PASS : 69 tests / 21 fichiers |
+| Intégrations PostgreSQL jetable | PASS : 27 tests / 13 fichiers ; trois migrations depuis zéro et replay |
+| Build Next.js Webpack | PASS |
+| E2E Chromium de production | PASS : 35/35 scénarios, dont CTA FR/EN activé au clavier, absence de création à l’accueil, comptes/invités, création dédiée et adhésion réelle |
+| Mobile, thèmes et accessibilité automatisée | PASS : FR/EN clair/sombre, absence de débordement à 360/1440 px, mouvement réduit et axe AA des pages existantes |
+| Inspection visuelle | PASS : accueil EN desktop clair et FR à 360 px sombre inspectés dans le navigateur |
+| Diff sans erreur d’espacement | PASS |
+| Échecs non résolus | Aucun |
+| Turbopack, OAuth réel et déploiement | NON EXÉCUTÉS dans ce lot |
+
+Les premières tentatives PostgreSQL sous sandbox ont été bloquées par `shmget: Operation not permitted`, puis la recette complète a passé avec les droits locaux nécessaires. La base `typing_test` a été créée dans un répertoire temporaire puis supprimée ; le serveur de recette et les profils de navigateur étaient isolés à `localhost:3400`. Aucun reset d’une base inconnue ou de production. Les imports initiaux de `next-env.d.ts` ont été conservés, puis le contrôle de types a passé de nouveau. Node hôte reste 25.6.0, hors de la version 24 demandée. Les statuts officiels ne sont pas relevés par ce changement de présentation.
+
+## Profil personnel — 7 octobre 2026
+
+Demande utilisateur : créer la page de profil selon les exigences et l’UI existante. Rattachement : `AUTH-04/05`, `SEC-02`, `DES-04/05/06`, `I18N-01/03`, `A11Y-01/02/03/04`. La page `/[locale]/profile` et son lien pour les comptes réutilisent le shell, les cartes, boutons, champs, icônes et tokens. `identity` possède validation, droits, repository et photo ; `composition/profile` assemble la page et le transport. Les cinq statistiques, le graphique de progression et l’historique affichent leur indisponibilité : `AUTH-06` et `HIST-01/02` restent non réalisés faute de course/résultats.
+
+**Test initial rouge :** `tests/unit/profile.test.ts` échoue avant réalisation sur l’absence du contrat et du superviseur de profil. Après réalisation, les bornes 3/20, trim, contrôles, champs supplémentaires, droits compte/invité, session absente et propagation des erreurs sont testés. Les tests d’image utilisent le véritable décodeur : contenu PNG valide même avec nom/MIME incorrects, GIF/corruption/vide/taille excessive refusés, image compressée de plus de 16 millions de pixels refusée.
+
+| Contrôle final sur l’arbre local non commité | Résultat |
+| --- | --- |
+| Installation verrouillée de Sharp 0.35.5 | PASS : version déjà transitive rendue directe ; aucune résolution tierce mise à jour |
+| Lint, TypeScript strict, frontières | PASS |
+| Prisma generate et validate | PASS |
+| Unitaires | PASS : 79 tests / 24 fichiers sur l’hôte et dans le conteneur Node 24 |
+| Intégrations PostgreSQL jetable | PASS : 31 tests / 14 fichiers ; quatre migrations depuis zéro puis replay |
+| Build Next.js 16.3.8 Turbopack | PASS : page profil et deux routes API compilées |
+| E2E Chrome isolé de production | PASS : 38/38 scénarios, dont trois nouveaux scénarios de profil |
+| Profil réel | PASS : enregistrement au clavier du pseudo et de la photo, affichage 256 px, reload, déconnexion puis reconnexion avec identifiant inchangé |
+| Refus serveur | PASS : absence/invité/session expirée ou révoquée, origine étrangère, identité falsifiée, champs/fichiers dupliqués, noms invalides, SVG/faux PNG/JPEG, >2 Mio, corps sans Content-Length surdimensionné, budget 10 commandes/IP puis HTTP 429 ; aucune écriture partielle |
+| Photo privée et redimensionnée | PASS : JPEG/PNG/WebP réels convertis en WebP 256×256 sans EXIF ; remplacement, conservation lors d’une édition du nom seul ; autre compte, identifiant fourni en query et visiteur refusés |
+| Traductions, thèmes, responsive et axe AA | PASS : profil FR/EN × clair/sombre × 360/820/1440 px, aucun débordement horizontal, dates localisées et aucune pageerror |
+| Inspection visuelle | PASS : captures du profil EN desktop sombre et mobile clair inspectées |
+| Diff sans erreur d’espacement | PASS |
+| Échecs applicatifs non résolus | Aucun |
+| OAuth réel, statistiques de course, VPS et déploiement | NON EXÉCUTÉS ; aucune preuve nouvelle revendiquée |
+
+Les intégrations utilisent exclusivement `typing_test` sur PostgreSQL 18.4 temporaire, créé puis supprimé par `scripts/test-stack.ts`. La recette navigateur utilise `localhost:3400`, un contexte Chrome séparé et les comptes locaux. Les nouveaux tests de profil désactivent les traces de sessions ; captures ignorées par Git : `test-results/profile-desktop-dark.png` et `test-results/profile-mobile-light.png`. Les contrôles hôte utilisent Node 25.6.0, hors de la version 24 prévue ; cette limite demeure explicite.
+
+Les premiers essais ont rencontré les restrictions de mémoire partagée PostgreSQL et de cache natif SWC du sandbox ; les exécutions locales autorisées ont ensuite passé. Le cache Playwright ne contient pas le navigateur attendu : la recette finale utilise le Chrome installé via `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. Deux attentes de test ont été corrigées : attendre la fin réelle de la déconnexion avant le login, et cibler l’alerte du formulaire dans `main` pour ne pas confondre l’annonceur de navigation Next.js. Ces essais intermédiaires ne sont pas comptés comme succès final.
+
+La migration additive `20261007130000_profile_photo` a aussi été appliquée à la base de développement documentée `typing_dev`, après vérification de l’hôte `127.0.0.1:5432`, du nom, de l’utilisateur `typing` et des trois migrations existantes. Aucun reset ni test n’utilise cette base. Le conteneur applicatif a reçu la dépendance directe Sharp et a été relancé ; les volumes PostgreSQL/Redis/S3 sont conservés. La synchronisation pnpm a nécessité de remettre le cache à son emplacement attendu `/app/.pnpm-store` depuis les paquets déjà présents, puis de corriger uniquement son chemin absolu dans les métadonnées générées `node_modules/.modules.yaml`. Le contrôle automatique pnpm a ensuite passé et Next.js est prêt. La copie intermédiaire imbriquée du cache a été supprimée ; les 79 tests Node 24 finaux ne comptent pas deux fois les tests découverts dans cette copie. Le cache généré est désormais ignoré par Git. Contrôle HTTP local final : `/en/profile` retourne 200, `/api/profile/photo` sans session retourne 401 ; le conteneur reste en marche. Les imports initiaux de `next-env.d.ts` sont conservés et le contrôle de types final passe. Aucun secret n’a été affiché ou modifié.

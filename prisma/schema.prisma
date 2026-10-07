@@ -22,10 +22,18 @@ model User {
   sessions        Session[]
   accounts        Account[]
   playerIdentity  PlayerIdentity?
+  profilePhoto    ProfilePhoto?
 
   @@unique([email])
   @@unique([username])
   @@map("user")
+}
+
+model ProfilePhoto {
+  authUserId String @id
+  user User @relation(fields: [authUserId], references: [id], onDelete: Cascade)
+  data Bytes
+  updatedAt DateTime @updatedAt
 }
 
 model Session {

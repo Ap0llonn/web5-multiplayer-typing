@@ -19,7 +19,7 @@ for (const [locale, messages] of [
   ["en", en],
 ] as const) {
   for (const width of [360, 1440]) {
-    test(`${locale}/${width}: decorative keyboard loads and real entry points work with reduced motion`, async ({
+    test(`${locale}/${width}: minimal home and real entry points work with reduced motion`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -34,19 +34,7 @@ for (const [locale, messages] of [
         const page = await context.newPage();
         await page.goto(`/${locale}`);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
-        const illustration = page.getByTestId("keyboard-illustration");
-        await expect(illustration).toBeVisible();
-        await expect(illustration).toHaveAttribute("alt", "");
-        await expect(illustration).toHaveAttribute("aria-hidden", "true");
-        await expect
-          .poll(() =>
-            illustration.evaluate(
-              (image: HTMLImageElement) =>
-                image.complete && image.naturalWidth > 0,
-            ),
-          )
-          .toBe(true);
-        await expect(page.getByRole("img").and(illustration)).toHaveCount(0);
+        await expect(page.getByRole("main").locator("img")).toHaveCount(0);
         await expectNoHorizontalOverflow(page);
         await expect
           .poll(() =>
@@ -67,10 +55,8 @@ for (const [locale, messages] of [
 
         const main = page.getByRole("main");
         await expect(main.locator("form, input")).toHaveCount(0);
-        await main
-          .getByRole("link", { name: messages.create, exact: true })
-          .click();
-        await expect(page).toHaveURL(new RegExp(`/${locale}/play/create$`));
+        await expect(main.getByRole("link")).toHaveCount(1);
+        await page.goto(`/${locale}/play/create`);
         await page
           .getByRole("main")
           .getByRole("link", { name: messages.login, exact: true })

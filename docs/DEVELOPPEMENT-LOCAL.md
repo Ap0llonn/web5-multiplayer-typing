@@ -33,11 +33,19 @@ Ouvrir http://localhost:3000. `infra:up` attend les healthchecks PostgreSQL, Red
 
 `pnpm dev` et `pnpm build` exécutent `pnpm db:generate` avant Next.js, y compris après un checkout sans fichiers générés. Une migration réussie ne génère pas le client TypeScript. En cas d’erreur `Can't resolve '@/generated/prisma/client'` sur un serveur déjà lancé, l’arrêter puis relancer `pnpm dev`. Les commandes indépendantes de types, tests et seed nécessitent toujours la préparation explicite du client.
 
+Le profil est disponible à `/fr/profile` et `/en/profile`, depuis le lien de navigation des comptes. La migration additive `20261007130000_profile_photo` est nécessaire : après vérification de la cible locale documentée, appliquer `pnpm exec prisma migrate deploy` et régénérer le client. Les photos personnelles redimensionnées sont stockées dans PostgreSQL, une par compte ; le bucket S3 n’est pas requis pour cette fonctionnalité. Aucun original n’est stocké. Les statistiques et l’historique attendent l’implémentation des courses.
+
 `BETTER_AUTH_SECRET` est obligatoire et doit contenir au moins 32 caractères. La valeur versionnée est un exemple public réservé au développement ; remplacez-la par une valeur aléatoire locale avant d'utiliser l'authentification. Si la configuration est invalide, le terminal indique uniquement les noms des variables à corriger et les pages affichent une erreur traduite. Corriger le fichier local puis redémarrer Next.js ; aucune valeur secrète ne doit être copiée dans un rapport.
 
 Les valeurs `local-…-example` sont des exemples publics réservés au développement local. Ne jamais copier des secrets de production ici. `.env` est ignoré par Git ; seuls `.env.example` (local) et `.env.production.example` (modèle Dokploy avec marqueurs à remplacer) sont versionnés. Laisser OAuth vide ne valide pas la recette GitHub/Discord.
 
 Compose lit `.env`, **pas `.env.local`**. Next.js peut donner priorité à `.env.local` : s’il existe déjà, vérifier qu’il ne masque pas `DATABASE_URL` ou l’origine locale. `infra:validate` et `test:compose` utilisent toujours les exemples, jamais les secrets de `.env`.
+
+## Installation Docker sur Apple Silicon
+
+Docker utilise Linux ARM64 sur les Mac Apple Silicon. `pnpm-workspace.yaml` autorise explicitement le postinstall de `@embedded-postgres/linux-arm64`, comme ceux des variantes Linux x64 et macOS déjà utilisées. Ce script restaure les liens du paquet PostgreSQL de test verrouillé ; il ne démarre aucune base. Sans cette entrée, pnpm 11 termine `install --frozen-lockfile` avec `ERR_PNPM_IGNORED_BUILDS`, même si les téléchargements ont réussi.
+
+Après cette correction, relancer `pnpm infra:up`. Pour voir les logs détaillés d’une erreur de construction : `docker compose --progress plain build app`. Conserver le lockfile et les approbations explicites par paquet.
 
 ## Connexions depuis l’hôte
 

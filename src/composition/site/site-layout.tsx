@@ -13,12 +13,22 @@ export async function SiteLayout({ children }: { children: ReactNode }) {
   const actor = await getCurrentActor(await headers());
   const accountControl = actor.ok ? (
     <div className="flex min-w-0 items-center gap-3">
-      <span
-        className="nav-player hidden max-w-36 truncate lg:block"
-        title={actor.value.displayName}
-      >
-        {actor.value.displayName}
-      </span>
+      {actor.value.kind === "account" ? (
+        <Link
+          href="/profile"
+          className={buttonStyles({ variant: "paper", size: "small" })}
+        >
+          <Icon name="user" />
+          <span>{t("profile.title")}</span>
+        </Link>
+      ) : (
+        <span
+          className="nav-player hidden max-w-36 truncate lg:block"
+          title={actor.value.displayName}
+        >
+          {actor.value.displayName}
+        </span>
+      )}
       <SignOutButton />
     </div>
   ) : actor.error.code === "UNAUTHENTICATED" ? (

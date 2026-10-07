@@ -62,7 +62,7 @@ test("two real sessions create/join, stream roster and reconnect without duplica
   ).toHaveCount(0);
   // Next renders a screen-reader route announcer with role=alert outside main.
   await expect(h.getByRole("main").getByRole("alert")).toHaveCount(0);
-  await h.getByRole("link", { name: "Create room", exact: true }).click();
+  await h.goto("/en/play/create");
   await expect(h.getByLabel("Room name")).toBeVisible();
   await h.getByLabel("Room name").fill("Test room");
   await h.getByRole("button", { name: "Create room", exact: true }).click();

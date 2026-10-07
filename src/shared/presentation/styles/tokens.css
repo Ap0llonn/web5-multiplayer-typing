@@ -523,159 +523,11 @@ small {
   margin-bottom: 0;
 }
 
-.home-hero {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1.13fr;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2.25rem 2.8rem;
-  margin-bottom: 2rem;
-  background: var(--hero);
-  border: 1px solid var(--hero-border);
-  border-radius: 28px;
-}
-.hero-copy {
-  position: relative;
-  z-index: 1;
-}
-.hero-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin-bottom: 1.15rem;
-  color: var(--accent);
-  font-size: 0.65rem;
-  font-weight: 950;
-  text-transform: uppercase;
-  letter-spacing: 0.095em;
-}
-.hero-eyebrow > span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 4px #6591f81c;
-}
-.hero-title {
-  max-width: 11ch;
-  margin-bottom: 1rem;
-  font-size: clamp(3.3rem, 5.2vw, 4.8rem);
-  font-weight: 1000;
-  line-height: 1.04;
-  letter-spacing: -0.055em;
-}
-.hero-description {
-  max-width: 26rem;
-  font-size: 1.03rem;
-  color: var(--muted);
-  font-weight: 650;
-  line-height: 1.65;
-}
-.hero-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem 1.25rem;
-  margin-top: 1.4rem;
-  font-size: 0.73rem;
-  font-weight: 800;
-  color: var(--muted);
-}
-.hero-details span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.hero-details svg {
-  width: 17px;
-  height: 17px;
-}
-.keyboard-scene {
-  position: relative;
-  min-width: 0;
-  padding-block: 1rem;
-}
 .decorative-image {
   display: block;
   width: 100%;
   height: auto;
   object-fit: contain;
-}
-.keyboard-art {
-  width: 112%;
-  max-width: none;
-  margin-left: -4%;
-  height: 280px;
-  animation: keyboard-float 7s ease-in-out infinite;
-}
-.keyboard-sticker {
-  position: absolute;
-  top: -0.6rem;
-  right: 1rem;
-  z-index: 1;
-  padding: 0.6rem 1rem;
-  border: 1px solid #e1be5e;
-  border-radius: 10px;
-  background: var(--yellow);
-  color: var(--on-color);
-  box-shadow: 0 4px 0 #d4b250;
-  font-weight: 1000;
-  font-size: 0.85rem;
-  transform: rotate(9deg);
-}
-.keyboard-caption {
-  position: absolute;
-  bottom: -0.75rem;
-  left: 25%;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--mint);
-  color: var(--on-color);
-  padding: 0.45rem 0.85rem;
-  border-radius: 8px;
-  font-size: 0.7rem;
-  font-weight: 900;
-  transform: rotate(-4deg);
-  box-shadow: 0 3px 0 #7bbba1;
-}
-.keyboard-caption svg {
-  width: 14px;
-  height: 14px;
-}
-.play-section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin: 0 0.15rem 1rem;
-}
-.play-section-heading > p {
-  font-size: 0.93rem;
-  font-weight: 900;
-}
-.play-section-heading > a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-underline-offset: 4px;
-  padding-block: 0.5rem;
-}
-.play-section-heading > a svg {
-  width: 15px;
-  height: 15px;
-}
-
-.how-it-works {
-  padding-top: 3.4rem;
-  scroll-margin-top: 2rem;
-}
-.how-heading {
-  text-align: center;
 }
 .section-eyebrow {
   color: var(--muted);
@@ -683,70 +535,6 @@ small {
   font-weight: 950;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-}
-.how-heading h2 {
-  margin-top: 0.4rem;
-  font-size: 1.7rem;
-  font-weight: 950;
-  letter-spacing: -0.04em;
-}
-.steps-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.6rem;
-  margin-top: 1.7rem;
-}
-.steps-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.9rem;
-  position: relative;
-  padding-block: 0.7rem;
-}
-.step-key {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  background: var(--yellow);
-  color: var(--on-color);
-  border: 1px solid #dec467;
-  box-shadow: 0 4px 0 #dac16d;
-  font-size: 1.1rem;
-  font-weight: 1000;
-  transform: rotate(-5deg);
-}
-.step-key--2 {
-  background: var(--mint);
-  border-color: #8bc9af;
-  box-shadow: 0 4px 0 #8bc9af;
-  transform: rotate(4deg);
-}
-.step-key--3 {
-  background: var(--pink);
-  border-color: #dd8d7f;
-  box-shadow: 0 4px 0 #dd8d7f;
-}
-.steps-list h3 {
-  font-size: 0.9rem;
-  font-weight: 900;
-  margin-bottom: 0.25rem;
-}
-.steps-list p {
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  line-height: 1.6;
-  max-width: 15rem;
-}
-.step-arrow {
-  margin-left: auto;
-  margin-top: 0.7rem;
-  color: var(--muted);
-  opacity: 0.45;
 }
 
 .auth-layout {
@@ -841,25 +629,7 @@ small {
   background: var(--pink);
   border-color: #c7897e;
 }
-@keyframes keyboard-float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-2deg);
-  }
-  50% {
-    transform: translateY(-7px) rotate(0deg);
-  }
-}
 @media (max-width: 1000px) {
-  .home-hero {
-    padding: 2rem;
-  }
-  .hero-title {
-    font-size: 3.5rem;
-  }
-  .hero-eyebrow {
-    font-size: 0.6rem;
-  }
   .auth-layout {
     gap: 2rem;
   }
@@ -894,43 +664,6 @@ small {
   .site-main {
     padding-top: 1.25rem;
   }
-  .home-hero {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1.5rem 1.35rem 1.3rem;
-    border-radius: 22px;
-  }
-  .hero-title {
-    max-width: 14ch;
-    font-size: clamp(2.35rem, 7.5vw, 3.6rem);
-  }
-  .hero-description {
-    font-size: 0.85rem;
-  }
-  .hero-details {
-    gap: 0.75rem;
-    font-size: 0.67rem;
-    margin-top: 1rem;
-  }
-  .keyboard-scene {
-    width: min(80%, 260px);
-    margin-inline: auto;
-    padding-top: 1.3rem;
-  }
-  .keyboard-art {
-    width: 100%;
-    margin-left: 0;
-    height: auto;
-  }
-  .keyboard-sticker {
-    top: -0.2rem;
-    right: 0.2rem;
-    font-size: 0.7rem;
-    padding: 0.4rem 0.65rem;
-  }
-  .keyboard-caption {
-    display: none;
-  }
   .action-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -948,21 +681,6 @@ small {
   }
   .card-title {
     font-size: 1.5rem;
-  }
-  .steps-list {
-    grid-template-columns: 1fr;
-    gap: 0.6rem;
-    max-width: 420px;
-    margin-inline: auto;
-  }
-  .steps-list p {
-    max-width: none;
-  }
-  .step-arrow {
-    display: none;
-  }
-  .how-it-works {
-    padding-top: 2.8rem;
   }
   .auth-layout {
     grid-template-columns: 1fr;

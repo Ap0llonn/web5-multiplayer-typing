@@ -164,7 +164,7 @@ test("keyboard signup and a maximum-length room name remain usable at 360px", as
     ).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/en\/?$/);
-    await page.getByRole("link", { name: en.create, exact: true }).click();
+    await page.goto("/en/play/create");
     await expect(page.getByLabel(en.roomName)).toBeVisible();
     await fitsViewport(page);
     const longName = "W".repeat(60);

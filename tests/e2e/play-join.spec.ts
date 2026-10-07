@@ -83,9 +83,12 @@ for (const [locale, messages] of [
       const owner = await host.newPage();
       await owner.goto(`/${locale}`);
       await expect(owner.getByRole("main").locator("form")).toHaveCount(0);
-      await owner
-        .getByRole("link", { name: messages.create, exact: true })
-        .click();
+      await expect(
+        owner
+          .getByRole("main")
+          .getByRole("link", { name: messages.create, exact: true }),
+      ).toHaveCount(0);
+      await owner.goto(`/${locale}/play/create`);
       await expect(owner).toHaveURL(new RegExp(`/${locale}/play/create/?$`));
       await owner.getByLabel(messages.roomName).fill("Play entry room");
       await owner

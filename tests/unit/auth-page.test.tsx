@@ -30,7 +30,7 @@ for (const [locale, messages] of [
   ["en", en],
   ["fr", fr],
 ] as const) {
-  it(`offers labelled links to dedicated room pages in ${locale}`, async () => {
+  it(`offers a join CTA without room creation in ${locale}`, async () => {
     translations.locale = locale;
     vi.mocked(getCurrentActor).mockResolvedValue(failure("UNAUTHENTICATED"));
     const html = renderToStaticMarkup(
@@ -42,10 +42,9 @@ for (const [locale, messages] of [
         {await HomePage()}
       </NextIntlClientProvider>,
     );
-    expect(html).toContain(`aria-labelledby="create-room-title"`);
-    expect(html).toContain(`aria-labelledby="join-room-title"`);
+    expect(html).toContain('aria-labelledby="home-title"');
     expect(html).toContain(messages.join);
-    expect(html).toContain(messages.create);
+    expect(html).not.toContain(messages.create);
     expect(html).not.toContain("<form");
     expect(html).not.toContain("<input");
   });
