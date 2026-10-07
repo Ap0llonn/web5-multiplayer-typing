@@ -18,8 +18,8 @@ for (const [locale, messages] of [
   ["fr", fr],
   ["en", en],
 ] as const) {
-  for (const width of [360, 1440]) {
-    test(`${locale}/${width}: minimal home and real entry points work with reduced motion`, async ({
+  for (const width of [360, 820, 1440]) {
+    test(`${locale}/${width}: home content and real entry points work with reduced motion`, async ({
       browser,
     }) => {
       const context = await browser.newContext({
@@ -55,7 +55,12 @@ for (const [locale, messages] of [
 
         const main = page.getByRole("main");
         await expect(main.locator("form, input")).toHaveCount(0);
-        await expect(main.getByRole("link")).toHaveCount(1);
+        await expect(main.getByRole("link")).toHaveCount(2);
+        await expect(main.getByRole("listitem")).toHaveCount(3);
+        await page.screenshot({
+          path: `test-results/home-${locale}-${width}.png`,
+          fullPage: true,
+        });
         await page.goto(`/${locale}/play/create`);
         await page
           .getByRole("main")

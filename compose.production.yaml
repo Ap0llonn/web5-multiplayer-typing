@@ -19,4 +19,11 @@ services:
       DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:-}
     expose:
       - "3000"
+    # Internal Dokploy database hostnames resolve on this shared network.
+    networks:
+      - dokploy-network
     restart: unless-stopped
+
+networks:
+  dokploy-network:
+    external: true

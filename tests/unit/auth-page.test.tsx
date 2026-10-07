@@ -30,7 +30,7 @@ for (const [locale, messages] of [
   ["en", en],
   ["fr", fr],
 ] as const) {
-  it(`offers a join CTA without room creation in ${locale}`, async () => {
+  it(`offers home navigation and account guidance without auth forms in ${locale}`, async () => {
     translations.locale = locale;
     vi.mocked(getCurrentActor).mockResolvedValue(failure("UNAUTHENTICATED"));
     const html = renderToStaticMarkup(
@@ -44,7 +44,8 @@ for (const [locale, messages] of [
     );
     expect(html).toContain('aria-labelledby="home-title"');
     expect(html).toContain(messages.join);
-    expect(html).not.toContain(messages.create);
+    expect(html).toContain(messages.create);
+    expect(html).toContain(messages.homeContent.hostAccountRequired);
     expect(html).not.toContain("<form");
     expect(html).not.toContain("<input");
   });

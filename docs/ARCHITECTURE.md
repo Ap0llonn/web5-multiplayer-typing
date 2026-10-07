@@ -247,6 +247,8 @@ Tests futurs : rejouer une seed, comparer plusieurs découpages de temps, vérif
 - Le nom et le logo finaux doivent venir de l'étudiant sans IA (`DES-01/02`). Aucun agent ne les invente, ne génère des croquis ou ne présente un placeholder comme identité finale.
 - Versions exactes, lockfile pnpm et Node versionnés. Variables dans `.env.example`, secrets hors Git. PostgreSQL jetable pour les tests ; ne jamais réinitialiser une base non explicitement dédiée aux tests.
 
+La configuration de déploiement (`DOC-S1-DEPLOY`, `DOC-FINAL-README`) appartient à l’infrastructure, sans règle métier ajoutée aux modules : `compose.production.yaml` relie explicitement `app` au réseau externe existant `dokploy-network` pour résoudre les hôtes internes des bases Dokploy. `DATABASE_URL` utilise les paramètres internes exacts de la base sur ce réseau. `infra:validate` contrôle le Compose résolu avec des exemples publics ; la connectivité réelle de production reste une preuve distincte. Voir le [guide Dokploy et diagnostic DNS](DEVELOPPEMENT-LOCAL.md#production-avec-dokploy).
+
 ### Historique : présentation rétro arcade — 4 octobre 2026
 
 La seconde maquette de cette conversation a été approuvée par l’utilisateur, puis demandée en frontend. Elle remplace la direction visuelle provisoire neutre, sans changer le périmètre métier S1. `shared/presentation/ui` possède les primitives génériques Button (type button par défaut), Card, Badge, Field/Input/Select, Icon, Brand, AuthLayout, SiteNavigation, SiteFooter et Shell. Les champs et boutons de soumission métier restent dans identity/lobby ; les submit portent explicitement leur type. `composition/site/SiteLayout` résout l’identité réelle et injecte les contrôles de compte au shell générique. `app/[locale]/layout.tsx` conserve locale/providers et délègue cet assemblage. Les boutons langue conservent chemin, query et fragment ; les thèmes continuent d’utiliser le provider existant.
@@ -379,7 +381,7 @@ La nouvelle route `app/[locale]/play/create/page.tsx` délègue à `composition/
 
 Le shell reste partagé avec `/play`, en FR/EN et clair/sombre. La configuration PostCSS déclarative `.postcssrc.json` est reconnue par la version Next installée et remplace `postcss.config.ts`, ignoré par son chargeur ; les classes Tailwind sont réellement générées. Les liens de navigation ont un espacement réduit sur mobile pour tenir à 360 px. Les tests de navigation suivent maintenant les pages dédiées.
 
-### Accueil minimal — décision utilisateur du 7 octobre 2026
+### Historique : accueil minimal — décision utilisateur du 7 octobre 2026
 
 Cette décision remplace explicitement les deux cartes et les étapes explicatives de l’accueil du 6 octobre. `composition/home/HomePage` possède désormais une introduction courte et un unique CTA traduit vers `/[locale]/play`, suivi de la note d’accès sans compte. La présentation utilise Tailwind et les primitives partagées ; `HomeHero`, `HomeEntryCards`, `HowItWorks`, leurs styles exclusifs et leurs clés de traduction inutilisées sont retirés. Le shell conserve la marque fournie, FR/EN et clair/sombre.
 
@@ -408,3 +410,9 @@ La demande porte sur la navigation, alors que `JOIN-02` et les visibilités de `
 ### Bibliothèque d’icônes — décision utilisateur du 7 octobre 2026
 
 L’utilisateur demande une vraie bibliothèque à la place des icônes SVG dessinées dans le code. `shared/presentation/ui/Icon` garde son contrat de noms fermés et de props SVG, mais assemble désormais les composants importés explicitement depuis `lucide-react`. La bibliothèque possède les tracés ; l’adaptateur partagé conserve tailles Tailwind, couleur courante, personnalisation, `aria-hidden` et absence de focus des icônes décoratives. Cette décision remplace les tracés manuels de la primitive Icon pour la navigation, les formulaires, menus et cartes. Les personnages de lobby restent des illustrations propres au jeu et la marque fournie reste inchangée. Aucun contrat métier ni frontière serveur/client n’est modifié. Dépendance exacte et licence dans `dependencies.md`, contrôles dans `verification.md`.
+
+### Accueil simple enrichi — décision utilisateur du 7 octobre 2026
+
+La demande suivante « make a better home page, simple but add some content » remplace la restriction historique d’un seul lien sans étapes. `composition/home/HomePage` possède une introduction sur une surface bleue du thème, un lien principal vers `/play`, une liste ordonnée de trois étapes (code, personnage/pseudo invité, présence réelle) et un encart hôte vers `/play/create` avec restriction aux comptes expliquée. La présentation reste statique : aucun formulaire, roster ou appel métier n’est monté sur l’accueil.
+
+Contrat de présentation : les deux destinations utilisent la navigation localisée existante ; le parcours de création autorise toujours les comptes côté serveur. Les textes sont dans les catalogues FR/EN sous `homeContent` et dans l’introduction existante. Tailwind, les tokens clair/sombre et les primitives Badge, Icon/Lucide et Button sont réutilisés. Aucun nouveau module, contrat serveur, transport, dépendance ou migration. La marque fournie reste inchangée. Course, bonus, bots et explorateur public ne sont pas annoncés comme disponibles. Portée : `JOIN-01`, `DES-04/05/06`, `I18N-01`, `A11Y-02/04` ; tests et preuves distincts dans `verification.md`.

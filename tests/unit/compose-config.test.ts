@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { assertLocalComposeConfig } from "../../scripts/compose-config";
+import {
+  assertLocalComposeConfig,
+  assertProductionComposeConfig,
+} from "../../scripts/compose-config";
 
 const config = () => ({
   services: {
@@ -29,6 +32,39 @@ const config = () => ({
     },
   },
   volumes: { "postgres-data": {}, "redis-data": {}, "s3-data": {} },
+});
+
+describe("production Compose database connectivity contract", () => {
+  const productionConfig = () => ({
+    services: { app: { networks: { "dokploy-network": null } } },
+    networks: {
+      "dokploy-network": { name: "dokploy-network", external: true },
+    },
+  });
+
+  it("accepts an app attached to the existing database network", () => {
+    expect(() =>
+      assertProductionComposeConfig(productionConfig()),
+    ).not.toThrow();
+  });
+
+  it("rejects an app isolated from the internal database DNS", () => {
+    const value = productionConfig();
+    const isolated = {
+      ...value,
+      services: { app: { networks: { default: null } } },
+    };
+    expect(() => assertProductionComposeConfig(isolated)).toThrow();
+  });
+
+  it("rejects a new private network or a renamed shared network", () => {
+    const privateNetwork = productionConfig();
+    privateNetwork.networks["dokploy-network"].external = false;
+    const renamedNetwork = productionConfig();
+    renamedNetwork.networks["dokploy-network"].name = "typing-dokploy-network";
+    expect(() => assertProductionComposeConfig(privateNetwork)).toThrow();
+    expect(() => assertProductionComposeConfig(renamedNetwork)).toThrow();
+  });
 });
 
 describe("local Compose safety contract", () => {

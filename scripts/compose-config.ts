@@ -47,3 +47,20 @@ const schema = z.object({
 export function assertLocalComposeConfig(value: unknown): void {
   schema.parse(value);
 }
+
+/** Internal database DNS requires the existing shared Dokploy network. */
+export function assertProductionComposeConfig(value: unknown): void {
+  z.object({
+    services: z.object({
+      app: z.object({
+        networks: z.object({ "dokploy-network": z.object({}).nullable() }),
+      }),
+    }),
+    networks: z.object({
+      "dokploy-network": z.object({
+        name: z.literal("dokploy-network"),
+        external: z.literal(true),
+      }),
+    }),
+  }).parse(value);
+}

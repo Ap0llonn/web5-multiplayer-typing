@@ -8,8 +8,30 @@
   "switchToEnglish": "English",
   "switchToFrench": "Français",
   "heroTitle": "À vos claviers, les amis !",
-  "heroDescription": "Tu as un code ? Retrouve tes amis dans leur salon.",
+  "heroDescription": "Une salle pour tes amis, une place pour toi. Récupère le code de ton hôte et retrouve la bande autour du clavier.",
   "noAccountNeeded": "Pas besoin de compte pour rejoindre",
+  "homeContent": {
+    "eyebrow": "Un petit salon pour ta bande",
+    "stepsTitle": "Comment rejoindre ?",
+    "stepsDescription": "Trois étapes simples pour retrouver tes amis.",
+    "steps": {
+      "code": {
+        "title": "Entre le code",
+        "description": "Demande à ton hôte le code de 6 caractères de la salle et saisis-le sur la page pour rejoindre."
+      },
+      "character": {
+        "title": "Choisis ton personnage",
+        "description": "Choisis ton look et, en invité, un pseudo. Tu peux rejoindre sans créer de compte."
+      },
+      "crew": {
+        "title": "Retrouve la bande",
+        "description": "Entre dans le salon et vois qui est là. La liste se met à jour quand tes amis arrivent ou repartent."
+      }
+    },
+    "hostTitle": "Envie de rassembler tes amis ?",
+    "hostDescription": "Crée ta salle, choisis son nom et sa capacité, puis partage le code avec tes amis.",
+    "hostAccountRequired": "Un compte est nécessaire pour créer une salle."
+  },
   "hostBadge": "Lance les invitations",
   "createDescription": "Ta salle, ta bande. Réunis tout le monde autour du clavier.",
   "joinDescription": "Entre le code partagé par ton hôte.",

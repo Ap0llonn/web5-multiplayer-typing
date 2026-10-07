@@ -3,7 +3,10 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { parse } from "dotenv";
-import { assertLocalComposeConfig } from "./compose-config";
+import {
+  assertLocalComposeConfig,
+  assertProductionComposeConfig,
+} from "./compose-config";
 
 // Every run owns a unique disposable project. Never read .env or reuse dev data.
 const project = `typing-compose-test-${randomUUID()}`;
@@ -66,10 +69,36 @@ const sql = (statement: string) =>
 assertLocalComposeConfig(
   JSON.parse(compose(["config", "--format", "json"]).toString()),
 );
+// Parse production separately with public placeholders; never inspect real secrets.
+const production = spawnSync(
+  "docker",
+  [
+    "compose",
+    "--file",
+    "compose.production.yaml",
+    "--env-file",
+    ".env.production.example",
+    "config",
+    "--format",
+    "json",
+  ],
+  {
+    env: { ...process.env, ...parse(readFileSync(".env.production.example")) },
+    timeout: 30_000,
+  },
+);
+assert.ifError(production.error);
+assert.equal(
+  production.status,
+  0,
+  "Production Compose must parse successfully",
+);
+assertProductionComposeConfig(JSON.parse(production.stdout.toString()));
 if (process.argv.includes("--config-only")) {
   console.log(
     "Compose configuration: pinned images, loopback ports, healthchecks and volumes verified.",
   );
+  console.log("Production Compose: shared external Dokploy network verified.");
 } else {
   try {
     compose(["up", "--detach", "--wait", "--wait-timeout", "120"]);

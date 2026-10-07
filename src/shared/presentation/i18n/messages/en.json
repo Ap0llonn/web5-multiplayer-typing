@@ -8,8 +8,30 @@
   "switchToEnglish": "English",
   "switchToFrench": "Français",
   "heroTitle": "Good keys. Great company.",
-  "heroDescription": "Got a code? Join your friends in their lobby.",
+  "heroDescription": "A room for your friends and a place for you. Grab your host’s code and meet everyone around the keyboard.",
   "noAccountNeeded": "No account needed to join",
+  "homeContent": {
+    "eyebrow": "A little room for your crew",
+    "stepsTitle": "How do I join?",
+    "stepsDescription": "Three simple steps to find your friends.",
+    "steps": {
+      "code": {
+        "title": "Enter the code",
+        "description": "Ask your host for the room’s 6-character code and enter it on the join page."
+      },
+      "character": {
+        "title": "Pick your character",
+        "description": "Choose your look and, as a guest, a nickname. You can join without an account."
+      },
+      "crew": {
+        "title": "Meet the crew",
+        "description": "Step into the lobby and see who’s there. The list updates as friends come and go."
+      }
+    },
+    "hostTitle": "Bringing your friends together?",
+    "hostDescription": "Create your own room, choose its name and capacity, then share the code with your friends.",
+    "hostAccountRequired": "An account is required to create a room."
+  },
   "hostBadge": "Send out the invites",
   "createDescription": "Your room, your crew. Bring everyone together around the keyboard.",
   "joinDescription": "Enter the code shared by your host.",

@@ -7,13 +7,6 @@ import en from "@/shared/presentation/i18n/messages/en.json";
 import fr from "@/shared/presentation/i18n/messages/fr.json";
 
 const state = vi.hoisted(() => ({ locale: "en" }));
-vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-vi.mock("@/modules/identity/server", () => ({
-  getCurrentActor: async () => ({
-    ok: true,
-    value: { kind: "account", playerIdentityId: "host", displayName: "Host" },
-  }),
-}));
 vi.mock("next-intl/server", () => ({
   getTranslations: async () =>
     createTranslator({
@@ -33,7 +26,7 @@ for (const [locale, messages] of [
   ["fr", fr],
   ["en", en],
 ] as const) {
-  it(`${locale}: home has one join CTA without creation or extra sections`, async () => {
+  it(`${locale}: home explains joining and links to the dedicated join and host pages`, async () => {
     state.locale = locale;
     const html = renderToStaticMarkup(
       <NextIntlClientProvider
@@ -48,14 +41,33 @@ for (const [locale, messages] of [
     expect(html).not.toContain("<input");
     expect(html).not.toContain("member-row");
     expect(html).toContain('href="/play"');
-    expect(html).not.toContain('href="/play/create"');
-    expect(html.match(/<a /g)).toHaveLength(1);
+    expect(html).toContain('href="/play/create"');
+    expect(html.match(/<a /g)).toHaveLength(2);
     expect(html.match(/<h1 /g)).toHaveLength(1);
     expect(html).toContain(messages.join);
     expect(html).toContain(messages.noAccountNeeded);
-    expect(html).not.toContain(messages.create);
+    expect(html).toContain(messages.create);
     expect(html).not.toContain("<img");
-    expect(html).not.toContain("how-it-works");
     expect(html).toContain(messages.heroTitle);
+    const copy =
+      locale === "fr"
+        ? [
+            "Comment rejoindre ?",
+            "Entre le code",
+            "Choisis ton personnage",
+            "Retrouve la bande",
+            "Envie de rassembler tes amis ?",
+            "Un compte est nécessaire pour créer une salle.",
+          ]
+        : [
+            "How do I join?",
+            "Enter the code",
+            "Pick your character",
+            "Meet the crew",
+            "Bringing your friends together?",
+            "An account is required to create a room.",
+          ];
+    for (const text of copy) expect(html).toContain(text);
+    expect(html.match(/<li[ >]/g)).toHaveLength(3);
   });
 }

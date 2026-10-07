@@ -1,5 +1,23 @@
 # Vérification du socle Sprint 1
 
+## Résolution DNS PostgreSQL dans Dokploy — 7 octobre 2026
+
+Incident signalé dans Dokploy : `prisma.rateLimit.findMany()` échoue avec `getaddrinfo EAI_AGAIN production-postgres`. Le diagnostic établit un échec de résolution DNS, sans preuve distante de sa cause exacte. Le Compose versionné ne raccordait pas `app` au réseau de la base Dokploy. Correction d’infrastructure pour `DOC-S1-DEPLOY` et `DOC-FINAL-README` : déclaration explicite du réseau existant `dokploy-network`, externe. Les modules et contrats métier, la limitation Better Auth et les migrations restent identiques. Le guide demande de vérifier aussi l’hôte interne exact, la disponibilité de la base et le Compose rendu en cas d’isolation Dokploy.
+
+Avant correction, le nouveau contrôle du vrai parseur Compose échoue avec « Production app must share the Dokploy database network ». Après correction, `infra:validate` passe pour les configurations locale et production avec uniquement les exemples publics. Trois tests unitaires vérifient notamment le refus d’une application isolée, d’un réseau privé nouvellement créé et d’un nom de réseau différent.
+
+| Contrôle final | Résultat |
+| --- | --- |
+| Configurations Compose | PASS : parseur Docker Compose réel, réseau de production externe partagé ; aucun service démarré |
+| Lint, types stricts, frontières | PASS |
+| Unitaires | PASS : 94 tests / 27 fichiers |
+| Intégrations | PASS : commande `pnpm test:integration`, PostgreSQL 18.4 jetable et replay des migrations |
+| Build de production | PASS : Next.js 16.3.8 |
+| E2E pertinents | PASS : commande `pnpm test:browser tests/e2e/sprint.spec.ts --trace off`, Chrome local et PostgreSQL jetable, serveur localhost:3410 |
+| Production réelle, DNS Dokploy, OAuth externe | NON EXÉCUTÉS : aucun accès distant, déploiement ni migration de production dans ce lot |
+
+Échecs intermédiaires d’environnement : mémoire partagée PostgreSQL refusée par le sandbox, cache natif SWC hors des chemins autorisés et compilation Turbopack confinée bloquée. Les tests DB, le build et Chrome passent avec l’autorisation technique locale ; cache SWC redirigé vers `/private/tmp/typing-dokploy-swc-cache`. Le build réécrit `next-env.d.ts` ; ses imports initiaux sont restaurés puis les types revérifiés. Hôte Node 25.6.0, hors de Node 24 prévu : aucune nouvelle preuve Node 24 ou de connectivité de production revendiquée. Le défaut réseau est corrigé dans le dépôt ; la restauration du service distant reste à confirmer après utilisation de cette configuration.
+
 ## Stories #9 et #10 — recette locale du 5 octobre 2026
 
 Demande : compléter création/entrée « Sur code » (#9) et présence/reconnexion (#10), avec **validation en local** confirmée par l'utilisateur. Référence : `SALLE-01/02/05/06/09/10`, socle `TECH-06` et `SEC-01`. Checkout `main`, base `25fd45a6d2b019c95f14043e92f319336b217613`, avec les modifications antérieures et ce lot non commitées. Node 24.19.0, Next 16.3.8, Chrome installé sur macOS ; chaque contrôle DB utilise un PostgreSQL 18.4 jetable neuf sur 127.0.0.1:55432, migrations depuis zéro puis replay, suppression à la fin. Le build et les tests utilisent les variables locales de ce harnais.
@@ -490,3 +508,28 @@ Décision utilisateur : utiliser une bibliothèque réelle pour les icônes au l
 | OAuth réel, VPS et déploiement | NON EXÉCUTÉS dans ce lot |
 
 Tests DB et navigateur exclusivement sur la base PostgreSQL temporaire `typing_test`, créée puis supprimée par `scripts/test-stack.ts`. Serveur E2E local sur localhost:3400, contextes Chrome séparés et traces désactivées pour navigation/profil. La synchronisation du conteneur de développement n’a modifié aucune base ni volume de données. Les contrôles hôte utilisent Node 25.6.0, hors de la version 24 prévue ; l’application Docker utilise Node 24. Les chemins initiaux de next-env.d.ts réécrits par le build sont restaurés et typecheck repasse. Aucun secret affiché ou modifié. Aucun autre numéro de version de dépendance n’est changé ; pnpm normalise aussi les métadonnées facultatives de Sharp, déjà dépendance directe.
+
+## Accueil simple enrichi — 7 octobre 2026
+
+Décision utilisateur : améliorer l’accueil avec un peu de contenu en conservant une interface simple. Cette demande remplace la restriction historique d’un seul lien sans étapes. `composition/home/HomePage` affiche une introduction sur la surface bleue du thème, le CTA principal Rejoindre, trois étapes traduites (code, personnage/pseudo invité, salon et présence) et un encart hôte avec lien de création et restriction aux comptes. Les formulaires restent sur leurs pages dédiées. Tailwind et les primitives Badge, Icon/Lucide et Button réutilisent les tokens clair/sombre. Aucun contrat serveur, module métier, transport, migration, dépendance ou logo modifié.
+
+**Régression avant réalisation :** les deux tests de rendu FR/EN échouent sur le lien hôte absent. Après réalisation, les traductions, étapes, destinations localisées et absence de formulaires à l’accueil sont vérifiées. Les assertions historiques qui interdisaient ce lien dans `auth-page.test.tsx` et le parcours hôte de `play-join.spec.ts` sont adaptées à la nouvelle demande ; le parcours compte ouvre maintenant la création depuis l’encart de l’accueil. Les nouveaux scénarios vérifient aussi que le visiteur ne voit pas le formulaire de création, et que les liens fonctionnent au clavier sans commande lobby au simple affichage.
+
+| Contrôle sur l’état final | Résultat |
+| --- | --- |
+| Lint, TypeScript strict et frontières | PASS |
+| Unitaires | PASS : 94 tests / 27 fichiers |
+| Intégrations PostgreSQL jetable | PASS : 31 tests / 14 fichiers ; quatre migrations depuis zéro et replay |
+| Build Next.js 16.3.8 Turbopack | PASS : projet et copie de vérification isolée |
+| E2E Chrome de production | PASS : 43/43 scénarios dans la copie isolée, dont entrée invité, création depuis l’encart hôte, langues/thèmes, clavier et régressions de présence/profil |
+| Responsive et inspection visuelle | PASS : accueil FR/EN à 360/820/1440 px sans débordement, mouvement réduit ; captures EN desktop clair et FR mobile sombre inspectées |
+| Accessibilité automatisée | PASS : axe AA FR/EN, clair/sombre à 360 px, avec les nouvelles sections de l’accueil |
+| Diff et formatage des fichiers modifiés pour l’accueil | PASS |
+| Échecs non résolus | Aucun dans les contrôles exécutés ; les échecs des tentatives initiales restent documentés ci-dessous |
+| OAuth réel, VPS, déploiement et Lighthouse | NON EXÉCUTÉS dans ce lot |
+
+Tests DB et navigateur exclusivement sur PostgreSQL temporaire `typing_test`, créé puis supprimé par `scripts/test-stack.ts`. Les premières recettes utilisent localhost:3400 et PostgreSQL au port 55432. La première termine à 41/43 sur deux assertions historiques qui interdisent le lien hôte ; elles sont remplacées par le parcours réel via ce lien. Une réécriture parallèle de la sortie partagée est constatée pendant la seconde recette (40/43) : les tests corrigés du parcours hôte passent, mais trois régressions `sprint.spec.ts` échouent sur le roster après reload, l’erreur de login et la lecture initiale retardée. L’exécution finale passe 43/43 dans une copie temporaire des sources et dépendances, avec sa propre sortie de build, localhost:3417 et PostgreSQL au port 55543. Seuls les ports et le lancement direct des binaires sont adaptés dans le harnais temporaire ; aucun changement de ces scripts/configurations dans le projet. Les sources de l’accueil et les deux catalogues sont comparés à la copie avant et après les tests. Aucun secret local n’y est copié. La copie temporaire est supprimée après les contrôles et la conservation des deux aperçus anonymes.
+
+Les captures anonymes `test-results/home-{locale}-{width}.png` sont ignorées par Git ; aucune session personnelle n’est capturée. Aperçus conservés dans le dossier de visualisation du chat : `homepage-desktop.png` et `homepage-mobile.png`. Les vérifications hôte utilisent Node 25.6.0, alors que le projet cible Node 24 ; aucune nouvelle validation Node 24 n’est revendiquée. Des modifications d’infrastructure parallèles sont préservées ; le contrôle unitaire final inclut leurs trois nouveaux scénarios, soit 94 tests au total.
+
+Les premières tentatives confinées ont rencontré des restrictions d’environnement : cache natif SWC hors des chemins autorisés, compilation Turbopack bloquée, et mémoire partagée PostgreSQL refusée. Le cache SWC est redirigé vers `/private/tmp/typing-swc-native-cache` pour les contrôles, et build/tests DB/browser sont exécutés avec l’autorisation technique adaptée. Aucun contournement dans le code produit. Les chemins de développement de `next-env.d.ts`, réécrits automatiquement par le build, sont restaurés et le contrôle de types repasse. Aucun secret, configuration locale de connexion ni base de développement/production modifié.
