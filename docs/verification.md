@@ -444,3 +444,49 @@ Les intégrations utilisent exclusivement `typing_test` sur PostgreSQL 18.4 temp
 Les premiers essais ont rencontré les restrictions de mémoire partagée PostgreSQL et de cache natif SWC du sandbox ; les exécutions locales autorisées ont ensuite passé. Le cache Playwright ne contient pas le navigateur attendu : la recette finale utilise le Chrome installé via `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. Deux attentes de test ont été corrigées : attendre la fin réelle de la déconnexion avant le login, et cibler l’alerte du formulaire dans `main` pour ne pas confondre l’annonceur de navigation Next.js. Ces essais intermédiaires ne sont pas comptés comme succès final.
 
 La migration additive `20261007130000_profile_photo` a aussi été appliquée à la base de développement documentée `typing_dev`, après vérification de l’hôte `127.0.0.1:5432`, du nom, de l’utilisateur `typing` et des trois migrations existantes. Aucun reset ni test n’utilise cette base. Le conteneur applicatif a reçu la dépendance directe Sharp et a été relancé ; les volumes PostgreSQL/Redis/S3 sont conservés. La synchronisation pnpm a nécessité de remettre le cache à son emplacement attendu `/app/.pnpm-store` depuis les paquets déjà présents, puis de corriger uniquement son chemin absolu dans les métadonnées générées `node_modules/.modules.yaml`. Le contrôle automatique pnpm a ensuite passé et Next.js est prêt. La copie intermédiaire imbriquée du cache a été supprimée ; les 79 tests Node 24 finaux ne comptent pas deux fois les tests découverts dans cette copie. Le cache généré est désormais ignoré par Git. Contrôle HTTP local final : `/en/profile` retourne 200, `/api/profile/photo` sans session retourne 401 ; le conteneur reste en marche. Les imports initiaux de `next-env.d.ts` sont conservés et le contrôle de types final passe. Aucun secret n’a été affiché ou modifié.
+
+## Navigation commune — 7 octobre 2026
+
+Demande utilisateur : ajouter Rejoindre, Voir les salons et Créer une course ; proposer connexion + inscription aux visiteurs ; retirer l’apparence de dropdown du bouton de langue. `SiteNavigation` est maintenant partagé par les layouts site/play. La composition possède les contrôles de compte issus de la session réelle, sans import identity dans shared. Profil/déconnexion restent disponibles aux comptes ; les invités gardent leur déconnexion ; une panne d’identité ne devient pas un faux état déconnecté. FR/EN, préférences, query/fragment et logo fourni sont conservés.
+
+**Limite explicite :** l’explorateur public `JOIN-02` et la visibilité publique ne sont pas implémentés. `/lobbies` affiche « Bientôt disponible » et les parcours réels par code/création, sans liste fictive ni exposition des salles « sur code ». Le libellé demandé « Créer une course » ouvre `/play/create`, dont la création de salle reste autorisée côté serveur ; aucun moteur de course n’est ajouté.
+
+**Régression avant correction :** les tests du shell échouent en FR/EN sur l’absence de destination `/lobbies`. Les tests des layouts échouent sur l’absence d’inscription dans les deux headers et de profil dans le header play. Après correction, les branches visiteur, compte, invité et panne sont vérifiées. La destination de disponibilité future est vérifiée en FR/EN.
+
+| Contrôle final sur l’arbre local | Résultat |
+| --- | --- |
+| Lint, TypeScript strict et frontières | PASS |
+| Unitaires | PASS : 89 tests / 26 fichiers |
+| Intégrations PostgreSQL jetable | PASS : 31 tests / 14 fichiers ; quatre migrations depuis zéro et replay |
+| Build Next.js 16.3.8 Turbopack | PASS : nouvelle route `/[locale]/lobbies` compilée |
+| E2E Chrome isolé de production | PASS : 41/41 scénarios, dont trois nouveaux scénarios de navigation |
+| Nouvelle navigation | PASS : liens FR/EN sur accueil, rejoindre, création et salons à 360/820/1440 px ; état actif, destinations, connexion/inscription, profil/déconnexion et retour aux actions visiteurs après déconnexion |
+| Langue, responsive et accessibilité | PASS : bouton avec une seule icône et sans menu, URL/préférence conservées par la régression existante, absence de débordement, axe AA FR/EN clair/sombre à 360 px |
+| Inspection visuelle | PASS : navigation EN/FR mobile sombre et profil EN desktop sombre inspectés |
+| Diff sans erreur d’espacement | PASS |
+| Échecs non résolus | Aucun dans les contrôles exécutés |
+| Explorateur public réel, moteur de course, OAuth réel, VPS et déploiement | NON EXÉCUTÉS / non livrés dans ce lot |
+
+Les tests DB et navigateur utilisent exclusivement `typing_test`, créé puis supprimé par `scripts/test-stack.ts`, et le serveur de production local `localhost:3400`. Chrome est installé sur l’hôte et lancé en contextes séparés ; les nouveaux scénarios désactivent les traces de session. Les captures `test-results/navigation-en-mobile.png`, `navigation-fr-mobile.png` et `profile-desktop-dark.png` sont ignorées par Git. Aucun secret ni volume de développement n’a été modifié. Les contrôles hôte utilisent Node 25.6.0, hors de la version 24 prévue ; cette limite demeure explicite. Les chemins initiaux de `next-env.d.ts`, réécrits automatiquement par le build, ont été restaurés et le contrôle de types a repassé.
+
+## Icônes Lucide — 7 octobre 2026
+
+Décision utilisateur : utiliser une bibliothèque réelle pour les icônes au lieu des tracés SVG manuels. `shared/presentation/ui/icon.tsx` assemble désormais douze composants de `lucide-react` 1.52.0, importés par nom et verrouillés dans package.json/pnpm-lock.yaml. Les noms publics, tailles/couleurs Tailwind, props SVG, `aria-hidden` et `focusable=false` sont conservés. Navigation, formulaires, menus et cartes utilisent la même primitive ; personnages illustrés et marque fournie restent distincts.
+
+**Régression avant correction :** le test de rendu échoue car les icônes viennent encore des SVG locaux, sans composant Lucide. Après remplacement, les douze noms rendent les icônes de bibliothèque, et un second test vérifie la personnalisation des classes, attributs et épaisseur de trait.
+
+| Contrôle sur l’état final | Résultat |
+| --- | --- |
+| Lint, types stricts et frontières | PASS |
+| Unitaires | PASS : 91 tests / 27 fichiers |
+| Intégrations PostgreSQL jetable | PASS : 31 tests / 14 fichiers ; quatre migrations depuis zéro et replay |
+| Build Next.js 16.3.8 Turbopack | PASS |
+| E2E Chrome de production | PASS : 41/41 scénarios, dont navigation, langues/thèmes, formulaires, menus et profil |
+| Responsive, clavier et accessibilité automatisée | PASS : régressions FR/EN clair/sombre, 360/820/1440 px ; icônes décoratives, focus, menus et labels conservés |
+| Inspection visuelle | PASS : capture de navigation EN mobile sombre inspectée |
+| App locale déjà lancée | PASS : installation frozen-lockfile de Lucide 1.52.0 dans le volume de dépendances du conteneur ; `/en` sur localhost:3000 retourne 200 avec les icônes Lucide, dont le globe |
+| Diff sans erreur d’espacement | PASS |
+| Échecs finaux | Aucun dans les contrôles exécutés |
+| OAuth réel, VPS et déploiement | NON EXÉCUTÉS dans ce lot |
+
+Tests DB et navigateur exclusivement sur la base PostgreSQL temporaire `typing_test`, créée puis supprimée par `scripts/test-stack.ts`. Serveur E2E local sur localhost:3400, contextes Chrome séparés et traces désactivées pour navigation/profil. La synchronisation du conteneur de développement n’a modifié aucune base ni volume de données. Les contrôles hôte utilisent Node 25.6.0, hors de la version 24 prévue ; l’application Docker utilise Node 24. Les chemins initiaux de next-env.d.ts réécrits par le build sont restaurés et typecheck repasse. Aucun secret affiché ou modifié. Aucun autre numéro de version de dépendance n’est changé ; pnpm normalise aussi les métadonnées facultatives de Sharp, déjà dépendance directe.

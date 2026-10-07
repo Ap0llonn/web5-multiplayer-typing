@@ -29,6 +29,15 @@
   "checkpoint": "Checkpoint 1 · Socle fonctionnel",
   "skip": "Aller au contenu",
   "navigation": "Navigation principale",
+  "siteNav": {
+    "join": "Rejoindre",
+    "seeLobbies": "Voir les salons",
+    "createRace": "Créer une course"
+  },
+  "lobbies": {
+    "comingSoon": "Bientôt disponible",
+    "unavailable": "L’exploration des salons publics n’est pas encore disponible. Rejoignez avec un code ou connectez-vous pour créer votre salle."
+  },
   "light": "Thème clair",
   "dark": "Thème sombre",
   "login": "Connexion",

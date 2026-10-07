@@ -23,9 +23,8 @@ export function LanguageSwitcher() {
         )
       }
     >
-      <Icon name="globe" className="hidden sm:block" />
+      <Icon name="globe" />
       <span>{t(locale === "fr" ? "localeFr" : "localeEn")}</span>
-      <Icon name="chevron" className="h-4 w-4" />
     </Button>
   );
 }

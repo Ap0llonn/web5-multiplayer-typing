@@ -110,7 +110,7 @@ small {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.75rem;
   padding-block: 0.9rem;
 }
 .brand-link {
@@ -126,8 +126,22 @@ small {
   font-size: 0.9rem;
   font-weight: 900;
   text-decoration: none;
-  padding: 0.65rem 1rem;
+  padding: 0.65rem 0.75rem;
   border-radius: 12px;
+  white-space: nowrap;
+}
+.nav-links,
+.nav-account-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.nav-links {
+  justify-content: center;
+}
+.nav-account-controls {
+  min-width: 0;
 }
 .nav-home[aria-current="page"] {
   background: var(--hero);
@@ -141,6 +155,7 @@ small {
 }
 .nav-controls {
   flex-wrap: wrap;
+  justify-content: center;
 }
 .theme-controls {
   gap: 3px;
@@ -634,22 +649,21 @@ small {
     gap: 2rem;
   }
 }
+@media (max-width: 1180px) {
+  .nav-links {
+    order: 3;
+    width: 100%;
+  }
+}
 @media (max-width: 760px) {
   .site-navigation {
     justify-content: center;
     gap: 0.7rem;
   }
-  .site-navigation > div:first-child {
-    width: 100%;
-    justify-content: space-between;
-    gap: 0.5rem;
-  }
   .nav-home {
     padding-inline: 0.6rem;
   }
   .nav-controls {
-    width: 100%;
-    justify-content: space-between;
     gap: 0.4rem;
   }
   .brand-link {

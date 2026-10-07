@@ -6,8 +6,9 @@ import { Shell } from "@/shared/presentation/ui/shell";
 import en from "@/shared/presentation/i18n/messages/en.json";
 import fr from "@/shared/presentation/i18n/messages/fr.json";
 
+const navigation = vi.hoisted(() => ({ path: "/" }));
 vi.mock("@/shared/presentation/i18n/navigation", () => ({
-  usePathname: () => "/",
+  usePathname: () => navigation.path,
   useRouter: () => ({ replace: vi.fn() }),
   Link: ({ href, children, ...props }: React.ComponentProps<"a">) => (
     <a href={href} {...props}>
@@ -23,6 +24,29 @@ for (const [locale, messages] of [
   ["en", en],
   ["fr", fr],
 ] as const) {
+  it(`offers join, browse and create destinations with an active link in ${locale}`, () => {
+    navigation.path = "/play/create";
+    const html = renderToStaticMarkup(
+      <NextIntlClientProvider
+        locale={locale}
+        messages={messages}
+        timeZone="UTC"
+      >
+        <Shell>
+          <h1>Content</h1>
+        </Shell>
+      </NextIntlClientProvider>,
+    );
+    const header = html.match(/<header[\s\S]*?<\/header>/)?.[0];
+    expect(header).toContain('href="/play"');
+    expect(header).toContain('href="/lobbies"');
+    expect(header).toMatch(
+      /<a[^>]*href="\/play\/create"[^>]*aria-current="page"/,
+    );
+    expect(header?.match(/aria-current="page"/g)).toHaveLength(1);
+    navigation.path = "/";
+  });
+
   it(`provides a skip target, labelled navigation and working footer links in ${locale}`, () => {
     const html = renderToStaticMarkup(
       <NextIntlClientProvider

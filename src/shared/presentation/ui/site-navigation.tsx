@@ -20,8 +20,8 @@ export function SiteNavigation({
         className="site-container site-navigation"
         aria-label={t("navigation")}
       >
-        <div className="flex min-w-0 items-center gap-4 sm:gap-8">
-          <Brand />
+        <Brand />
+        <div className="nav-links">
           <Link
             className="nav-home"
             href="/"
@@ -34,7 +34,21 @@ export function SiteNavigation({
             href="/play"
             aria-current={path === "/play" ? "page" : undefined}
           >
-            {t("play.navigationLabel")}
+            {t("siteNav.join")}
+          </Link>
+          <Link
+            className="nav-home"
+            href="/lobbies"
+            aria-current={path === "/lobbies" ? "page" : undefined}
+          >
+            {t("siteNav.seeLobbies")}
+          </Link>
+          <Link
+            className="nav-home"
+            href="/play/create"
+            aria-current={path === "/play/create" ? "page" : undefined}
+          >
+            {t("siteNav.createRace")}
           </Link>
         </div>
         <div className="nav-controls">

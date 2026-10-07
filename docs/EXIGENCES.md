@@ -20,6 +20,10 @@ Ce fichier est le livrable `docs/EXIGENCES.md` imposé aux pages 1, 10 et 11 du 
 
 **Installation Docker ARM64 (7 octobre 2026) :** correction de `ERR_PNPM_IGNORED_BUILDS` lors de la construction sur Apple Silicon : approbation explicite de `@embedded-postgres/linux-arm64` dans `pnpm-workspace.yaml`. Paquet et lockfile inchangés. Ce correctif d’outillage concerne `TECH-04` et `DOC-FINAL-README` ; il ne change aucun statut métier. Preuve de construction et limites dans `verification.md`.
 
+**Navigation commune (7 octobre 2026) :** liens Rejoindre, Voir les salons et Créer une course dans le shell du site et les pages play ; connexion et inscription pour les visiteurs, profil et déconnexion pour les comptes. Le bouton de langue perd le chevron de dropdown, avec conservation des préférences et de l’URL. Portée : `JOIN-01`, `AUTH-01`, `DES-06`, `I18N-01/02` et `A11Y-04`. « Créer une course » ouvre la création réelle de salle ; aucun moteur de course livré. L’explorateur `JOIN-02` reste **non fait** : `/lobbies` annonce sa disponibilité future et offre les parcours existants, sans publier les salles « sur code ». La navigation ne modifie pas le CTA unique du contenu d’accueil. Contrat dans `ARCHITECTURE.md`, contrôles dans [verification.md](verification.md).
+
+**Icônes de bibliothèque (7 octobre 2026) :** décision utilisateur suivante : remplacer les tracés manuels de la primitive partagée Icon par `lucide-react`, pour les contrôles de navigation et les autres usages de cette primitive. Contrat TypeScript strict, styles Tailwind et accessibilité des icônes décoratives conservés ; personnages de jeu et marque distincts. Portée : `TECH-02`, `DES-04/05/06` et `A11Y-02/03/04`. Aucun statut officiel relevé. Dépendance dans `dependencies.md`, preuves dans [verification.md](verification.md).
+
 - **complet** : tous les sous-critères sont réalisés et vérifiés, avec fichiers, tests et preuve datée du commit
 - **partiel** : réalisation ou conception effectivement constatée, avec limites précisées ; ne vaut pas preuve d'exécution
 - **non fait** : aucune réalisation vérifiée à cet instant ; peut être prévu ou en cours de développement

@@ -29,6 +29,15 @@
   "checkpoint": "Checkpoint 1 · Functional foundation",
   "skip": "Skip to content",
   "navigation": "Main navigation",
+  "siteNav": {
+    "join": "Join",
+    "seeLobbies": "See Lobbies",
+    "createRace": "Create Race"
+  },
+  "lobbies": {
+    "comingSoon": "Coming soon",
+    "unavailable": "Public lobby browsing isn’t available yet. Join with a code, or sign in to create your own room."
+  },
   "light": "Light theme",
   "dark": "Dark theme",
   "login": "Sign in",

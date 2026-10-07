@@ -5,3 +5,7 @@ Vérifiées dans le registre officiel npm le 3 octobre 2026 ; chaque dépendance
 Sources : [Next](https://nextjs.org/docs), [Better Auth Next](https://better-auth.com/docs/integrations/next), [Prisma](https://docs.prisma.io/docs/guides/upgrade-prisma-orm/v7), [username](https://better-auth.com/docs/plugins/username), [anonymous](https://better-auth.com/docs/plugins/anonymous), [rate limiting](https://better-auth.com/docs/concepts/rate-limit).
 
 Instructions AGENTS et guides Next livrés dans node_modules/next/dist/docs lus : App Router layouts/pages, route handlers, proxy. Schéma auth généré par CLI officiel auth1.7.7, puis migration Prisma. Schéma applicatif ajouté sans recopier Type.
+
+## Icônes — 7 octobre 2026
+
+`lucide-react` **1.52.0**, version exacte vérifiée au registre npm et verrouillée dans pnpm, remplace les tracés manuels de la primitive partagée Icon selon la demande utilisateur. Le peer React accepte les versions 16.5.1 à 19, dont React 19.3.0 installé. Imports nommés des douze composants utilisés par le contrat existant ; aucun chargement dynamique du catalogue. Types fournis par la bibliothèque ; licence ISC. Sources officielles : [guide React](https://lucide.dev/guide/react/getting-started), [licence](https://lucide.dev/license). Cette bibliothèque rend des SVG optimisés ; leurs tracés sont désormais maintenus par Lucide.
