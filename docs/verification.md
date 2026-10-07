@@ -1,5 +1,24 @@
 # Vérification du socle Sprint 1
 
+## Migrations au démarrage de production — 7 octobre 2026
+
+Après la résolution du nom PostgreSQL, l’utilisateur signale `TableDoesNotExist` dans Dokploy et demande si le build applique les migrations. Constat : `pnpm build` générait seulement le client Prisma ; le `CMD` de production lançait directement `pnpm start`. Le guide prévoyait une migration manuelle, sans étape automatique. La demande actuelle remplace ce choix : `Dockerfile` exécute désormais `pnpm exec prisma migrate deploy && exec pnpm start`. Les migrations utilisent la connexion runtime injectée par Dokploy ; le build reste indépendant de la base de production, avec son URL factice. Aucun nouveau SQL ni changement des modules/contrats métier.
+
+Les deux tests de `tests/unit/production-startup.test.ts` exécutent le véritable `CMD` de production avec un CLI externe contrôlé. Avant correction, les deux échouent : le serveur est lancé directement, même dans le scénario d’échec de migration. Après correction, les migrations précèdent le serveur ; un code d’échec de migration est conservé et aucun serveur n’est lancé. Ils vérifient la chaîne de démarrage, sans prétendre prouver une migration PostgreSQL avec ce double. Le shell de l’image étant Linux, ces deux contrôles sont ignorés sur un hôte Windows.
+
+| Contrôle final | Résultat |
+| --- | --- |
+| Lint, types stricts, frontières, diff | PASS ; imports initiaux de `next-env.d.ts` restaurés après build et types repassés |
+| Unitaires | PASS : 96 tests / 28 fichiers, dont les deux nouvelles régressions de démarrage |
+| PostgreSQL jetable et intégrations | PASS : quatre migrations appliquées depuis zéro, puis rejeu sans migration en attente ; 31 tests / 14 fichiers |
+| Compose résolu | PASS : `pnpm infra:validate`, exemples publics uniquement |
+| Build Next.js | PASS : génération du client et compilation Next.js 16.3.8 |
+| E2E pertinents | PASS : quatre scénarios de `sprint.spec.ts`, Chrome local, serveur localhost:3410 et PostgreSQL jetable |
+| Image Docker Node 24 et démarrage réel | EN COURS : compilation réussie, packaging et recette de démarrage à terminer |
+| Migration/déploiement Dokploy, OAuth externe | NON EXÉCUTÉS : aucun accès à la base distante, aucune publication ou migration de production |
+
+Le build et les tests DB/browser hôte utilisent les autorisations techniques nécessaires à Turbopack, PostgreSQL et Chrome, avec cache SWC sous `/private/tmp/typing-dokploy-swc-cache`. Le moteur Docker local nécessite aussi un accès autorisé à son socket. Les contrôles hôte restent sous Node 25.6.0 ; le conteneur de production utilise Node 24. Le guide et le README remplacent explicitement l’étape manuelle antérieure. Le service distant devra être reconstruit/redéployé avec cette image pour appliquer ce changement.
+
 ## Résolution DNS PostgreSQL dans Dokploy — 7 octobre 2026
 
 Incident signalé dans Dokploy : `prisma.rateLimit.findMany()` échoue avec `getaddrinfo EAI_AGAIN production-postgres`. Le diagnostic établit un échec de résolution DNS, sans preuve distante de sa cause exacte. Le Compose versionné ne raccordait pas `app` au réseau de la base Dokploy. Correction d’infrastructure pour `DOC-S1-DEPLOY` et `DOC-FINAL-README` : déclaration explicite du réseau existant `dokploy-network`, externe. Les modules et contrats métier, la limitation Better Auth et les migrations restent identiques. Le guide demande de vérifier aussi l’hôte interne exact, la disponibilité de la base et le Compose rendu en cas d’isolation Dokploy.

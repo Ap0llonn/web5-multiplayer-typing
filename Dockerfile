@@ -29,4 +29,5 @@ RUN addgroup -S --gid 1001 app && adduser -S --uid 1001 --ingroup app app
 COPY --from=builder --chown=app:app /app /app
 USER app
 EXPOSE 3000
-CMD ["pnpm", "start"]
+# Use the runtime DATABASE_URL; failed migrations must prevent server startup.
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && exec pnpm start"]

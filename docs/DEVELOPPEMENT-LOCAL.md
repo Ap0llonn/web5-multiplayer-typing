@@ -67,7 +67,7 @@ Une erreur `getaddrinfo EAI_AGAIN production-postgres` signifie que le conteneur
 
 Remplacer tous les `CHANGE_ME`, générer un `BETTER_AUTH_SECRET` distinct avec `openssl rand -base64 32`, et enregistrer les callbacks GitHub/Discord sous `BETTER_AUTH_URL/api/auth/callback/github` et `/discord`. Ne pas téléverser le fichier d’exemple avec de vraies valeurs. Redis et S3 apparaissent dans le modèle pour documenter les services envisagés, mais l’application ne les consomme pas actuellement.
 
-Les migrations de production ne sont pas lancées automatiquement au démarrage. Avant de router le trafic vers une nouvelle version, appliquer `prisma migrate deploy` une fois depuis le conteneur de l’application ou une tâche de release Dokploy, avec la vraie `DATABASE_URL` et après validation/sauvegarde de la base cible. Ne jamais utiliser une base inconnue ou de production pour les tests locaux.
+La décision utilisateur du 7 octobre 2026 remplace l’étape de migration manuelle : l’image de production exécute désormais `pnpm exec prisma migrate deploy` **au démarrage du conteneur**, puis `pnpm start` seulement si les migrations réussissent. Une panne DB ou une migration en échec bloque le démarrage ; consulter les logs du déploiement. Le build génère le client Prisma avec une URL factice et ne contacte pas la base de production. Les migrations versionnées, y compris la création de `rateLimit`, utilisent la vraie `DATABASE_URL` injectée par Dokploy au démarrage. Avant le déploiement, vérifier cette cible et conserver une sauvegarde adaptée. Ne jamais utiliser une base inconnue ou de production pour les tests locaux.
 
 Pour inspecter l’infrastructure :
 
