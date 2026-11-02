@@ -8,6 +8,7 @@ import en from "@/shared/presentation/i18n/messages/en.json";
 import fr from "@/shared/presentation/i18n/messages/fr.json";
 const room: LobbySnapshot = {
   id: "room",
+  visibility: "CODE",
   code: "ABC234",
   name: "Room",
   capacity: 2,
@@ -63,5 +64,31 @@ for (const [locale, messages, accountLabel, guestLabel] of [
     expect(rows[1]).toContain(messages.PARTICIPANT);
     expect(rows[1]).toContain(messages.offline);
     expect(rows[1]).not.toContain(messages.host);
+  });
+  it(`offers expulsion only to the host and never for the host in ${locale}`, () => {
+    const render = (playerIdentityId: string, pending = false) =>
+      renderToStaticMarkup(
+        <NextIntlClientProvider
+          locale={locale}
+          messages={messages}
+          timeZone="UTC"
+        >
+          <LobbyRoster
+            room={room}
+            playerIdentityId={playerIdentityId}
+            pending={pending}
+            onKick={async () => ({ ok: true, value: room })}
+          />
+        </NextIntlClientProvider>,
+      );
+    const label = locale === "fr" ? "Expulser Bob" : "Remove Bob";
+    expect(render("account")).toContain(label);
+    expect(render("account")).toContain('aria-haspopup="dialog"');
+    expect(render("account")).not.toContain(
+      locale === "fr" ? "Expulser Alice" : "Remove Alice",
+    );
+    expect(render("guest")).not.toContain(label);
+    expect(render("outsider")).not.toContain(label);
+    expect(render("account", true)).toMatch(/<button[^>]*disabled=""/);
   });
 }

@@ -3,17 +3,19 @@ import { getCurrentActor } from "@/modules/identity/server";
 import {
   getLobbyService,
   createLobbySchema,
+  publicLobbiesQuerySchema,
   heartbeatLobbySchema,
+  kickLobbySchema,
   joinLobbySchema,
   roomCodeSchema,
 } from "@/modules/lobby/server";
-import { failure } from "@/shared/contracts/operation-result";
+import { failure, success } from "@/shared/contracts/operation-result";
 import { resultResponse } from "@/shared/infrastructure/http/response";
 import { readServerEnv } from "@/shared/infrastructure/env/server";
 import { allowRequest } from "@/shared/infrastructure/http/rate-limit";
 export async function handleLobbyCommand(
   request: Request,
-  operation: "create" | "join" | "leave" | "current" | "heartbeat",
+  operation: "create" | "join" | "leave" | "current" | "heartbeat" | "kick",
   code?: string,
 ) {
   try {
@@ -33,7 +35,7 @@ export async function handleLobbyCommand(
       return resultResponse(await service.leaveLobby(parsed.data, actor.value));
     }
     if (
-      operation !== "heartbeat" &&
+      (operation === "create" || operation === "join") &&
       !(await allowRequest(operation, request.headers, 10))
     )
       return resultResponse(failure("RATE_LIMITED"));
@@ -63,6 +65,19 @@ export async function handleLobbyCommand(
           : failure("VALIDATION"),
       );
     }
+    if (operation === "kick") {
+      const parsedCode = roomCodeSchema.safeParse(code);
+      const parsedBody = kickLobbySchema.safeParse(data);
+      return resultResponse(
+        parsedCode.success && parsedBody.success
+          ? await service.kickLobby(
+              parsedCode.data,
+              parsedBody.data.playerIdentityId,
+              actor.value,
+            )
+          : failure("VALIDATION"),
+      );
+    }
     const parsed = joinLobbySchema.safeParse(data);
     return resultResponse(
       parsed.success
@@ -84,4 +99,46 @@ export async function getRoomSnapshot(headers: Headers, code: string) {
   const actor = await getCurrentActor(headers);
   if (!actor.ok) return actor;
   return getLobbyService().observeLobby(parsed.data, actor.value);
+}
+
+// Browsing publishes only the public summary; membership/session checks remain on join.
+export async function getPublicLobbies() {
+  try {
+    return await getLobbyService().listPublicLobbies();
+  } catch {
+    return failure("INTERNAL");
+  }
+}
+export async function handlePublicLobbies(request: Request) {
+  const parsed = publicLobbiesQuerySchema.safeParse(
+    Object.fromEntries(new URL(request.url).searchParams),
+  );
+  return resultResponse(
+    parsed.success ? await getPublicLobbies() : failure("VALIDATION"),
+  );
+}
+
+export async function handleQuickLobby(request: Request) {
+  try {
+    const parsed = publicLobbiesQuerySchema.safeParse(
+      Object.fromEntries(new URL(request.url).searchParams),
+    );
+    if (!parsed.success) return resultResponse(failure("VALIDATION"));
+    const actor = await getCurrentActor(request.headers);
+    if (!actor.ok && actor.error.code !== "UNAUTHENTICATED")
+      return resultResponse(actor);
+    const result = await getLobbyService().findQuickLobby(
+      actor.ok ? actor.value.playerIdentityId : undefined,
+    );
+    return resultResponse(
+      result.ok
+        ? success({
+            room: result.value,
+            canCreate: actor.ok && actor.value.kind === "account",
+          })
+        : result,
+    );
+  } catch {
+    return resultResponse(failure("INTERNAL"));
+  }
 }

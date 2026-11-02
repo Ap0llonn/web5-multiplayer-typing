@@ -42,6 +42,13 @@ export function LobbyRoom({ actor }: { actor: LobbyActor }) {
           <h1 ref={heading} tabIndex={-1}>
             {room.name}
           </h1>
+          <p className="mt-2 text-sm font-bold">
+            {t(
+              room.visibility === "PUBLIC"
+                ? "lobbies.publicVisibility"
+                : "lobbies.codeVisibility",
+            )}
+          </p>
         </div>
         <div className="lobby-room-actions">
           <Button
@@ -95,7 +102,14 @@ export function LobbyRoom({ actor }: { actor: LobbyActor }) {
             {t("connection")}: {t(connection)}
           </span>
         </div>
-        <LobbyRoster room={room} playerIdentityId={actor.playerIdentityId} />
+        <LobbyRoster
+          room={room}
+          playerIdentityId={actor.playerIdentityId}
+          pending={pending}
+          onKick={(playerIdentityId) =>
+            send(`/api/lobbies/${room.code}/kick`, { playerIdentityId })
+          }
+        />
         <p className="lobby-stage-caption">
           <Icon name="spark" />
           {t("play.stageCaption")}

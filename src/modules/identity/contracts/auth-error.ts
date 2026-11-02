@@ -1,5 +1,16 @@
 import type { ErrorCode } from "@/shared/contracts/operation-result";
-export function mapAuthError(code: string | undefined): `errors.${ErrorCode}` {
+export type AuthErrorMessageKey =
+  | `errors.${ErrorCode}`
+  | "authErrors.emailTaken"
+  | "authErrors.usernameTaken";
+
+export function mapAuthError(code: string | undefined): AuthErrorMessageKey {
+  if (
+    code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ||
+    code === "USER_ALREADY_EXISTS"
+  )
+    return "authErrors.emailTaken";
+  if (code === "USERNAME_IS_ALREADY_TAKEN") return "authErrors.usernameTaken";
   if (
     code?.includes("ALREADY_EXISTS") ||
     code?.includes("USERNAME_IS_ALREADY_TAKEN")

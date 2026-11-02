@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+test.use({ trace: "off" });
+
 test("participant and host reconnect within the grace period with unchanged identities and roster", async ({
   browser,
 }) => {
@@ -92,7 +94,8 @@ test("participant and host reconnect within the grace period with unchanged iden
       "Presence timing evidence (Chromium, localhost, milliseconds):",
       JSON.stringify({ arrivalMs, ...timings }),
     );
-    await h.getByRole("button", { name: "Français", exact: true }).click();
+    await expect(h.getByRole("navigation")).toHaveCount(0);
+    await h.goto("/fr/play/room");
     await expect(h).toHaveURL(/\/fr\/play\/room\/?$/);
     await expect(
       h.getByTestId("member-row").filter({ hasText: username }),
@@ -101,6 +104,14 @@ test("participant and host reconnect within the grace period with unchanged iden
       h.getByTestId("member-row").filter({ hasText: "Presence Guest" }),
     ).toContainText("Invité");
     await expect(h.getByTestId("member-row")).toHaveCount(2);
+    await expect(h.getByRole("navigation")).toHaveCount(0);
+    const localized = await (await host.request.get("/api/lobbies/me")).json();
+    expect(localized.value.hostPlayerIdentityId).toBe(ownerBefore);
+    expect(
+      localized.value.members
+        .map((member: { playerIdentityId: string }) => member.playerIdentityId)
+        .sort(),
+    ).toEqual(membersBefore);
   } finally {
     await host.close();
     await guest.close();

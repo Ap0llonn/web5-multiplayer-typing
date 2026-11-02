@@ -5,4 +5,6 @@ export type {
   LobbyState,
   CreateLobbyInput,
   LobbySnapshot,
+  LobbyVisibility,
+  PublicLobbySummary,
 } from "./contracts/lobby";

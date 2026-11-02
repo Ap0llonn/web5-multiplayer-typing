@@ -7,7 +7,8 @@ import { AuthForm } from "@/modules/identity/presentation/auth-form";
 import { sendLobbyCommand } from "@/modules/lobby/presentation/transport/lobby-command";
 import { startLobbyHeartbeat } from "@/modules/lobby/presentation/transport/lobby-heartbeat";
 import { CharacterPicker } from "@/modules/lobby/presentation/characters/character-picker";
-import type { LobbyCharacter } from "@/modules/lobby/public";
+import { LobbyRolePicker } from "@/modules/lobby/presentation/entry/lobby-role-picker";
+import type { LobbyCharacter, LobbyRole } from "@/modules/lobby/public";
 import { Link, useRouter } from "@/shared/presentation/i18n/navigation";
 import "./join-player-form.css";
 import { Button } from "@/shared/presentation/ui/button";
@@ -27,6 +28,7 @@ export function JoinPlayerForm({
   const router = useRouter();
   const [authenticated, setAuthenticated] = useState(actor !== null);
   const [character, setCharacter] = useState<LobbyCharacter>(initialCharacter);
+  const [role, setRole] = useState<LobbyRole>("PARTICIPANT");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
@@ -49,7 +51,7 @@ export function JoinPlayerForm({
         "/api/lobbies/join",
         {
           code,
-          role: "PARTICIPANT",
+          role,
           character,
         },
       );
@@ -86,6 +88,13 @@ export function JoinPlayerForm({
           ) : authenticated ? (
             <>
               {actor && <p>{actor.displayName}</p>}
+              {!alreadyJoined && (
+                <LobbyRolePicker
+                  role={role}
+                  onChange={setRole}
+                  disabled={pending}
+                />
+              )}
               <CharacterPicker
                 character={character}
                 onChange={setCharacter}
@@ -105,6 +114,13 @@ export function JoinPlayerForm({
                 await join();
               }}
             >
+              {!alreadyJoined && (
+                <LobbyRolePicker
+                  role={role}
+                  onChange={setRole}
+                  disabled={pending}
+                />
+              )}
               <CharacterPicker
                 character={character}
                 onChange={setCharacter}

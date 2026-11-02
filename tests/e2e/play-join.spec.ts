@@ -134,6 +134,9 @@ for (const [locale, messages] of [
       });
       await player.goto(`/${locale}/play`);
       await player
+        .getByRole("button", { name: messages.dark, exact: true })
+        .click();
+      await player
         .getByLabel(messages.play.roomCodeLabel)
         .fill(code.toLowerCase());
       await player
@@ -146,6 +149,7 @@ for (const [locale, messages] of [
         new RegExp(`/${locale}/play/player\\?code=${code}$`),
       );
       await expect(player.getByLabel(messages.guestName)).toBeVisible();
+      await expect(player.getByRole("navigation")).toHaveCount(0);
       expect(mutations).toEqual([]);
       await player.getByLabel(messages.guestName).fill("Play Guest");
       await player
@@ -157,6 +161,7 @@ for (const [locale, messages] of [
         .click();
       await expect(player).toHaveURL(new RegExp(`/${locale}/play/room/?$`));
       await expect(player.getByTestId("room-code")).toHaveText(code);
+      await expect(player.getByRole("navigation")).toHaveCount(0);
       await expect(owner.getByTestId("member-row")).toHaveCount(2);
       await expect(player.getByTestId("member-row")).toHaveCount(2);
       const guestOnOwner = owner
@@ -179,6 +184,13 @@ for (const [locale, messages] of [
         "/api/lobbies/join",
       ]);
       expect(mutations).not.toContain("/api/lobbies");
+      // Returning via the character page resumes this same membership.
+      await player.goto(`/${locale}/play/player?code=${code}`);
+      await expect(player.getByRole("navigation")).toHaveCount(0);
+      await player
+        .getByRole("link", { name: messages.play.backButton, exact: true })
+        .click();
+      await expect(player.getByTestId("member-row")).toHaveCount(2);
       await player.reload();
       await expect(player.getByTestId("room-code")).toHaveText(code);
       await expect(player.getByTestId("member-row")).toHaveCount(2);

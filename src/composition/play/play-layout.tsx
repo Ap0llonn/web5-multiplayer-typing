@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { getAccountControls } from "@/composition/site/account-controls";
 import { SiteNavigation } from "@/shared/presentation/ui/site-navigation";
+import { PlayNavigation } from "./play-navigation";
 import "./play-layout.css";
 
 export async function PlayLayout({ children }: { children: ReactNode }) {
@@ -12,7 +13,9 @@ export async function PlayLayout({ children }: { children: ReactNode }) {
       <a className="skip-link" href="#content">
         {t("skip")}
       </a>
-      <SiteNavigation accountControl={accountControl} />
+      <PlayNavigation>
+        <SiteNavigation accountControl={accountControl} />
+      </PlayNavigation>
       <main id="content" tabIndex={-1} className="play-main">
         {children}
       </main>

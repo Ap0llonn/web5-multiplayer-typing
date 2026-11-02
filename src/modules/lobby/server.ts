@@ -3,7 +3,9 @@ import { lobbySupervisor } from "./container";
 export const getLobbyService = () => lobbySupervisor;
 export {
   createLobbySchema,
+  publicLobbiesQuerySchema,
   heartbeatLobbySchema,
+  kickLobbySchema,
   joinLobbySchema,
   roomCodeSchema,
 } from "./contracts/lobby-schemas";

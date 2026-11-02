@@ -100,6 +100,7 @@ model PlayerIdentity {
   user User @relation(fields:[authUserId],references:[id],onDelete:Restrict)
   createdAt DateTime @default(now())
   memberships LobbyMember[]
+  bans LobbyBan[]
   hostedLobbies Lobby[]
 }
 
@@ -114,6 +115,10 @@ enum LobbyRole {
  PARTICIPANT
  SPECTATOR
 }
+enum LobbyVisibility {
+ PUBLIC
+ CODE
+}
 model Lobby {
  id String @id
  code String @unique
@@ -121,10 +126,13 @@ model Lobby {
  capacity Int
  hostPlayerIdentityId String
  host PlayerIdentity @relation(fields:[hostPlayerIdentityId],references:[id],onDelete:Restrict)
+ visibility LobbyVisibility @default(CODE)
  state LobbyState @default(WAITING)
  version Int @default(1)
  members LobbyMember[]
+ bans LobbyBan[]
  createdAt DateTime @default(now())
+ @@index([visibility,state,createdAt])
 }
 model LobbyMember {
  id String @id @default(cuid())
@@ -141,6 +149,17 @@ model LobbyMember {
  lastSeenAt DateTime
  @@unique([lobbyId,playerIdentityId])
  @@index([lobbyId,activePlayerIdentityId])
+}
+
+model LobbyBan {
+ id String @id @default(cuid())
+ lobbyId String
+ lobby Lobby @relation(fields:[lobbyId],references:[id],onDelete:Cascade)
+ playerIdentityId String
+ player PlayerIdentity @relation(fields:[playerIdentityId],references:[id],onDelete:Restrict)
+ createdAt DateTime @default(now())
+ @@unique([lobbyId,playerIdentityId])
+ @@index([playerIdentityId])
 }
 
 enum LobbyCharacter {

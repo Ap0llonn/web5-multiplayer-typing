@@ -37,6 +37,7 @@ it("accounts create only from the dedicated page with settings and characters", 
   expect(html).toContain('name="name"');
   expect(html).toContain('name="capacity"');
   expect(html).toContain('name="character"');
+  expect(html).toContain('name="visibility" value="CODE"');
   expect(html).not.toContain('name="code"');
 });
 for (const kind of ["guest", "signed-out", "error"] as const) {

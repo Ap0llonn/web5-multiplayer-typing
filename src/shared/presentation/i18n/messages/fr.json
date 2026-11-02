@@ -57,8 +57,28 @@
     "createRace": "Créer une course"
   },
   "lobbies": {
-    "comingSoon": "Bientôt disponible",
-    "unavailable": "L’exploration des salons publics n’est pas encore disponible. Rejoignez avec un code ou connectez-vous pour créer votre salle."
+    "description": "Trouvez un salon public et retrouvez le groupe. Choisissez votre rôle et votre personnage avant de rejoindre.",
+    "liveHint": "Actualisation automatique toutes les 5 secondes.",
+    "emptyTitle": "Aucun salon public pour le moment",
+    "emptyDescription": "Créez un salon public ou rejoignez une salle avec son code. Un compte est requis pour créer une salle.",
+    "listLabel": "Salons publics",
+    "participants": "Participants",
+    "slots": "{count, number} / {capacity, number}",
+    "spectators": "{count, number}",
+    "full": "Les places de participants sont prises. Vous pouvez encore choisir spectateur en rejoignant.",
+    "notJoinable": "L’entrée sera disponible quand la salle sera en attente ou aux résultats.",
+    "joinByCode": "Rejoindre avec un code",
+    "visibility": "Visibilité",
+    "codeVisibility": "Sur code",
+    "publicVisibility": "Publique",
+    "visibilityHint": "Les salles publiques apparaissent dans Voir les salons. Les salles sur code sont accessibles uniquement avec leur code."
+  },
+  "quickPlay": {
+    "title": "Partie rapide",
+    "description": "Trouve le salon public le plus proche de sa capacité, avec une place pour participer.",
+    "action": "Trouver un salon",
+    "emptyAccount": "Aucun salon public ne propose de place pour participer. Tu peux en créer un.",
+    "emptyGuest": "Aucun salon public ne propose de place pour participer. Réessaie plus tard ou rejoins avec un code."
   },
   "light": "Thème clair",
   "dark": "Thème sombre",
@@ -152,6 +172,10 @@
     "historyUnavailable": "L’historique sera disponible avec les courses."
   },
   "play": {
+    "kickMember": "Expulser {name}",
+    "kickWarning": "{name} sera retiré de ce salon et ne pourra plus le rejoindre avec cette identité.",
+    "confirmKick": "Confirmer l’expulsion",
+    "cancelKick": "Annuler",
     "navigationLabel": "Rejoindre",
     "entryEyebrow": "Une place sur la ligne de départ",
     "entryTitle": "Retrouve ta bande.",
@@ -180,5 +204,9 @@
     "you": "Toi",
     "stageCaption": "Les bonnes touches, ça se partage.",
     "createTitle": "Rassemble ta bande."
+  },
+  "authErrors": {
+    "emailTaken": "Cette adresse email est déjà utilisée. Connectez-vous ou utilisez une autre adresse email.",
+    "usernameTaken": "Cet identifiant est déjà pris. Choisissez un autre identifiant."
   }
 }

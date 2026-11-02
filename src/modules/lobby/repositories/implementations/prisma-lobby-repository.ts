@@ -8,16 +8,24 @@ import {
 import type { Lobby } from "../../contracts/lobby";
 import { createCode } from "../../domain/lobby-rules";
 import type { LobbyRepository } from "../interfaces/lobby-repository";
-type Row = Prisma.LobbyGetPayload<{ include: { members: true } }>;
+import {
+  QUICK_LOBBY_PAGE_SIZE,
+  type QuickLobbyCandidate,
+} from "../interfaces/lobby-repository";
+type Row = Prisma.LobbyGetPayload<{
+  include: { members: true; bans: true };
+}>;
 function fromRow(row: Row): Lobby {
   return {
     id: row.id,
+    visibility: row.visibility,
     code: row.code,
     name: row.name,
     capacity: row.capacity,
     hostPlayerIdentityId: row.hostPlayerIdentityId,
     state: row.state,
     version: row.version,
+    bannedPlayerIdentityIds: row.bans.map((ban) => ban.playerIdentityId),
     members: row.members
       .filter((m) => m.activePlayerIdentityId !== null)
       .sort(
@@ -50,12 +58,94 @@ function memberData(member: Lobby["members"][number]) {
 }
 export class PrismaLobbyRepository implements LobbyRepository {
   constructor(private readonly db: PrismaClient) {}
+  async findQuickLobbyCandidates(
+    activeSince: number,
+    afterId?: string,
+  ): Promise<OperationResult<QuickLobbyCandidate[]>> {
+    try {
+      const rows = await this.db.lobby.findMany({
+        where: {
+          ...(afterId ? { id: { gt: afterId } } : {}),
+          visibility: "PUBLIC",
+          state: { in: ["WAITING", "RESULTS"] },
+          members: {
+            some: {
+              activePlayerIdentityId: { not: null },
+              kind: "account",
+              lastSeenAt: { gte: new Date(activeSince) },
+            },
+          },
+        },
+        include: {
+          members: {
+            where: {
+              activePlayerIdentityId: { not: null },
+              lastSeenAt: { gte: new Date(activeSince) },
+            },
+          },
+          bans: true,
+        },
+        orderBy: { id: "asc" },
+        take: QUICK_LOBBY_PAGE_SIZE,
+      });
+      return success(
+        rows.map((row) => ({
+          room: fromRow(row),
+          createdAt: row.createdAt.getTime(),
+        })),
+      );
+    } catch {
+      return failure("INTERNAL");
+    }
+  }
+  async findPublicLobbies(
+    activeSince: number,
+  ): Promise<OperationResult<Lobby[]>> {
+    try {
+      const rows = await this.db.lobby.findMany({
+        where: {
+          visibility: "PUBLIC",
+          state: { not: "CLOSED" },
+          members: {
+            some: {
+              activePlayerIdentityId: { not: null },
+              kind: "account",
+              lastSeenAt: { gte: new Date(activeSince) },
+            },
+          },
+        },
+        include: {
+          members: {
+            where: {
+              activePlayerIdentityId: { not: null },
+              lastSeenAt: { gte: new Date(activeSince) },
+            },
+          },
+        },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        take: 100,
+      });
+      return success(rows.map((row) => fromRow({ ...row, bans: [] })));
+    } catch {
+      return failure("INTERNAL");
+    }
+  }
   async create(room: Lobby): Promise<OperationResult<Lobby>> {
     for (let attempt = 0; attempt < 5; attempt++)
       try {
-        const { members, ...data } = room;
+        const { members } = room;
         await this.db.lobby.create({
-          data: { ...data, members: { create: members.map(memberData) } },
+          data: {
+            id: room.id,
+            visibility: room.visibility,
+            code: room.code,
+            name: room.name,
+            capacity: room.capacity,
+            hostPlayerIdentityId: room.hostPlayerIdentityId,
+            state: room.state,
+            version: room.version,
+            members: { create: members.map(memberData) },
+          },
         });
         return success(room);
       } catch (error) {
@@ -84,7 +174,7 @@ export class PrismaLobbyRepository implements LobbyRepository {
             await tx.$queryRaw`SELECT id FROM "Lobby" WHERE code=${code} FOR UPDATE`;
             const row = await tx.lobby.findUnique({
               where: { code },
-              include: { members: true },
+              include: { members: true, bans: true },
             });
             if (!row) return failure("NOT_FOUND");
             const room = fromRow(row);
@@ -112,6 +202,19 @@ export class PrismaLobbyRepository implements LobbyRepository {
                 },
                 data: { activePlayerIdentityId: null },
               });
+              const existingBanIds = new Set(
+                row.bans.map((ban) => ban.playerIdentityId),
+              );
+              const newBanIds = room.bannedPlayerIdentityIds.filter(
+                (playerIdentityId) => !existingBanIds.has(playerIdentityId),
+              );
+              if (newBanIds.length > 0)
+                await tx.lobbyBan.createMany({
+                  data: newBanIds.map((playerIdentityId) => ({
+                    lobbyId: room.id,
+                    playerIdentityId,
+                  })),
+                });
               for (const member of room.members) {
                 const old = row.members.find(
                   (m) => m.playerIdentityId === member.playerIdentityId,
@@ -175,7 +278,7 @@ export class PrismaLobbyRepository implements LobbyRepository {
           });
           const row = await tx.lobby.findUnique({
             where: { id: locked[0].id },
-            include: { members: true },
+            include: { members: true, bans: true },
           });
           if (!row) return failure("NOT_FOUND");
           if (row.state === "CLOSED") return failure("ROOM_CLOSED");
@@ -198,7 +301,7 @@ export class PrismaLobbyRepository implements LobbyRepository {
     try {
       const member = await this.db.lobbyMember.findUnique({
         where: { activePlayerIdentityId: playerIdentityId },
-        include: { lobby: { include: { members: true } } },
+        include: { lobby: { include: { members: true, bans: true } } },
       });
       return success(member ? fromRow(member.lobby) : null);
     } catch {

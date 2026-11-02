@@ -8,6 +8,7 @@ import {
 import type { LobbySnapshot } from "@/modules/lobby/public";
 const room: LobbySnapshot = {
   id: "room",
+  visibility: "CODE",
   code: "ABC234",
   name: "Room",
   capacity: 2,

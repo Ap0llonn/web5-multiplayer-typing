@@ -57,8 +57,28 @@
     "createRace": "Create Race"
   },
   "lobbies": {
-    "comingSoon": "Coming soon",
-    "unavailable": "Public lobby browsing isn’t available yet. Join with a code, or sign in to create your own room."
+    "description": "Find a public room and meet the crew. Choose your role and character before joining.",
+    "liveHint": "Updated automatically every 5 seconds.",
+    "emptyTitle": "No public lobbies yet",
+    "emptyDescription": "Create a public room, or join a room with its code. Creating a room requires an account.",
+    "listLabel": "Public lobbies",
+    "participants": "Participants",
+    "slots": "{count, number} / {capacity, number}",
+    "spectators": "{count, number}",
+    "full": "Participant slots are full. You can still choose spectator when joining.",
+    "notJoinable": "Joining will be available when the room is waiting or showing results.",
+    "joinByCode": "Join with a code",
+    "visibility": "Visibility",
+    "codeVisibility": "On code",
+    "publicVisibility": "Public",
+    "visibilityHint": "Public rooms appear in See Lobbies. On-code rooms are only accessible with their code."
+  },
+  "quickPlay": {
+    "title": "Quick play",
+    "description": "Find the public room closest to full, with a participant slot available.",
+    "action": "Find a room",
+    "emptyAccount": "No public room has a participant slot available. You can create one.",
+    "emptyGuest": "No public room has a participant slot available. Try again later, or join with a code."
   },
   "light": "Light theme",
   "dark": "Dark theme",
@@ -152,6 +172,10 @@
     "historyUnavailable": "Race history will be available when races are ready."
   },
   "play": {
+    "kickMember": "Remove {name}",
+    "kickWarning": "{name} will be removed from this room and cannot rejoin with this identity.",
+    "confirmKick": "Confirm removal",
+    "cancelKick": "Cancel",
     "navigationLabel": "Join a room",
     "entryEyebrow": "A spot at the starting line",
     "entryTitle": "Meet your crew.",
@@ -180,5 +204,9 @@
     "you": "You",
     "stageCaption": "Good keys. Great company.",
     "createTitle": "Get your crew together."
+  },
+  "authErrors": {
+    "emailTaken": "This email is already registered. Sign in or use a different email address.",
+    "usernameTaken": "This username is already taken. Choose a different username."
   }
 }

@@ -4,6 +4,7 @@ import { failure, success } from "@/shared/contracts/operation-result";
 import type { LobbySnapshot } from "@/modules/lobby/public";
 const currentRoom: LobbySnapshot = {
   id: "current",
+  visibility: "CODE",
   code: "ABC234",
   name: "Current room",
   capacity: 2,

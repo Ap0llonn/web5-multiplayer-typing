@@ -35,12 +35,14 @@ export function createRoom(
   if (!parsed.success) return failure("VALIDATION");
   return success({
     id: randomUUID(),
+    visibility: parsed.data.visibility,
     code,
     name: parsed.data.name,
     capacity: parsed.data.capacity,
     hostPlayerIdentityId: actor.playerIdentityId,
     state: "WAITING",
     version: 1,
+    bannedPlayerIdentityIds: [],
     members: [
       {
         ...actor,
@@ -61,6 +63,8 @@ export function joinRoom(
 ): OperationResult<Lobby> {
   if (character !== undefined && !characterSchema.safeParse(character).success)
     return failure("VALIDATION");
+  if (room.bannedPlayerIdentityIds.includes(actor.playerIdentityId))
+    return failure("FORBIDDEN");
   for (const member of [...room.members])
     if (now - member.lastSeenAt > PRESENCE_GRACE_MS)
       leaveRoom(room, member.playerIdentityId, now);
@@ -86,6 +90,34 @@ export function joinRoom(
     joinedAt: now,
     lastSeenAt: now,
   });
+  return success(room);
+}
+export function kickRoom(
+  room: Lobby,
+  actor: LobbyActor,
+  targetPlayerIdentityId: string,
+  now: number,
+): OperationResult<Lobby> {
+  for (const member of [...room.members])
+    if (now - member.lastSeenAt > PRESENCE_GRACE_MS)
+      leaveRoom(room, member.playerIdentityId, now);
+  if (
+    room.state === "CLOSED" ||
+    actor.kind !== "account" ||
+    actor.playerIdentityId !== room.hostPlayerIdentityId ||
+    !room.members.some(
+      (member) => member.playerIdentityId === actor.playerIdentityId,
+    ) ||
+    actor.playerIdentityId === targetPlayerIdentityId ||
+    !room.members.some(
+      (member) => member.playerIdentityId === targetPlayerIdentityId,
+    )
+  )
+    return failure("FORBIDDEN");
+  room.members = room.members.filter(
+    (member) => member.playerIdentityId !== targetPlayerIdentityId,
+  );
+  room.bannedPlayerIdentityIds.push(targetPlayerIdentityId);
   return success(room);
 }
 export function leaveRoom(
@@ -148,7 +180,14 @@ export function heartbeatRoom(
 }
 export function snapshot(room: Lobby, now: number): LobbySnapshot {
   return {
-    ...room,
+    id: room.id,
+    visibility: room.visibility,
+    code: room.code,
+    name: room.name,
+    capacity: room.capacity,
+    hostPlayerIdentityId: room.hostPlayerIdentityId,
+    state: room.state,
+    version: room.version,
     members: room.members.map(({ lastSeenAt, ...m }) => ({
       ...m,
       online: now - lastSeenAt <= PRESENCE_FRESH_MS,

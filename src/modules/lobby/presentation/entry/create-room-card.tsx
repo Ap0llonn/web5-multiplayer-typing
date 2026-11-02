@@ -8,6 +8,7 @@ import { ActionHeading } from "@/shared/presentation/ui/action-heading";
 import { Button } from "@/shared/presentation/ui/button";
 import { Field, Input } from "@/shared/presentation/ui/field";
 import { Icon } from "@/shared/presentation/ui/icon";
+import { Select } from "@/shared/presentation/ui/select";
 import { LobbyRoleField } from "./lobby-role-field";
 
 type RoomFormProps = { pending: boolean; onSubmit: (data: FormData) => void };
@@ -57,6 +58,17 @@ export function CreateRoomCard({ pending, onSubmit }: RoomFormProps) {
           </Field>
           <LobbyRoleField />
         </div>
+        <Select
+          name="visibility"
+          label={t("lobbies.visibility")}
+          defaultValue="CODE"
+          disabled={pending}
+          options={[
+            { value: "CODE", label: t("lobbies.codeVisibility") },
+            { value: "PUBLIC", label: t("lobbies.publicVisibility") },
+          ]}
+        />
+        <p className="text-sm text-muted">{t("lobbies.visibilityHint")}</p>
         <CharacterPicker
           character={character}
           onChange={setCharacter}

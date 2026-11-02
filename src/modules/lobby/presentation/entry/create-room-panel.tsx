@@ -45,6 +45,7 @@ export function CreateRoomPanel() {
               capacity: Number(data.get("capacity")),
               role: data.get("role"),
               character: data.get("character"),
+              visibility: data.get("visibility"),
             });
           }}
         />

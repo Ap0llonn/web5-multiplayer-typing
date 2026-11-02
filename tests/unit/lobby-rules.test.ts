@@ -3,6 +3,7 @@ import {
   createRoom,
   joinRoom,
   leaveRoom,
+  kickRoom,
   heartbeatRoom,
   createCode,
 } from "@/modules/lobby/domain/lobby-rules";
@@ -81,6 +82,68 @@ describe("authoritative lobby rules", () => {
     leaveRoom(room, "host", 2);
     expect(room.state).toBe("CLOSED");
     expect(room.members).toHaveLength(0);
+  });
+  it("lets only the host account expel a present member and permanently bans that identity from this room", () => {
+    const room = fresh();
+    joinRoom(room, guest, "SPECTATOR", 1);
+
+    expect(kickRoom(room, host, guest.playerIdentityId, 2)).toMatchObject({
+      ok: true,
+      value: {
+        members: [{ playerIdentityId: "host" }],
+        bannedPlayerIdentityIds: ["guest"],
+      },
+    });
+    expect(joinRoom(room, guest, "PARTICIPANT", 2)).toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(
+      joinRoom(
+        room,
+        { ...guest, playerIdentityId: "other-room" },
+        "PARTICIPANT",
+        2,
+      ),
+    ).toMatchObject({ ok: true });
+  });
+  it("refuses self-expulsion, absent targets, and actors other than the active host account", () => {
+    const room = fresh();
+    joinRoom(room, guest, "PARTICIPANT", 1);
+    expect(kickRoom(room, host, "host", 2)).toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(kickRoom(room, host, "absent", 2)).toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(kickRoom(room, guest, "host", 2)).toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(
+      kickRoom(room, { ...host, kind: "guest" }, "guest", 2),
+    ).toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+  });
+  it("reconciles an expired host before authorizing a kick", () => {
+    const room = fresh();
+    joinRoom(room, guest, "PARTICIPANT", 1);
+    const successor = { ...host, playerIdentityId: "successor" };
+    joinRoom(room, successor, "SPECTATOR", 2);
+
+    expect(kickRoom(room, host, guest.playerIdentityId, 30001)).toMatchObject({
+      ok: false,
+      error: { code: "FORBIDDEN" },
+    });
+    expect(room.hostPlayerIdentityId).toBe(successor.playerIdentityId);
+    expect(room.members.map((member) => member.playerIdentityId)).toEqual([
+      guest.playerIdentityId,
+      successor.playerIdentityId,
+    ]);
   });
   it("preserves membership on reconnection within 30s and expires it after the grace window", () => {
     const room = fresh();

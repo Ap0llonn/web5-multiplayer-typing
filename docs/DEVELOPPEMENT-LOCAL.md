@@ -67,7 +67,7 @@ Une erreur `getaddrinfo EAI_AGAIN production-postgres` signifie que le conteneur
 
 Remplacer tous les `CHANGE_ME`, générer un `BETTER_AUTH_SECRET` distinct avec `openssl rand -base64 32`, et enregistrer les callbacks GitHub/Discord sous `BETTER_AUTH_URL/api/auth/callback/github` et `/discord`. Ne pas téléverser le fichier d’exemple avec de vraies valeurs. Redis et S3 apparaissent dans le modèle pour documenter les services envisagés, mais l’application ne les consomme pas actuellement.
 
-La décision utilisateur du 7 octobre 2026 remplace l’étape de migration manuelle : l’image de production exécute désormais `pnpm exec prisma migrate deploy` **au démarrage du conteneur**, puis `pnpm start` seulement si les migrations réussissent. Une panne DB ou une migration en échec bloque le démarrage ; consulter les logs du déploiement. Le build génère le client Prisma avec une URL factice et ne contacte pas la base de production. Les migrations versionnées, y compris la création de `rateLimit`, utilisent la vraie `DATABASE_URL` injectée par Dokploy au démarrage. Avant le déploiement, vérifier cette cible et conserver une sauvegarde adaptée. Ne jamais utiliser une base inconnue ou de production pour les tests locaux.
+Le correctif du 7 octobre 2026 après signalement d’une table absente remplace l’étape de migration manuelle : l’image de production exécute désormais `pnpm exec prisma migrate deploy` **au démarrage du conteneur**, puis `pnpm start` seulement si les migrations réussissent. Une panne DB ou une migration en échec bloque le démarrage ; consulter les logs du déploiement. Le build génère le client Prisma avec une URL factice et ne contacte pas la base de production. Les migrations versionnées, y compris la création de `rateLimit`, utilisent la vraie `DATABASE_URL` injectée par Dokploy au démarrage. Avant le déploiement, vérifier cette cible et conserver une sauvegarde adaptée. Ne jamais utiliser une base inconnue ou de production pour les tests locaux.
 
 Pour inspecter l’infrastructure :
 
@@ -108,3 +108,7 @@ Le second utilise les exemples locaux, des ports hôte automatiquement attribué
 Le workflow [.github/workflows/compose.yml](../.github/workflows/compose.yml) exécute ces deux commandes à chaque push/PR sur un runner disposant de Docker. Les tests applicatifs continuent d’utiliser leur PostgreSQL jetable distinct. Aucun test ne réinitialise une base de développement ou de production.
 
 Le poste cloud de préparation n’a pas Docker/Podman : le démarrage réel des conteneurs et leur persistance doivent être confirmés par le résultat de ce workflow, pas déduits des tests unitaires. Voir [verification.md](verification.md) pour les preuves disponibles.
+
+### Salons publics
+
+La migration additive `20261012110000_public_lobbies` ajoute la visibilité des salles, avec défaut `CODE` : les anciennes salles restent invisibles dans l’explorateur. Un compte peut choisir « Publique » dans `/fr/play/create` ; `/fr/lobbies` et `/en/lobbies` affichent les résumés publics et permettent l’entrée par le parcours existant. Les migrations sont appliquées par les procédures locales ou de démarrage déjà documentées, sans reset. Les tests continuent d’utiliser uniquement la base jetable.

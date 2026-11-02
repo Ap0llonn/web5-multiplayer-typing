@@ -1,5 +1,6 @@
 import { expect, it, beforeAll, afterAll } from "vitest";
 import { createAuthentication } from "@/shared/infrastructure/auth/config";
+import { mapAuthError } from "@/modules/identity/contracts/auth-error";
 import { prisma } from "@/shared/infrastructure/db/prisma";
 import { testRequest, signup } from "../support/auth";
 let auth: ReturnType<typeof createAuthentication>;
@@ -98,4 +99,47 @@ it("rejects foreign origins and rate-limits repeated HTTP login attempts", async
       ).status,
     );
   expect(statuses).toContain(429);
+});
+it("returns distinct official codes for duplicate email and username without creating a user or session", async () => {
+  const username = `dup${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`;
+  await signup(auth, username);
+  const email = `${username}@example.com`;
+  const body = {
+    name: "Duplicate",
+    username: `new${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`,
+    email: email.toUpperCase(),
+    password: "test-password-123",
+  };
+  const duplicateEmail = await testRequest(
+    auth,
+    "/sign-up/email",
+    body,
+    undefined,
+    "192.0.2.91",
+  );
+  expect(duplicateEmail.status).toBe(422);
+  const emailError = await duplicateEmail.json();
+  expect(emailError.code).toBe("USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL");
+  expect(mapAuthError(emailError.code)).toBe("authErrors.emailTaken");
+  expect(duplicateEmail.headers.get("set-cookie")).toBeNull();
+  expect(await prisma.user.count({ where: { email } })).toBe(1);
+  expect(
+    await prisma.user.findUnique({ where: { username: body.username } }),
+  ).toBeNull();
+  const duplicateUsername = await testRequest(
+    auth,
+    "/sign-up/email",
+    {
+      ...body,
+      username: username.toUpperCase(),
+      email: `${body.username}@example.test`,
+    },
+    undefined,
+    "192.0.2.92",
+  );
+  expect(duplicateUsername.status).toBeGreaterThanOrEqual(400);
+  const usernameError = await duplicateUsername.json();
+  expect(usernameError.code).toBe("USERNAME_IS_ALREADY_TAKEN");
+  expect(mapAuthError(usernameError.code)).toBe("authErrors.usernameTaken");
+  expect(duplicateUsername.headers.get("set-cookie")).toBeNull();
 });

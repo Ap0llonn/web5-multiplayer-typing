@@ -2,6 +2,7 @@ import { PRESENCE_GRACE_MS } from "../../contracts/presence";
 import { success, failure } from "@/shared/contracts/operation-result";
 import type {
   CreateLobbyInput,
+  PublicLobbySummary,
   LobbyActor,
   LobbyRole,
   LobbyCharacter,
@@ -11,17 +12,76 @@ import {
   createCode,
   joinRoom,
   leaveRoom,
+  kickRoom,
   heartbeatRoom,
   observeRoom,
   snapshot,
 } from "../../domain/lobby-rules";
-import type { LobbyRepository } from "../../repositories/interfaces/lobby-repository";
+import {
+  QUICK_LOBBY_PAGE_SIZE,
+  type LobbyRepository,
+} from "../../repositories/interfaces/lobby-repository";
+import { summarizePublicLobby } from "../../domain/public-lobby";
 import type { LobbySupervisor } from "../interfaces/lobby-supervisor";
 export class DefaultLobbySupervisor implements LobbySupervisor {
   constructor(
     private readonly repository: LobbyRepository,
     private readonly now: () => number = Date.now,
   ) {}
+  async listPublicLobbies() {
+    const activeSince = this.now() - PRESENCE_GRACE_MS;
+    const result = await this.repository.findPublicLobbies(activeSince);
+    if (!result.ok) return result;
+    const rooms: PublicLobbySummary[] = [];
+    for (const room of result.value) {
+      const summary = summarizePublicLobby(room, activeSince);
+      if (summary) rooms.push(summary);
+    }
+    return success(rooms);
+  }
+  async findQuickLobby(playerIdentityId?: string) {
+    const activeSince = this.now() - PRESENCE_GRACE_MS;
+    let afterId: string | undefined;
+    let best:
+      | {
+          summary: PublicLobbySummary;
+          remaining: number;
+          createdAt: number;
+          id: string;
+        }
+      | undefined;
+    while (true) {
+      const result = await this.repository.findQuickLobbyCandidates(
+        activeSince,
+        afterId,
+      );
+      if (!result.ok) return result;
+      for (const { room, createdAt } of result.value) {
+        if (
+          playerIdentityId &&
+          room.bannedPlayerIdentityIds.includes(playerIdentityId)
+        )
+          continue;
+        const summary = summarizePublicLobby(room, activeSince);
+        if (!summary || !["WAITING", "RESULTS"].includes(summary.state))
+          continue;
+        const remaining = summary.capacity - summary.participantCount;
+        if (remaining <= 0) continue;
+        if (
+          !best ||
+          remaining < best.remaining ||
+          (remaining === best.remaining &&
+            (createdAt < best.createdAt ||
+              (createdAt === best.createdAt && room.id < best.id)))
+        ) {
+          best = { summary, remaining, createdAt, id: room.id };
+        }
+      }
+      if (result.value.length < QUICK_LOBBY_PAGE_SIZE) break;
+      afterId = result.value[result.value.length - 1].room.id;
+    }
+    return success(best?.summary ?? null);
+  }
   async createLobby(input: CreateLobbyInput, actor: LobbyActor) {
     if (actor.kind !== "account") return failure("FORBIDDEN");
     const current = await this.currentLobby(actor);
@@ -50,6 +110,22 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
       return failure("FORBIDDEN");
     const result = await this.repository.mutate(code, (room) =>
       leaveRoom(room, actor.playerIdentityId, this.now()),
+    );
+    return result.ok ? success(snapshot(result.value, this.now())) : result;
+  }
+  async kickLobby(
+    code: string,
+    targetPlayerIdentityId: string,
+    actor: LobbyActor,
+  ) {
+    if (actor.kind !== "account") return failure("FORBIDDEN");
+    const current = await this.repository.findForPlayer(actor.playerIdentityId);
+    if (!current.ok) return current;
+    if (!current.value || current.value.code !== code)
+      return failure("FORBIDDEN");
+    const now = this.now();
+    const result = await this.repository.mutate(code, (room) =>
+      kickRoom(room, actor, targetPlayerIdentityId, now),
     );
     return result.ok ? success(snapshot(result.value, this.now())) : result;
   }

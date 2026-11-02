@@ -2,7 +2,7 @@
 
 ## Migrations au démarrage de production — 7 octobre 2026
 
-Après la résolution du nom PostgreSQL, l’utilisateur signale `TableDoesNotExist` dans Dokploy et demande si le build applique les migrations. Constat : `pnpm build` générait seulement le client Prisma ; le `CMD` de production lançait directement `pnpm start`. Le guide prévoyait une migration manuelle, sans étape automatique. La demande actuelle remplace ce choix : `Dockerfile` exécute désormais `pnpm exec prisma migrate deploy && exec pnpm start`. Les migrations utilisent la connexion runtime injectée par Dokploy ; le build reste indépendant de la base de production, avec son URL factice. Aucun nouveau SQL ni changement des modules/contrats métier.
+Après la résolution du nom PostgreSQL, l’utilisateur signale `TableDoesNotExist` dans Dokploy et demande si le build applique les migrations. Constat : `pnpm build` générait seulement le client Prisma ; le `CMD` de production lançait directement `pnpm start`. Le guide prévoyait une migration manuelle, sans étape automatique. Le correctif remplace ce choix : `Dockerfile` exécute désormais `pnpm exec prisma migrate deploy && exec pnpm start`. Les migrations utilisent la connexion runtime injectée par Dokploy ; le build reste indépendant de la base de production, avec son URL factice. Aucun nouveau SQL ni changement des modules/contrats métier.
 
 Les deux tests de `tests/unit/production-startup.test.ts` exécutent le véritable `CMD` de production avec un CLI externe contrôlé. Avant correction, les deux échouent : le serveur est lancé directement, même dans le scénario d’échec de migration. Après correction, les migrations précèdent le serveur ; un code d’échec de migration est conservé et aucun serveur n’est lancé. Ils vérifient la chaîne de démarrage, sans prétendre prouver une migration PostgreSQL avec ce double. Le shell de l’image étant Linux, ces deux contrôles sont ignorés sur un hôte Windows.
 
@@ -14,10 +14,12 @@ Les deux tests de `tests/unit/production-startup.test.ts` exécutent le véritab
 | Compose résolu | PASS : `pnpm infra:validate`, exemples publics uniquement |
 | Build Next.js | PASS : génération du client et compilation Next.js 16.3.8 |
 | E2E pertinents | PASS : quatre scénarios de `sprint.spec.ts`, Chrome local, serveur localhost:3410 et PostgreSQL jetable |
-| Image Docker Node 24 et démarrage réel | EN COURS : compilation réussie, packaging et recette de démarrage à terminer |
+| Image Docker Node 24 et démarrage réel | PASS : build de la cible `production`, base PostgreSQL 18.4 Docker vide, quatre migrations créées au démarrage, table `rateLimit` constatée en SQL et vrai POST invité Better Auth à HTTP 200. Après redémarrage : quatre migrations terminées et même utilisateur conservé. Identifiants PostgreSQL invalides : sortie en échec et aucun démarrage Next.js |
 | Migration/déploiement Dokploy, OAuth externe | NON EXÉCUTÉS : aucun accès à la base distante, aucune publication ou migration de production |
 
-Le build et les tests DB/browser hôte utilisent les autorisations techniques nécessaires à Turbopack, PostgreSQL et Chrome, avec cache SWC sous `/private/tmp/typing-dokploy-swc-cache`. Le moteur Docker local nécessite aussi un accès autorisé à son socket. Les contrôles hôte restent sous Node 25.6.0 ; le conteneur de production utilise Node 24. Le guide et le README remplacent explicitement l’étape manuelle antérieure. Le service distant devra être reconstruit/redéployé avec cette image pour appliquer ce changement.
+Le build et les tests DB/browser hôte utilisent les autorisations techniques nécessaires à Turbopack, PostgreSQL et Chrome, avec cache SWC sous `/private/tmp/typing-dokploy-swc-cache`. Le moteur Docker local nécessite aussi un accès autorisé à son socket. Les contrôles hôte restent sous Node 25.6.0 ; le build et la recette de l’image de production utilisent Node 24 dans le conteneur. Le guide et le README remplacent explicitement l’étape manuelle antérieure. Le service distant devra être reconstruit/redéployé avec cette image pour appliquer ce changement.
+
+**Échecs intermédiaires de recette :** les deux tests de démarrage étaient rouges avant le correctif. Le premier harnais Docker attendait une ligne dans un seul flux de logs et conservait le port temporaire précédent après un redémarrage ; les logs montraient déjà un démarrage réussi et aucune migration en attente. La reprise relit le port réellement publié puis attend HTTP. Un autre essai a rencontré l’arrêt du serveur PostgreSQL provisoire d’initialisation : l’attente finale utilise la disponibilité TCP, distincte de ce serveur initial sur socket. Une reprise après nettoyage a aussi rencontré une image de test déjà supprimée, reconstruite depuis le cache. Une tentative de limitation du rôle bootstrap jetable a été refusée par PostgreSQL, sans modification du rôle ; le scénario d’échec final utilise des identifiants invalides. La recette finale complète passe. **Échecs finaux : aucun.** Les conteneurs, volumes anonymes, réseaux et tags d’image sont propres à cette recette, avec préfixe `typing-production-migration-smoke-`, puis supprimés ; aucune base ou infrastructure utilisateur n’est modifiée.
 
 ## Résolution DNS PostgreSQL dans Dokploy — 7 octobre 2026
 
@@ -552,3 +554,124 @@ Tests DB et navigateur exclusivement sur PostgreSQL temporaire `typing_test`, cr
 Les captures anonymes `test-results/home-{locale}-{width}.png` sont ignorées par Git ; aucune session personnelle n’est capturée. Aperçus conservés dans le dossier de visualisation du chat : `homepage-desktop.png` et `homepage-mobile.png`. Les vérifications hôte utilisent Node 25.6.0, alors que le projet cible Node 24 ; aucune nouvelle validation Node 24 n’est revendiquée. Des modifications d’infrastructure parallèles sont préservées ; le contrôle unitaire final inclut leurs trois nouveaux scénarios, soit 94 tests au total.
 
 Les premières tentatives confinées ont rencontré des restrictions d’environnement : cache natif SWC hors des chemins autorisés, compilation Turbopack bloquée, et mémoire partagée PostgreSQL refusée. Le cache SWC est redirigé vers `/private/tmp/typing-swc-native-cache` pour les contrôles, et build/tests DB/browser sont exécutés avec l’autorisation technique adaptée. Aucun contournement dans le code produit. Les chemins de développement de `next-env.d.ts`, réécrits automatiquement par le build, sont restaurés et le contrôle de types repasse. Aucun secret, configuration locale de connexion ni base de développement/production modifié.
+
+
+## Expulsion par l'hôte — 12 octobre 2026
+
+Lot issu de la revue du cahier des charges : `SALLE-07`, autorisation `SEC-01`, validation `TECH-07`, présentation FR/EN et accessibilité. Module propriétaire : lobby ; contrat et limites dans [ARCHITECTURE.md](ARCHITECTURE.md#expulsion-par-lhôte--12-octobre-2026). Révision de départ `c37542c`, état final local **non commité**. Les modifications antérieures des documents d'infrastructure et `release.txt` sont conservées. Aucun déploiement ni migration d'une base existante.
+
+L'hôte peut expulser un participant ou spectateur depuis le roster, après confirmation traduite. L'interdiction persiste dans PostgreSQL par salle et identité ; elle survit à un autre cookie de session du même compte, refuse le retour et ne bloque pas les autres salles. Les onglets de la personne expulsée perdent leur roster et leurs accès heartbeat/SSE. La version et les présences des autres membres sont actualisées. Aucun bannissement interne n'est publié.
+
+| Contrôle final | Résultat et portée |
+| --- | --- |
+| Runtime | Node **24.19.0**, Next **16.3.8**, Chrome installé sur macOS |
+| Lint, types et frontières | PASS : `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` ; pas d'avertissement lint final |
+| Unitaires | PASS : **101 tests / 28 fichiers**, dont hôte/non-hôte, auto-expulsion, membre absent, présence expirée et contrôles de roster FR/EN |
+| PostgreSQL réel | PASS : **36 tests / 15 fichiers** via `pnpm test:integration` ; cinq migrations depuis une DB neuve et replay sans migration restante ; `LobbyBan` persisté, interdiction de retour, concurrence entrée/expulsion et hôte expiré/succession |
+| Prisma | PASS : génération et validation du schéma ; migration additive `20261012100000_lobby_bans` et contrainte unique par salle/identité |
+| Production locale | PASS : `pnpm build`, avec variables de test ; la nouvelle route `/api/lobbies/[code]/kick` est compilée et typée |
+| Navigateurs sur build final | PASS : **16/16 Chromium**, tests `lobby-expulsion`, `lobby-acceptance`, `play-join`, `presence` et `sprint` sur localhost:3118 ; confirmation/annulation, focus clavier, deux onglets expulsés, reload, entrée interdite et régressions du lobby |
+| API indépendante sur build final | PASS : **5/5 Chromium** sur localhost:3119, fichier `lobby-expulsion-api.spec.ts` ; vrais appels HTTP, session compte/invité, participant/spectateur, origine étrangère, session absente, identité agissante injectée, schémas stricts, auto-expulsion/non-hôte/membre absent, reprise avec nouvelle session du compte, autre salle, double commande concurrente et succession d'hôte |
+| Accessibilité et inspection | PASS : deux contrôles axe WCAG A/AA de la confirmation dans `main`, FR sombre **360 px** et EN clair **1280 px** ; captures de confirmation inspectées, sans débordement horizontal |
+| Diff et matrice | PASS : `git diff --check` ; **90 exigences officielles uniques** conservées ; architecture, statut `SALLE-07` et preuve `SEC-01` mis à jour |
+
+**Rouge avant réalisation/correction :** les deux nouvelles assertions unitaires de roster attendaient un contrôle d'expulsion absent. La revue a ensuite constaté une recherche de codes possible via l'API d'expulsion : un appel non autorisé distinguait un code connu (`403`) d'un code inconnu (`404`). Le test ajouté a reproduit `[403, 404, 403, 404, 404]`, puis passe avec cinq `403` après le précontrôle d'appartenance. Il vérifie aussi qu'un membre expiré et une salle étrangère ne sont pas modifiés par ces appels. L'autorisation hôte reste revérifiée sous verrou après ce précontrôle. La suite HTTP indépendante a rejoué les codes existants/inexistants et le contrôle de version de la salle étrangère sur le build corrigé.
+
+**Échecs intermédiaires :** cache natif SWC hors sandbox, compilation confinée bloquée et mémoire partagée PostgreSQL refusée ; le cache est redirigé vers `/private/tmp/web5-expulsion-swc` et les contrôles locaux exécutés avec l'autorisation technique adaptée. Des assertions de fixtures d'intégration et un username E2E dépassant 20 caractères ont été corrigés avant les runs finaux. **Échecs finaux non résolus : aucun dans les contrôles exécutés.** Les imports de développement de `next-env.d.ts`, automatiquement réécrits par le build, sont restaurés et `typecheck` repasse.
+
+**Non exécutés :** autres fichiers E2E hors des régressions du lobby sélectionnées, Firefox/WebKit, lecteur d'écran et appareil tactile réels, charge/Lighthouse, OAuth externe, VPS HTTPS et déploiement. Invitations et révocation des liens restent futures (`SALLE-04`) ; `SALLE-07` demeure donc **partiel** dans la matrice. Les interdictions sont attachées à l'identité de session, sans prétendre reconnaître une nouvelle identité invitée par pseudo ou IP. Les bases jetables et serveurs de recette sont arrêtés puis supprimés après les runs. Aucune base de développement/production ni aucun secret n'a été modifié.
+
+## Salons publics — 12 octobre 2026
+
+Demande utilisateur : implémenter les salons publics et les relier à « Voir les salons ». Module propriétaire : lobby ; `SALLE-03`, explorateur partiel `JOIN-02`, `TECH-07` et présentation FR/EN. Arbre local non commité ; modifications antérieures d'expulsion et d'infrastructure conservées.
+
+La création valide et persiste `PUBLIC | CODE`, avec défaut `CODE` pour les anciennes salles/clients. `/lobbies` lit les résumés réels via le service lobby et les actualise sans navigation toutes les cinq secondes via `GET /api/lobbies`. La page montre nom, code, hôte, état, participants/capacité et spectateurs ; elle distingue erreur et liste vide. Les liens ouvrent le parcours réel de session/personnage/adhésion. Le choix participant/spectateur est désormais disponible à l'entrée ; une salle pleine peut recevoir un spectateur. Les salles fermées, sur code ou sans compte vivant sont exclues. Lire la liste ne renouvelle pas la présence.
+
+| Contrôle final | Résultat et portée |
+| --- | --- |
+| Runtime | Node **24.19.0**, Next **16.3.8**, Chrome installé sur macOS |
+| Lint, types et frontières | PASS : lint, typecheck et `check:boundaries` |
+| Unitaires | PASS : **112 tests / 31 fichiers**, dont visibilité validée/défaut, panne sans faux succès, résumés sans mutation, succession déterministe, page FR/EN, choix de rôle compte/invité, polling/reprise/annulation |
+| PostgreSQL jetable | PASS : **38 tests / 16 fichiers**, six migrations depuis zéro puis replay sans migration restante ; salles publiques seulement, comptes de rôles, exclusion des expirations, absence de renouvellement, lecture anonyme sans cache/query stricte et retrait des salles fermées |
+| Build | PASS : build de production avec `/[locale]/lobbies` et GET/POST `/api/lobbies` compilés ; second build après ajout du choix de rôle |
+| Navigateurs | PASS : **12/12 Chromium** sur localhost:3400 ; `public-lobbies.spec.ts`, `navigation.spec.ts` et `play-join.spec.ts` sur le build final avec PostgreSQL jetable |
+| Parcours publics | PASS FR/EN : création Publique par compte, salle Sur code invisible, découverte sans session, entrée invitée, places pleines, entrée spectateur, compte de spectateurs actualisé sans recharger, fermeture puis liste vide, panne de rafraîchissement et reprise manuelle |
+| Accessibilité et rendu | PASS : axe WCAG A/AA en **360 et 1440 px**, puis thème sombre, pas de débordement horizontal ; capture sombre de la liste inspectée |
+| Diff et documentation | PASS : diff sans erreurs d'espacement ; architecture, guide local et matrice mis à jour, 90 IDs officiels uniques conservés, statuts `SALLE-03` et `JOIN-02` conservés partiels |
+
+**Rouge avant réalisation :** six tests visibilité/service/page échouaient avec l'attente et l'absence de service public. La première recette navigateur révèle le rôle fixé à participant : les deux tests publics attendent en vain le choix spectateur ; le scénario d'état vide suivant échoue car ces salles n'ont pas été fermées. Quatre nouveaux tests unitaires reproduisent l'absence du choix pour compte/invité FR/EN. Ajout de `LobbyRolePicker`, transmission du rôle choisi au payload serveur et nouvelle recette : 112 unitaires et 12 E2E passent.
+
+**Restrictions initiales :** PostgreSQL confiné échoue sur `shmget` et SWC sur son cache natif hors sandbox. Les tests jetables et builds sont relancés avec l'autorisation technique adaptée et réussissent. Aucun correctif de contournement dans le produit. Les chemins de développement de `next-env.d.ts` réécrits par le build sont restaurés. Échecs finaux non résolus dans les contrôles exécutés : aucun.
+
+**Développement local :** cible `.env` vérifiée sans afficher de secret : hôte loopback, port 5432, base `typing_dev`, utilisateur `typing`, identiques au guide local. Les services du projet `typing-local` sont en marche. La lecture des migrations trouve les quatre premières versions ; `prisma migrate deploy` applique uniquement les migrations additives `20261012100000_lobby_bans` (changement antérieur déjà présent) et `20261012110000_public_lobbies`. Le client Prisma du conteneur est régénéré puis seul le service applicatif est redémarré ; aucun reset ni suppression de volume. Les tests n'utilisent jamais cette base de développement. Contrôles HTTP après redémarrage : `/en/lobbies`, `/fr/lobbies` et `/api/lobbies` retournent 200 ; la liste publique est vide, aucun salon de démonstration créé dans la base locale. Aucune migration de production ni déploiement.
+
+**Non exécutés et limites :** autres fichiers E2E, Firefox/WebKit, lecteur d'écran/appareil tactile, charge/Lighthouse, OAuth externe, VPS HTTPS et déploiement. La liste publie les 100 premières salles, sans pagination. Langue/complexité et filtres restent futurs avec la configuration de course (`JOIN-02` partiel) ; invitations et Privée restent futures (`SALLE-03/04`). Course, bots et bonus non réalisés dans ce lot. Les bases de recette sont arrêtées puis supprimées par le harnais.
+
+## Salle sans navigation et modales — 12 octobre 2026
+
+Demande utilisateur : retirer la barre pendant l'entrée/dans la salle pour éviter une sortie apparente par les liens du site, et remplacer la confirmation d'expulsion intégrée à la carte par une modale réutilisable. Présentation dans composition/play et shared ; l'expulsion reste propriétaire du module lobby. Arbre local non commité ; tous les changements antérieurs sont conservés.
+
+`PlayNavigation` retire le slot de navigation sur `/play/player` et `/play/room` uniquement. Le lien d'évitement, main et footer restent disponibles ; les pages code/création gardent la barre. La sortie explicite reste une commande serveur. `Modal` et `ConfirmationModal` dans shared fournissent premier plan natif, fond inerte, titre/description, scroll verrouillé, clavier, annulation et restauration du focus. Le roster ouvre la confirmation hors des cartes. L'envoi attend `OperationResult`, bloque les doubles confirmations/annulations en cours, conserve la fenêtre avec l'erreur en cas d'échec et ferme sur succès. Les textes FR/EN existants sont réutilisés.
+
+| Contrôle final | Résultat et portée |
+| --- | --- |
+| Runtime | Node **24.19.0**, Next **16.3.8**, Chrome installé sur macOS |
+| Lint, types et frontières | PASS ; premier avertissement de cleanup de ref corrigé en capturant le repli de focus avant le cleanup |
+| Unitaires | PASS : **118 tests / 33 fichiers**, suppression du slot aux deux routes, conservation aux entrées, noms/descriptions distincts des modales, modal fermée sans contenu, contrôle hôte FR/EN |
+| PostgreSQL jetable | PASS : **38 tests / 16 fichiers** ; six migrations depuis zéro et replay, autorisations/invariants/présence inchangés |
+| Build | PASS : build de production avec navigation conditionnelle et composants de modale |
+| Première recette navigateur | **21 PASS / 1 assertion obsolète** sur 22 scénarios : `lobby-acceptance`, `lobby-expulsion`, `navigation`, `play-join`, `public-lobbies`, `presence`, `sprint` ; reconnexion réseau réussie, puis le test cherchait le bouton de langue retiré de la salle |
+| Reprise finale ciblée | PASS : **3/3 Chromium**, les deux modales FR/EN avec retour du focus au roster après suppression et présence/reconnexion/route FR ; **22 scénarios distincts validés** sur le build final en combinant les deux runs |
+| Modales et accès | PASS FR sombre **360 px** et EN clair **1280 px** : dialogue natif visible hors des cartes, focus initial Annuler, Tab/Shift+Tab, Échap, clic du fond, bouton Annuler et restitution du focus ; aucune suppression sur annulation |
+| Commande en attente/erreur | PASS : panne HTTP simulée uniquement dans ce sous-scénario de présentation ; boutons désactivés et Échap sans fermeture pendant l'envoi, erreur traduite dans la modale, roster conservé puis nouvelle confirmation avec vraie API réussie |
+| Retour à la salle | PASS FR/EN : pas de navigation sur joueur/salle ; retour par l'éditeur et reload gardent deux membres, sortie explicite retire l'adhésion ; reprise après conflit d'une autre salle inchangée |
+| Accessibilité et rendu | PASS : axe WCAG A/AA des modales, screenshots mobile sombre et desktop clair inspectés ; pas de débordement horizontal, tailles adaptées et scène derrière le fond |
+| Application locale | PASS : `/en/play` retourne 200 avec barre, `/en/play/player?code=ABC234` et variante FR retournent 200 sans barre ; lecture anonyme seulement, aucun compte/salon créé ni mutation de base |
+
+**Rouge avant réalisation :** quatre assertions reproduisent la navigation présente aux routes de session et l'absence de déclencheur de dialogue dans les cartes FR/EN. Elles passent après réalisation. La recette présence initiale valide les coupures invité/hôte et les identités inchangées (arrivée 1323 ms ; reprises 14 700/14 769 ms), puis dépasse son délai en cherchant un bouton de langue de la barre supprimée. Le test utilise désormais un accès à la route FR de la même salle et recontrôle les identités ; les traces de ce scénario sont désactivées et la trace générée par ce premier échec est supprimée.
+
+**Non exécutés :** autres fichiers E2E, Firefox/WebKit, appareil tactile/lecteur d'écran, charge/Lighthouse, OAuth réel, VPS HTTPS et déploiement. Aucune migration nécessaire à ce changement de présentation. Tests DB et navigateur exclusivement sur la base jetable et serveur localhost:3400 ; aucun secret modifié ou publié. La suppression de la barre ne transforme pas l'historique du navigateur en départ volontaire ; règles serveur et expiration restent inchangées. Aucun statut de conformité officiel relevé.
+
+Recette ciblée finale : arrivée 813 ms, reprise invité 15 231 ms et hôte 14 724 ms ; identité hôte et ensemble des IDs membres inchangés après chaque coupure et après accès à la route FR. Échecs finaux non résolus : aucun dans les contrôles exécutés. `next-env.d.ts` restauré puis contrôle de types final réussi ; diff sans erreurs d’espacement et 90 IDs officiels uniques conservés.
+
+## Retours d'inscription — 12 octobre 2026
+
+Demande utilisateur : une adresse email déjà utilisée doit afficher un retour précis à l'inscription. Module identity ; `AUTH-01`, `I18N-01`, `A11Y-04`. Arbre local non commité, changements précédents préservés. La cause est le mapping UI : Better Auth retourne `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`, mais `mapAuthError` le traduisait en `errors.CONFLICT`, qui évoque une salle. Le code de doublon username était aussi ramené à ce message.
+
+Les deux catalogues possèdent maintenant `authErrors.emailTaken` (connexion ou autre email) et `authErrors.usernameTaken` (autre identifiant). L'alert existante conserve le formulaire et les valeurs après refus ; corriger les champs permet une vraie inscription. Les codes et contrôles Better Auth, les sessions, les identités, l'origine et la limitation restent inchangés. Aucun endpoint de disponibilité, hasher, session, récupération ou fusion de comptes ajouté.
+
+| Contrôle final | Résultat et portée |
+| --- | --- |
+| Runtime | Node **24.19.0**, Next **16.3.8**, Better Auth **1.7.7**, Chrome installé sur macOS |
+| Lint, types, frontières | PASS : lint, typecheck et `check:boundaries` |
+| Unitaires | PASS : **121 tests / 33 fichiers**, clés spécifiques email/username, traduction FR/EN, login/limitation inchangés et erreurs fournisseur inconnues masquées |
+| PostgreSQL jetable | PASS : **39 tests / 16 fichiers**, six migrations depuis zéro puis replay ; vraie réponse email dupliqué insensible à la casse (`422`), code username distinct, aucun nouveau compte ni cookie de session lors du refus |
+| Build | PASS après correction du typage d'une donnée du test ; build final compile les messages et leur utilisation par le formulaire existant |
+| Navigateurs sur le build final | PASS : **6/6 Chromium**, `signup-feedback.spec.ts` et `sprint.spec.ts` sur localhost:3400 avec DB jetable ; vraie erreur email/username FR/EN, maintien des valeurs et de la route, aucun faux succès/session, correction puis création/connexion réelles, régressions de login et lobby |
+
+**Rouge avant correction :** trois assertions reproduisent la clé générique et les phrases de conflit de salle pour email et identifiant. Elles passent avec les nouvelles clés. Le premier contrôle de types/build a aussi détecté un accès `email` hors du type minimal du helper de test (`{ id: string }`) ; le test utilise désormais l'email qu'il a envoyé, sans élargissement du helper ni suppression de type.
+
+**Non exécutés :** autres fichiers E2E hors de la recette sélectionnée, Firefox/WebKit, lecteur d'écran/appareil tactile, charge/Lighthouse, OAuth externe, production et déploiement. Aucune migration requise et aucune inscription de diagnostic dans la base locale de développement. Toutes les inscriptions automatisées de recette utilisent uniquement la base jetable ; traces du nouveau scénario désactivées. Les bannissements de salles restent conservés, ce lot porte sur le retour d'inscription.
+
+Contrôles finaux de ce lot : `next-env.d.ts` restauré, typecheck et diff sans erreurs d’espacement, 90 IDs officiels uniques conservés. Échecs finaux non résolus : aucun dans les contrôles exécutés.
+
+## Partie rapide — 12 octobre 2026
+
+Lot demandé pour ajouter une fonctionnalité manquante : `JOIN-03`, règle `DEC-06`, validation `TECH-07`, présentation FR/EN et accessibilité. Module propriétaire lobby ; composition pour session et navigation. Révision de départ `c37542c`, arbre local **non commité**, modifications précédentes conservées. [Contrat et limites](ARCHITECTURE.md#partie-rapide--12-octobre-2026). Le statut de la matrice reste partiel : les sous-critères sont implémentés et vérifiés localement, mais la preuve liée à un commit et la recette VPS sont absentes.
+
+Depuis Voir les salons, Trouver un salon sélectionne le salon public joignable non plein avec le moins de places de participant restantes, puis la date de création et l'ID stable. Le navigateur ouvre le vrai parcours de pseudo/personnage/session. Les spectateurs ne consomment aucune place ; présence expirée, états non joignables, salles sur code et bannissements sont exclus. La recherche dépasse la limite de 100 de l'explorateur grâce aux pages internes PostgreSQL. Sans candidat, seul un compte reçoit une proposition explicite de création. Aucun siège réservé, renouvellement de présence ou départ automatique. L'entrée effective revérifie les invariants sous transaction.
+
+| Contrôle final | Résultat et portée |
+| --- | --- |
+| Runtime | Node **24.19.0**, Next **16.3.8**, PostgreSQL embarqué **18.4**, Chrome installé sur macOS |
+| Lint, types et frontières | PASS : `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` ; imports de développement `next-env.d.ts` restaurés après le build |
+| Unitaires | PASS : **128 tests / 35 fichiers**, dont quatre nouveaux scénarios de sélection et trois HTTP : capacités différentes, spectateurs, dates/ID, exclusions, page suivante, panne sur une page suivante, session officielle, query forgée, absence de cookie invité et état vide distinct d'une panne |
+| PostgreSQL jetable | PASS : **43 tests / 17 fichiers**, six migrations depuis zéro et replay sans migration restante ; quatre nouveaux scénarios : tri et absence de mutation, bannissement/expiration/états, dernière place concurrente (un succès et un `ROOM_FULL`), meilleur candidat après 100 salles |
+| Build de production local | PASS : `pnpm build` sous Node 24 avec valeurs fictives locales ; nouvelle route `/api/lobbies/quick` compilée et typée |
+| Navigateurs sur le build final | PASS : **22/22 Chromium**, sept fichiers `quick-play`, `public-lobbies`, `lobby-acceptance`, `sprint`, `play-join`, `presence`, `lobby-expulsion` sur **localhost:3120** avec DB jetable ; trois nouveaux scénarios : vraie sélection/entrée invitée FR/EN, exclusion d'une salle devenue pleine, aucun siège attribué au clic, états vides compte/invité, lien de création et panne/réessai |
+| Accessibilité et inspection | PASS : six analyses axe WCAG A/AA dans `main` (FR/EN, clair à 360/1280 px puis sombre à 1280 px), sans débordement horizontal ; capture sombre desktop inspectée : `test-results/quick-play-desktop-dark.png`, ignorée par Git |
+| Documents et diff | Architecture, `JOIN-03` et `DEC-06` actualisés ; 90 IDs officiels uniques conservés ; `git diff --check` sans erreur |
+
+**Rouge avant implémentation :** les quatre nouveaux tests unitaires échouaient avec `findQuickLobby is not a function`, puis passent avec la sélection réelle. Les premières vérifications confinées utilisent Node hôte 25.6.0 et passent pour lint/types/frontières/unitaires ; le lancement de PostgreSQL y échoue sur la mémoire partagée (`shmget: Operation not permitted`). L'intégralité des contrôles finaux ci-dessus utilise ensuite Node 24 et une autorisation technique d'exécution adaptée pour PostgreSQL, build et navigateur. La base `typing_test` est créée puis supprimée par `scripts/test-stack.ts` ; aucune base existante n'est réinitialisée et aucun secret n'est modifié ou affiché.
+
+**Échecs finaux non résolus : aucun dans les contrôles exécutés. Non exécutés :** autres fichiers E2E hors de cette recette, Firefox/WebKit, appareil tactile/lecteur d'écran, charge/Lighthouse, OAuth externe, recette VPS et déploiement. Aucun changement de migration requis par Partie rapide. La lecture par pages n'est pas une réservation ni un instantané transactionnel global : un changement concurrent entre le clic et l'entrée peut donner le refus d'entrée existant, sans dépassement de capacité ni faux succès. Les traces des nouveaux scénarios sont désactivées.

@@ -12,6 +12,7 @@ it("keeps the SSE stream open through retryable contention, then stops on revoke
   vi.useFakeTimers();
   const room: LobbySnapshot = {
     id: "room",
+    visibility: "CODE",
     code: "ABC234",
     name: "Room",
     capacity: 2,
@@ -45,6 +46,7 @@ it("retries a transient failure during initial stream setup instead of returning
   vi.useFakeTimers();
   const room: LobbySnapshot = {
     id: "room",
+    visibility: "CODE",
     code: "ABC234",
     name: "Room",
     capacity: 2,

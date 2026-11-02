@@ -1,12 +1,17 @@
 import type { OperationResult } from "@/shared/contracts/operation-result";
 import type {
   CreateLobbyInput,
+  PublicLobbySummary,
   LobbyActor,
   LobbySnapshot,
   LobbyRole,
   LobbyCharacter,
 } from "../../contracts/lobby";
 export interface LobbySupervisor {
+  findQuickLobby(
+    playerIdentityId?: string,
+  ): Promise<OperationResult<PublicLobbySummary | null>>;
+  listPublicLobbies(): Promise<OperationResult<PublicLobbySummary[]>>;
   createLobby(
     input: CreateLobbyInput,
     actor: LobbyActor,
@@ -19,6 +24,11 @@ export interface LobbySupervisor {
   ): Promise<OperationResult<LobbySnapshot>>;
   leaveLobby(
     code: string,
+    actor: LobbyActor,
+  ): Promise<OperationResult<LobbySnapshot>>;
+  kickLobby(
+    code: string,
+    targetPlayerIdentityId: string,
     actor: LobbyActor,
   ): Promise<OperationResult<LobbySnapshot>>;
   observeLobby(
