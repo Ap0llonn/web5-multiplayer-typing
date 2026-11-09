@@ -6,6 +6,10 @@ const isRetryable = (result: Awaited<ReturnType<typeof getRoomSnapshot>>) =>
   ["CONFLICT", "INTERNAL", "RATE_LIMITED", "PROVIDER_UNAVAILABLE"].includes(
     result.error.code,
   );
+const interval = (result: Awaited<ReturnType<typeof getRoomSnapshot>>) =>
+  result.ok && ["COUNTDOWN", "RACING"].includes(result.value.state)
+    ? 250
+    : 1000;
 export async function lobbyEvents(request: Request, code: string) {
   const first = await getRoomSnapshot(request.headers, code);
   if (!first.ok && !isRetryable(first)) return resultResponse(first);
@@ -43,12 +47,12 @@ export async function lobbyEvents(request: Request, code: string) {
             close();
             return;
           }
-          timer = setTimeout(tick, 1000);
+          timer = setTimeout(tick, interval(result));
         } catch {
           if (!stopped) timer = setTimeout(tick, 1000);
         }
       };
-      timer = setTimeout(tick, 1000);
+      timer = setTimeout(tick, interval(first));
     },
     cancel() {
       stopped = true;

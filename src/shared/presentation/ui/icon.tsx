@@ -9,6 +9,7 @@ import {
   Moon,
   Plus,
   Sparkles,
+  Settings,
   Sun,
   UserRound,
   UsersRound,
@@ -28,6 +29,7 @@ const icons = {
   chevron: ChevronDown,
   user: UserRound,
   spark: Sparkles,
+  settings: Settings,
 } satisfies Record<string, LucideIcon>;
 
 export function Icon({

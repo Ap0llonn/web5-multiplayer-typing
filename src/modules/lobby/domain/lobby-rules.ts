@@ -1,5 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import { PRESENCE_FRESH_MS, PRESENCE_GRACE_MS } from "../contracts/presence";
+import { abandonRace, advanceRace, raceSnapshot } from "./race-rules";
 import {
   failure,
   success,
@@ -80,7 +81,7 @@ export function joinRoom(
   }
   if (
     role === "PARTICIPANT" &&
-    room.members.filter((m) => m.role === "PARTICIPANT").length >= room.capacity
+    room.members.filter((m) => m.role === "PARTICIPANT").length + (room.raceSettings?.bots?.length ?? 0) >= room.capacity
   )
     return failure("ROOM_FULL");
   room.members.push({
@@ -117,6 +118,7 @@ export function kickRoom(
   room.members = room.members.filter(
     (member) => member.playerIdentityId !== targetPlayerIdentityId,
   );
+  advanceRace(room, now);
   room.bannedPlayerIdentityIds.push(targetPlayerIdentityId);
   return success(room);
 }
@@ -127,6 +129,10 @@ export function leaveRoom(
 ): OperationResult<Lobby> {
   if (!room.members.some((m) => m.playerIdentityId === playerIdentityId))
     return failure("FORBIDDEN");
+  const actor = room.members.find(
+    (m) => m.playerIdentityId === playerIdentityId,
+  );
+  if (room.race && actor) abandonRace(room, actor, now);
   room.members = room.members.filter(
     (m) => m.playerIdentityId !== playerIdentityId,
   );
@@ -146,6 +152,7 @@ export function leaveRoom(
       room.members = [];
     }
   }
+  advanceRace(room, now);
   return success(room);
 }
 export function observeRoom(
@@ -157,6 +164,7 @@ export function observeRoom(
   for (const member of [...room.members])
     if (now - member.lastSeenAt > PRESENCE_GRACE_MS)
       leaveRoom(room, member.playerIdentityId, now);
+  advanceRace(room, now);
   if (room.members.length === 0) return failure("ROOM_CLOSED");
   const member = room.members.find(
     (m) => m.playerIdentityId === playerIdentityId,
@@ -178,8 +186,16 @@ export function heartbeatRoom(
   member.lastSeenAt = now;
   return success(room);
 }
-export function snapshot(room: Lobby, now: number): LobbySnapshot {
+export function snapshot(
+  room: Lobby,
+  now: number,
+  viewer?: string,
+): LobbySnapshot {
   return {
+    ...(room.raceSettings ? { raceSettings: room.raceSettings } : {}),
+    ...(room.race !== undefined
+      ? { race: raceSnapshot(room, now, viewer) }
+      : {}),
     id: room.id,
     visibility: room.visibility,
     code: room.code,

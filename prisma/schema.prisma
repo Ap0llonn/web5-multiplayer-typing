@@ -102,6 +102,7 @@ model PlayerIdentity {
   memberships LobbyMember[]
   bans LobbyBan[]
   hostedLobbies Lobby[]
+  raceResults RaceResult[]
 }
 
 enum LobbyState {
@@ -129,6 +130,8 @@ model Lobby {
  visibility LobbyVisibility @default(CODE)
  state LobbyState @default(WAITING)
  version Int @default(1)
+ raceSettings Json @default("{\"language\":\"fr\",\"wordCount\":30,\"durationSeconds\":120,\"correction\":\"required\"}")
+ race Json?
  members LobbyMember[]
  bans LobbyBan[]
  createdAt DateTime @default(now())
@@ -167,4 +170,36 @@ enum LobbyCharacter {
  coral
  mint
  butter
+}
+
+model PracticeText {
+  id String @id
+  language String
+  content String
+  source String
+  @@index([language])
+}
+
+model RaceResult {
+  raceId String
+  playerIdentityId String
+  player PlayerIdentity @relation(fields: [playerIdentityId], references: [id], onDelete: Cascade)
+  finishedAt DateTime
+  status String
+  wpm Float
+  grossWpm Float
+  accuracy Float
+  errors Int
+  elapsedMs Int
+  bonusesReceived Int @default(0)
+  samples Json
+  @@id([raceId, playerIdentityId])
+  @@index([playerIdentityId, finishedAt])
+}
+
+model PracticeWord {
+  language String
+  word String
+  source String
+  @@id([language, word])
 }

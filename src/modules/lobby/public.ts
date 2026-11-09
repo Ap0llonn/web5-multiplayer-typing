@@ -8,3 +8,13 @@ export type {
   LobbyVisibility,
   PublicLobbySummary,
 } from "./contracts/lobby";
+export type {
+  RaceSettings,
+  RaceEditInput,
+  RaceSnapshot,
+  RaceStanding,
+  RaceItemType,
+  RaceItem,
+  RaceUseItemInput,
+  RaceBonusEvent,
+} from "./contracts/race";

@@ -15,7 +15,7 @@ vi.mock("@/shared/presentation/i18n/navigation", () => ({
 vi.mock("@/shared/presentation/ui/site-navigation", () => ({
   SiteNavigation: () => <nav>Navigation</nav>,
 }));
-for (const pathname of ["/play/player", "/play/room"]) {
+for (const pathname of ["/play/player", "/play/room", "/play/room/settings"]) {
   it(`${pathname}: keeps the main/skip target and removes site navigation`, async () => {
     navigation.pathname = pathname;
     const html = renderToStaticMarkup(

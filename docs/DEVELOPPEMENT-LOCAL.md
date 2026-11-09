@@ -112,3 +112,27 @@ Le poste cloud de préparation n’a pas Docker/Podman : le démarrage réel des
 ### Salons publics
 
 La migration additive `20261012110000_public_lobbies` ajoute la visibilité des salles, avec défaut `CODE` : les anciennes salles restent invisibles dans l’explorateur. Un compte peut choisir « Publique » dans `/fr/play/create` ; `/fr/lobbies` et `/en/lobbies` affichent les résumés publics et permettent l’entrée par le parcours existant. Les migrations sont appliquées par les procédures locales ou de démarrage déjà documentées, sans reset. Les tests continuent d’utiliser uniquement la base jetable.
+
+## Course humaine (8 novembre 2026)
+
+La migration additive `20261108140000_human_race` ajoute le corpus initial, l'état de course et les résultats des comptes. Après vérification de la cible **de développement**, appliquer `pnpm exec prisma migrate deploy`, puis relancer `pnpm dev` pour charger le client généré. Dans le conteneur local, les commandes équivalentes sont `docker compose exec -T app pnpm exec prisma migrate deploy` et `docker compose restart app` ; aucun reset n'est nécessaire.
+
+Un compte crée la salle, une deuxième session navigateur/invitée rejoint comme participant, puis l'hôte enregistre les réglages et démarre. Les spectateurs suivent sans taper. Sur un écran de moins de 640 px, le conseil de clavier physique remplace la zone de frappe. Les résultats des comptes et séries MPM sont stockés ; les pages de statistiques/historique et graphiques restent à implémenter. Bots et bonus restent futurs.
+
+Si le port hôte PostgreSQL 5432 appartient déjà à un autre projet, conserver ce service et le volume de ce projet : `POSTGRES_PORT=55434 docker compose up -d --no-deps postgres`. L'application du conteneur utilise toujours `postgres:5432/typing_dev` sur son réseau ; une commande lancée depuis l'hôte doit viser explicitement `127.0.0.1:55434` pour cette base. Garder la même valeur `POSTGRES_PORT` sur les futures commandes Compose pour éviter une tentative de réutilisation de 5432. Ne jamais migrer le service inconnu qui occupe l'ancien port.
+
+Le smoke HTTP accepte `SMOKE_BASE_URL=http://localhost:3125 pnpm test:http`, utile lorsque l'application de développement utilise déjà 3000. Il attend la disponibilité de son propre processus avant d'envoyer des comptes de test ; il utilise toujours le PostgreSQL jetable de `scripts/test-stack.ts`.
+
+## Configuration de course (9 novembre 2026)
+
+Les migrations additives `20261109120000_race_configuration` et `20261109120100_dictionary_words` installent le corpus littéraire et le dictionnaire FR/EN utilisés par les nouveaux réglages. Après vérification que le conteneur `app` est en mode `development` et vise `postgres:5432/typing_dev` :
+
+```sh
+docker compose start --wait postgres
+docker compose exec -T app pnpm exec prisma migrate deploy
+docker compose exec -T app pnpm db:generate
+docker compose restart app
+docker compose exec -T app pnpm exec prisma migrate status
+```
+
+Si Next.js est encore lancé mais affiche `Can't reach database server at postgres`, vérifier `docker compose ps -a` : un PostgreSQL arrêté ne peut pas recevoir de migration. `start` redémarre le conteneur existant avec son volume et son port publiés, notamment 55434 sur ce poste ; aucune recréation ni suppression de volume n'est nécessaire. Les commandes de migration passent par `app` pour utiliser l'adresse interne de la même base de développement. Ne pas exécuter ces commandes sur une cible de production ou inconnue.

@@ -1,14 +1,20 @@
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
-const server = spawn("pnpm", ["start"], {
+const target = new URL(process.env.SMOKE_BASE_URL ?? "http://localhost:3000");
+if (
+  target.protocol !== "http:" ||
+  !["localhost", "127.0.0.1"].includes(target.hostname)
+)
+  throw Error("Smoke tests require local HTTP.");
+const base = target.origin;
+const server = spawn("pnpm", ["start", "--port", target.port || "80"], {
   detached: true,
   stdio: ["ignore", "pipe", "pipe"],
-  env: { ...process.env, NODE_ENV: "production" },
+  env: { ...process.env, NODE_ENV: "production", BETTER_AUTH_URL: base },
 });
 let logs = "";
 server.stdout?.on("data", (c) => (logs += String(c)));
 server.stderr?.on("data", (c) => (logs += String(c)));
-const base = "http://localhost:3000";
 async function request(
   path: string,
   body?: object,
@@ -32,7 +38,11 @@ const cookieOf = (r: Response) =>
     .join("; ");
 try {
   for (let i = 0; i < 100; i++) {
+    // Never send test accounts/commands to an unrelated server already using this port.
+    if (server.exitCode !== null)
+      throw Error("Test server exited before readiness.");
     try {
+      if (!logs.includes("Ready")) throw Error("Waiting for our test server");
       await fetch(base);
       break;
     } catch {
@@ -70,8 +80,13 @@ try {
     }),
   );
   assert.ok(
-    firstHomes.every((r) => r.status === 200 && r.html.includes("Room name")),
-    "Every concurrent authenticated SSR response must expose the room form",
+    firstHomes.every(
+      (r) =>
+        r.status === 200 &&
+        r.html.includes('href="/en/profile"') &&
+        r.html.includes('href="/en/play/create"'),
+    ),
+    "Concurrent authenticated SSR must expose account and room-creation navigation",
   );
   const guest = await request("/api/auth/sign-in/anonymous", {
     name: "Smoke Guest",

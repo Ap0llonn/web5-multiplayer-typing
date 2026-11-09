@@ -6,6 +6,11 @@ import {
   type OperationResult,
 } from "@/shared/contracts/operation-result";
 import type { Lobby } from "../../contracts/lobby";
+import {
+  raceSettingsSchema,
+  raceStateSchema,
+} from "../../contracts/race-schemas";
+import { raceData, saveRaceResults } from "./race-storage";
 import { createCode } from "../../domain/lobby-rules";
 import type { LobbyRepository } from "../interfaces/lobby-repository";
 import {
@@ -17,6 +22,8 @@ type Row = Prisma.LobbyGetPayload<{
 }>;
 function fromRow(row: Row): Lobby {
   return {
+    raceSettings: raceSettingsSchema.parse(row.raceSettings),
+    race: row.race === null ? null : raceStateSchema.parse(row.race),
     id: row.id,
     visibility: row.visibility,
     code: row.code,
@@ -190,8 +197,18 @@ export class PrismaLobbyRepository implements LobbyRepository {
                   state: room.state,
                   version: room.version,
                   capacity: room.capacity,
+                  visibility: room.visibility,
+                  raceSettings: room.raceSettings
+                    ? { ...room.raceSettings }
+                    : undefined,
+                  // Closed rooms keep account result rows, never a guest's old draft.
+                  race:
+                    room.state !== "CLOSED" && room.race
+                      ? raceData(room.race)
+                      : Prisma.DbNull,
                 },
               });
+              if (room.race) await saveRaceResults(tx, room.race);
               await tx.lobbyMember.updateMany({
                 where: {
                   lobbyId: room.id,

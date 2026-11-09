@@ -96,6 +96,13 @@ test("creation role menu supports keyboard selection, cancellation and submissio
     await expect(menu).toBeHidden();
     await expect(createRole).toContainText(en.PARTICIPANT);
     await expect(
+      createForm.getByRole("combobox", {
+        name: en.lobbies.visibility,
+        exact: true,
+      }),
+    ).toBeFocused();
+    await page.keyboard.press("Tab");
+    await expect(
       createForm.getByRole("radio", {
         name: en.play.characters.cobalt,
         exact: true,

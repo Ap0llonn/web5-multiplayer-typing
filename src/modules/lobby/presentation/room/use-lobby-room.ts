@@ -111,6 +111,8 @@ export function useLobbyRoom() {
         if (currentRoom)
           dispatch({ type: "recovered", generation, room: currentRoom });
         else setError(result.error.messageKey);
+        if (path.endsWith("/race/item") && result.error.code === "CONFLICT")
+          setError("race.items.unavailable");
       }
       return result;
     } catch {
@@ -122,5 +124,16 @@ export function useLobbyRoom() {
     }
   }
   const messageKey = error || (view.conflictNotice ? "roomConflict" : "");
-  return { room, loaded, pending, connection, messageKey, send };
+  function acceptSnapshot(updated: LobbySnapshot) {
+    dispatch({ type: "snapshot", code: updated.code, room: updated });
+  }
+  return {
+    room,
+    loaded,
+    pending,
+    connection,
+    messageKey,
+    send,
+    acceptSnapshot,
+  };
 }

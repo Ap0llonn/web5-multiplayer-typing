@@ -72,7 +72,9 @@ for (const [locale, messages] of [
       await expect(host).toHaveURL(new RegExp(`/${locale}/play/room/?$`));
       const code = await host.getByTestId("room-code").innerText();
       await expect(
-        host.getByText(messages.lobbies.publicVisibility, { exact: true }),
+        host
+          .getByRole("paragraph")
+          .filter({ hasText: messages.lobbies.publicVisibility }),
       ).toBeVisible();
       const page = await visitor.newPage();
       await page.goto(`/${locale}`);

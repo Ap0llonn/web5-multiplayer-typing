@@ -675,3 +675,251 @@ Depuis Voir les salons, Trouver un salon sélectionne le salon public joignable 
 **Rouge avant implémentation :** les quatre nouveaux tests unitaires échouaient avec `findQuickLobby is not a function`, puis passent avec la sélection réelle. Les premières vérifications confinées utilisent Node hôte 25.6.0 et passent pour lint/types/frontières/unitaires ; le lancement de PostgreSQL y échoue sur la mémoire partagée (`shmget: Operation not permitted`). L'intégralité des contrôles finaux ci-dessus utilise ensuite Node 24 et une autorisation technique d'exécution adaptée pour PostgreSQL, build et navigateur. La base `typing_test` est créée puis supprimée par `scripts/test-stack.ts` ; aucune base existante n'est réinitialisée et aucun secret n'est modifié ou affiché.
 
 **Échecs finaux non résolus : aucun dans les contrôles exécutés. Non exécutés :** autres fichiers E2E hors de cette recette, Firefox/WebKit, appareil tactile/lecteur d'écran, charge/Lighthouse, OAuth externe, recette VPS et déploiement. Aucun changement de migration requis par Partie rapide. La lecture par pages n'est pas une réservation ni un instantané transactionnel global : un changement concurrent entre le clic et l'entrée peut donner le refus d'entrée existant, sans dépassement de capacité ni faux succès. Les traces des nouveaux scénarios sont désactivées.
+
+## Course humaine — 8 novembre 2026
+
+Demande utilisateur : « make the race », après la proposition d'une course humaine complète depuis le lobby. Révision de départ `2f680af`, modifications non commitées. Propriétaire : module lobby, avec composition HTTP/session et façades publiques existantes. [Contrat détaillé](ARCHITECTURE.md#course-humaine--demande-utilisateur-du-8-novembre-2026), [plan exécuté](superpowers/plans/2026-11-08-human-race.md). Les mêmes 90 IDs officiels sont conservés ; les lignes concernées restent partielles tant que leurs preuves finales/variantes manquent.
+
+Fonctionnement livré : réglages FR/EN, 10–100 mots, correction obligatoire/libre, temps absent ou 30–600 secondes ; démarrage hôte avec deux humains ; texte révélé au décompte 3–2–1 ; saisie avec erreurs/curseur, progression et métriques calculées serveur ; piste partagée et spectateurs ; reprise du brouillon acquitté, abandon confirmé, fin par délai ou statuts terminaux ; podium/tableau, préparation suivante et fermeture. Les résultats et séries MPM des comptes sont persistés, sans historique invité. Corpus initial original bilingue inséré par migration. Les étapes simples de corpus ne réalisent pas le dictionnaire et les filtres avancés.
+
+| Contrôle | Résultat et portée |
+| --- | --- |
+| Runtime final | Node **24.19.0**, pnpm **11.19.0**, Next **16.3.8**, PostgreSQL embarqué **18.4**, Chrome installé sur macOS. Runtime Node isolé dans `/tmp`, installation système inchangée. |
+| Lint | PASS : `pnpm lint` sous Node 24. |
+| Types stricts et frontières | PASS : `pnpm typecheck`, `pnpm check:boundaries`. Aucun `any` ni suppression de type ajoutés. |
+| Unitaires | PASS : **138 / 37 fichiers**, dont neuf scénarios de domaine de course et un de prévisualisation de frappe. |
+| PostgreSQL jetable | PASS : **47 / 18 fichiers**, sept migrations depuis zéro et replay sans migration restante. Quatre scénarios de course couvrent démarrages concurrents, autorisation, séquences/idempotence, confidentialité du brouillon, résultats comptes seulement, replay et fermeture, échéance atteinte avant relance, origine étrangère et champs acteur/score forgés. |
+| Build production | PASS : `pnpm build` sous Node 24, variables fictives locales ; route `/api/lobbies/[code]/race/[command]` compilée. |
+| HTTP/SSE production | PASS : `SMOKE_BASE_URL=http://localhost:3125 pnpm test:http`, DB jetable et processus de test distinct de l'app locale sur 3000. Session officielle, refus invité/origine/champs forgés, création/entrée, duplication, SSE et révocation. |
+| Navigateur complet | PASS : **60/60 Chromium / 17 fichiers**, sans retry, **6,6 minutes**, build de production sur localhost:3124 et PostgreSQL jetable. Les deux scénarios de course couvrent chacun deux humains et un spectateur, textes identiques, refus de démarrage invité, collage refusé, erreur bloquante puis correction, reprise du brouillon après reload, arrivée des deux humains, résultats après reload, replay, mobile, annulation et confirmation d’abandon, puis fermeture. |
+| Accessibilité et visuel | PASS : axe A/AA sur course et résultats (EN clair / FR sombre), contrôles existants à 360 px et deux thèmes ; captures `test-results/race-live-{en,fr}.png` et `race-results-{en,fr}.png`, ignorées par Git. Résultats clairs et course sombre inspectés visuellement. |
+| Application locale | PASS : après migration/restart, `/fr` retourne 200 et `/api/lobbies` retourne 200 avec `ok: true`. Aucun compte de test créé dans typing_dev. |
+
+**Rouge puis vert :** le test de domaine échoue d'abord car le moteur n'existe pas ; le test d'intégration échoue car l'adaptateur de commande n'existe pas. Les cas supplémentaires de fermeture et de relance au délai échouent ensuite explicitement : agrégat invité conservé à la fermeture et effacement prématuré avant sauvegarde. Le repository purge désormais le JSON des salles fermées tout en sauvegardant les comptes ; une première commande de relance qui constate le délai commite les résultats et refuse la relance avant le second appel. Les tests de régression passent.
+
+**Essais intermédiaires conservés :** un test de timeout oubliait les heartbeats et obtenait correctement un abandon ; sa fixture conserve désormais les présences. Le premier build détecte la clé de traduction Annuler absente, ajoutée dans les deux langues. Le lint détecte un appel à l'horloge pendant le rendu ; l'échantillonnage est déplacé dans l'effet. Le premier run d'intégration sous Node hôte 25.6 rencontre un timeout de 5 s du scénario existant à plus de 100 salles ; tous les runs finaux utilisent la version 24 imposée, et la suite entière passe sans élargir ce timeout. L'ancien test clavier du rôle omettait le sélecteur de visibilité entre rôle et personnage ; son attente suit désormais le véritable ordre de tabulation.
+
+**État local de développement :** le conteneur applicatif existant est bien celui du checkout, avec cible `postgres:5432/typing_dev`. Son PostgreSQL était arrêté ; le port hôte 5432 appartient à un autre service. Le conteneur PostgreSQL du projet est relancé sur **127.0.0.1:55434**, avec son volume existant. Les six migrations existantes et l'unique migration de course en attente sont vérifiées avant `prisma migrate deploy` ; seule cette migration est appliquée. L'application est relancée pour charger le client généré. Aucune base inconnue ou de production n'est migrée, aucun volume n'est supprimé, aucun fichier secret n'est modifié. Utiliser le même `POSTGRES_PORT=55434` aux prochaines commandes Compose ([guide](DEVELOPPEMENT-LOCAL.md#course-humaine-8-novembre-2026)). Cette DB n'est jamais utilisée pour les tests.
+
+**Limites :** bots, bonus, complexité/options de texte/dictionnaire, graphiques, records personnels, profil statistique et historique paginé restent futurs. La reconnexion utilise la présence existante à 30 s ; seuls les lots déjà acquittés survivent à un reload. Le protocole en lots/instantanés limite les bonds de progression et conserve l'autorité serveur ; il ne prouve pas qu'un humain utilise physiquement un clavier. Pas de mesure de charge à 30 joueurs, Lighthouse, Firefox/WebKit, appareil tactile/lecteur d'écran réels, OAuth externe ou recette VPS. Aucune publication ni déploiement de production effectué.
+
+**Bilan final :** aucun échec applicatif non résolu dans les contrôles exécutés. Les scénarios non exécutés sont listés dans les limites ci-dessus. Les bases temporaires sont supprimées par leur harnais ; seul le PostgreSQL de développement, avec son volume initial et le nouveau port hôte, reste démarré. Les imports de développement initiaux de `next-env.d.ts` sont restaurés après le build ; aucune modification de ce fichier généré n’est retenue.
+
+## Boîtes mystères — 8 novembre 2026
+
+Demande utilisateur : ajouter six effets pendant la course pour resserrer les écarts ; correction explicite « aider les retardataires », puis accord sur les six effets et leur implémentation. Cette section remplace la limite historique « bonus futurs » de la recette de course ci-dessus. Arbre de travail non commité conservé, aucune publication. Propriétaire lobby, exigences BONUS-01–04, CONF-09 et colonne bonus de RES-02. [Contrat et choix](ARCHITECTURE.md#boîtes-mystères--demande-et-accord-utilisateur-du-8-novembre-2026), [spécification](superpowers/specs/2026-11-08-mystery-boxes-design.md), [plan et journal](superpowers/plans/2026-11-08-mystery-boxes.md).
+
+Implémentation : boîtes serveur aux checkpoints 25/50/75 %, uniquement dernier ou retard strictement supérieur à 25 points, maximum trois ; inventaire personnel à activation manuelle ; raccourci −3 mots, détour +3 mots au meneur actif, brouillard 4 s, bouclier, éclaircie, petit coup de pouce −1 mot. Effets et consommation atomiques dans le verrou de salle, réévaluation d'utilité et de cible, textes personnels versionnés, MPM sans frappes offertes, événements sur piste et chez la cible. Le réglage est modifiable par l'hôte en attente ; les anciennes courses gardent leurs règles sans bonus.
+
+### Passé
+
+| Contrôle sur l'état final | Résultat et portée |
+| --- | --- |
+| Runtime | Node 24.19.0/pnpm 11.19.0 sur hôte ; PostgreSQL jetable embarqué 18.4 ; Chrome installé. Conteneur de développement Node 24.21.0. |
+| Lint / types / frontières | PASS : `pnpm lint` sans avertissement, `pnpm typecheck`, `pnpm check:boundaries`. Aucun `any` explicite ni suppression de type ajoutés. |
+| Unitaires | PASS : **158 / 39 fichiers**. Quatorze tests bonus : checkpoints sautés et uniques, plafond trois, égalités, dernier OU écart strict, arrondi exact 55−30, désactivation, tirage reproductible et six types atteignables, six effets/expiration/protection, appartenance/utilité/idempotence, statistiques, révisions, frontières de mots et anciens agrégats. Trois tests de frappe dont retours arrière sur suffixe retiré. Quatre rendus UI FR/EN dont brouillard et spectateurs. |
+| Intégration PostgreSQL jetable | PASS : **49 / 18 fichiers** ; huit migrations depuis zéro puis replay sans migration restante. Activation concurrente d'un même objet, propriétés/refus acteur et cible/type forgés, reprise de texte/révision depuis DB, frappe périmée rejetée, compteurs de bonus comptes sauvegardés et invités sans historique. |
+| Build | PASS : `pnpm build` Node 24, cache SWC temporaire et variables de build factices. Aucun accès métier ni migration d'une DB réelle au build. |
+| Navigateur pertinent | PASS : **11/11 Chromium / 3 fichiers**, **1,5 minute**, sans retry, serveur de production isolé `localhost:3100`, PostgreSQL jetable. `race.spec.ts` : quatre scénarios, dont deux nouveaux FR/EN de boîte réellement attribuée, persistance après reload, bouton d'activation, effet serveur annoncé au spectateur, répétition idempotente, compteur, absence d'inventaire spectateur et mobile. Deux scénarios course complète/reprise/résultats/replay/abandon. `presence.spec.ts` : reconnexion hôte/invité et identité/roster conservés. `select.spec.ts` : six régressions de menus clavier, tablette, FR/EN, clair/sombre et 360 px. |
+| Accessibilité / visuel | PASS : axe A/AA sur inventaire/boîtes (FR sombre, EN clair), ainsi que course/résultats et menus existants. Captures `test-results/mystery-boxes-fr.png` et `mystery-boxes-en.png` inspectées : cartes, piste, textes, contrôles et deux thèmes lisibles. Pas de débordement à 360 px. Les deux tirages observés dans le navigateur ont produit un détour ; les six effets sont couverts par le domaine, sans forcer le tirage dans l'API. |
+| Développement local | Cible vérifiée sans afficher l'URL ni identifiants : Compose `typing-local`, mode development, `postgres:5432/typing_dev`, port hôte PostgreSQL conservé 55434. Statut : seule `20261108150000_race_bonuses` en attente ; cette migration additive est appliquée, puis seule l'app est redémarrée pour régénérer Prisma. `/fr` retourne HTTP 200. Aucun reset/volume supprimé, aucun compte/salle de test créé dans typing_dev. |
+| Revue indépendante | Deux défauts reproduits et corrigés avec régressions : blocage à 100 % à une frontière exacte de mot ; retours arrière en vol effaçant des caractères valides après raccourcissement. Le reviewer revérifie les corrections et exécute les tests ciblés. |
+
+### Échecs intermédiaires résolus
+
+- RED attendu : tests bonus/UI échouent avant leurs composants/règles ; test d'intégration échoue avant `useItem`. Les régressions de frontière de mot et de seuil flottant échouent réellement avant correction. Les tests finaux passent.
+- Une fixture initiale arrondissait 24 % vers le haut et atteignait exactement 25 % ; la distribution était correcte. La fixture utilise un entier restant sous le seuil.
+- Le sandbox refuse la mémoire partagée PostgreSQL ; les tests tournent ensuite avec autorisation d'exécution locale et base temporaire. Le build initial refuse le cache SWC système ; il passe avec cache dans `/private/tmp`. Node hôte 25 est remplacé par le runtime Node 24 existant dans `/private/tmp`, sans changer l'installation système.
+- Un run d'intégration simultané au build dépasse le timeout du premier test seed ; son nettoyage n'ayant pas eu lieu, le seed suivant échoue sur la collision conservée. La suite entière rejouée seule passe 49/49, sans modifier les tests de seed ni augmenter leurs délais.
+- Premier lancement navigateur refusé : port 3000 déjà occupé par l'application de développement. Aucun processus existant n'est arrêté ; la recette passe sur le port isolé 3100.
+
+### Non exécuté / limites
+
+Pas de nouvelle recette de l'ensemble des autres fichiers E2E, Firefox/WebKit, lecteur d'écran ou appareil physique, charge soutenue à 30 joueurs, Lighthouse, OAuth externe ou production/VPS. Aucun bot livré par ce lot. Le brouillard est un effet de présentation sur des données autorisées, pas une preuve anti-triche matérielle. L'historique paginé et les graphiques restent futurs. Aucun échec applicatif non résolu dans les contrôles exécutés ; aucune migration de base inconnue/production ni déploiement.
+
+## Configuration de course §4.5 — 9 novembre 2026
+
+Arbre local déjà modifié avant ce lot, sans commit de livraison ni déploiement. Propriétaire lobby, exigences CONF-01–12 et prise en charge des places bots nécessaires à CONF-10. Source de vérité du contrat : [architecture](ARCHITECTURE.md#configuration-de-course-45--demande-utilisateur-du-9-novembre-2026) et [corpus](CORPUS.md).
+
+### Passé
+
+- `pnpm lint`, `pnpm typecheck`, `pnpm check:boundaries` : PASS sur l'état final ; aucun import intermodule ajouté.
+- `pnpm db:validate`, `pnpm db:generate` : PASS.
+- `pnpm test:unit` : **166 tests, 41 fichiers PASS**, dont nouvelles régressions configuration/texte : limites temporelles, droits/états, changement atomique de capacité/visibilité, place des bots, au moins un humain, déterminisme/reprise/version de moteur, exactitude de longueur, complexités, options indépendantes et filtres impossibles.
+- `pnpm test:integration exec vitest run tests/integration --testTimeout 30000` : **52 tests, 18 fichiers PASS** sur PostgreSQL jetable, migrations depuis zéro puis deuxième déploiement sans migration en attente. Corpus/dictionnaire bilingues réels, tous modes/niveaux, sauvegarde et relecture complète, refus atomique sans changement de version, historique des comptes seulement et concurrence ajout de bot/dernière place humaine.
+- `SWC_NATIVE_BINDING_CACHE=/private/tmp/typing-swc-native pnpm build` : PASS, build de production Next.js 16.3.8. Exécution locale autorisée hors bac à sable pour le cache natif et les processus nécessaires à Turbopack.
+- Régressions finales : `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' PLAYWRIGHT_BASE_URL=http://localhost:3109 pnpm test:browser race.spec.ts public-lobbies.spec.ts quick-play.spec.ts lobby-acceptance.spec.ts presence.spec.ts` : **16/16 PASS en 2,5 min**, sur build final et migrations/dictionnaires finaux. Inclut course humaine, bonus, configuration/bots FR/EN, salle/hôte spectateur, capacité, reconnexion, découverte publique et partie rapide avec reprise après panne.
+- Deux nouveaux E2E FR/EN : PASS sur Chrome installé, serveur production port 3109 et PostgreSQL jetable. Formulaire réel, options désactivées en cohérent, ajout/retrait/niveau de bot, filtres de génération, indépendance UI EN/texte FR, sauvegarde partagée avec spectateur, persistance après reload, verrouillage en course, progression réelle du bot, résultats et réglages de la prochaine course figés séparément, replay. Axe WCAG A/AA et 2.1 AA : aucune violation dans le formulaire testé.
+
+### Échecs intermédiaires résolus
+
+- Les tests de configuration ajoutés échouaient avant les champs/règles de bots et de salle ; les tests de génération échouaient avec l'absence du générateur. Le refus d'une version de bot inconnue et la frappe d'un bot exactement à l'échéance ont été testés rouge puis vert.
+- PostgreSQL était bloqué par `shmget` dans le bac à sable ; relancé avec autorisation sur une DB temporaire dédiée. Le premier run large avait un timeout de cinq secondes dans `seed-s1.test.ts` (« seeds two credential-free users… concurrently… ») ; la suite complète passe avec `--testTimeout 30000`.
+- Le premier run E2E élargi a eu six échecs : sélecteur « Public/Publique » ambigu dans les deux scénarios de création publique, puis deux scénarios de partie rapide et leurs deux scénarios de reprise influencés par les salles laissées ouvertes après ces échecs. Le test cible maintenant le paragraphe de visibilité de la salle ; nouvelle exécution sur DB neuve : les six scénarios passent. Un run suivant a révélé une lecture E2E trop rapide après le clic Démarrer dans le nouveau scénario FR ; le test attend maintenant la piste rendue après la réponse serveur avant de lire le snapshot. Le passage final des 16 scénarios est entièrement vert.
+- Le cache SWC par défaut était interdit et `/tmp` était refusé par son contrôle de lien symbolique. Chemin physique `/private/tmp`, puis build hors bac à sable après arrêt du seul processus de build de cette tâche : PASS.
+- Port 3000 déjà occupé : tests isolés sur 3109 sans arrêter l'autre serveur. Chromium Playwright absent : utilisation du Chrome installé via `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`, sans installation de navigateur ni modification des dépendances.
+
+### Non exécuté / limites
+
+- Toutes les commandes ont utilisé Node **25.6.0** disponible sur cette machine, avec avertissement du moteur attendu `>=24 <25` ; cette recette ne certifie pas Node 24.
+- Aucune migration d'une DB de développement/production existante, aucun déploiement, OAuth réel, test de charge à 30 joueurs, ni certification exhaustive des profils de bots. Les migrations ont été appliquées uniquement dans les bases jetables du harnais.
+- Visibilité privée et invitations de SALLE-03 restent futures ; ce lot édite réellement les modes PUBLIC/CODE existants. Les options de caractères et le nombre de mots portent sur le texte initial ; les bonus gardent leur comportement de modification du texte personnel.
+- Le corpus et le dictionnaire initial sont volontairement finis ; un filtre sans mot compatible refuse le départ. Les critères de difficulté, sources et droits sont documentés dans CORPUS.md. Les réglages exigent une sauvegarde explicite avant démarrage.
+
+## Remise en service PostgreSQL et migrations locales — 9 novembre 2026
+
+À la demande utilisateur après l'erreur Prisma `Can't reach database server at postgres`, diagnostic du Compose **typing-local** : `app` était actif et `postgres` arrêté avec code de sortie 0. Vérification expurgée depuis l'application : mode `development`, hôte `postgres`, port interne 5432 et base `typing_dev`. Aucune valeur d'identifiant ou de secret affichée.
+
+Actions réellement exécutées sur cette base de développement identifiée : redémarrage du conteneur PostgreSQL **existant** (`docker compose start --wait postgres`), application par le conteneur applicatif de `20261109120000_race_configuration` et `20261109120100_dictionary_words`, régénération Prisma et redémarrage de `app`. Aucun reset, suppression de volume ou changement de secret.
+
+Preuves après intervention :
+
+- `docker compose ps` : application running, PostgreSQL running/healthy.
+- `prisma migrate status` depuis `app` : dix migrations, schéma à jour, aucune migration en attente.
+- Lecture par le client Prisma régénéré : deux passages `corpus-*`, 426 entrées de dictionnaire FR et 433 EN.
+- Requêtes HTTP depuis l'application : `/fr/play`, `/en/play` et `/api/lobbies` répondent **200**, sans erreur Prisma de connexion dans leur réponse.
+
+Les suites lint/types/unitaires/intégration/build/E2E du lot précédent ne sont pas relancées pour cette intervention d'exploitation : aucun code applicatif modifié. Les vérifications ci-dessus portent sur le vrai service de développement réparé ; aucun test ne réinitialise cette base. Procédure de reprise ajoutée à DEVELOPPEMENT-LOCAL.md.
+
+## Réglages derrière un engrenage — 9 novembre 2026
+
+Décision utilisateur : retirer le panneau volumineux du salon et ouvrir une page dédiée. Le formulaire et le résumé complet vivent à `/[locale]/play/room/settings`. L'engrenage possède un nom accessible, un lien explicite retourne à la salle, et Démarrer reste au salon. Le même hook maintient lecture autorisée, SSE et heartbeat ; aucun nouveau schéma ni migration.
+
+### Passé
+
+- Tests ajoutés exécutés rouges avant modification : le formulaire apparaissait encore au salon, la page dédiée ne séparait pas les contrôles et la nouvelle route conservait la navigation générale. Après changement : régressions FR/EN sur rendu principal/configuration, édition hôte et consultation invitée, navigation locale sans barre générale.
+- Lint, TypeScript et `check:boundaries` : PASS.
+- Suite unitaire complète : **173 tests, 42 fichiers PASS**.
+- Suite intégration PostgreSQL jetable : **52 tests, 18 fichiers PASS**, avec les dix migrations puis deuxième déploiement sans migration en attente.
+- Build production : PASS, route dynamique `/[locale]/play/room/settings` générée. Documentation de la version Next.js installée consultée pour pages, headers et composants clients.
+
+### Vérification navigateur et correction des attentes historiques
+
+Le premier passage de `race.spec.ts` et `lobby-acceptance.spec.ts` a validé sept scénarios : trois parcours de salle, les deux parcours bonus et les deux nouveaux parcours configuration FR/EN. Ces derniers vérifient l'engrenage, l'absence de formulaire dans le salon, retour à la salle, sauvegarde et partage avec spectateur, absence de navigation générale, reload, page verrouillée en course, mobile 360 px et desktop 1280 px, thèmes clair/sombre et axe sans violation. Le cas FR reste plus de 30 secondes dans l'éditeur et conserve la même salle grâce au heartbeat.
+
+Deux scénarios historiques « two humans race… » échouaient seulement sur l'ancien texte d'attente du panneau retiré après Replay. L'attente cible maintenant l'état serveur `WAITING` et l'engrenage accessible, puis poursuit la vraie deuxième course. Relance ciblée sur la même version : **2/2 PASS** en 34,1 secondes. Au total **neuf scénarios E2E validés** pour ce changement (sept dans le premier passage, puis les deux scénarios corrigés).
+
+### Non exécuté / limites
+
+Pas de déploiement, OAuth réel ou test de charge. Aucun changement métier ou de DB de développement dans ce lot ; les opérations des tests utilisent uniquement PostgreSQL jetable. Commandes locales sous Node 25.6.0 (le projet prévoit Node 24), Chrome installé et port 3109 pour isoler l'application de développement existante. Les réglages non enregistrés ne sont pas conservés lorsqu'on quitte l'éditeur.
+
+## Frappe directe et boîtes personnelles — 9 novembre 2026
+
+Nouvelle décision utilisateur : retirer la zone de frappe visible, donner des boîtes indépendantes à chaque coureur et pondérer les effets par sa place. Confirmation explicite : raccourcir le texte restant pour remonter vers le milieu sans modifier les statistiques. Le contrat actuel et l'écart à BONUS-01 du PDF sont documentés en fin d'ARCHITECTURE.md et dans EXIGENCES.md. Les anciennes courses sans version restent v1 ; les nouveaux départs utilisent v2.
+
+### Passé
+
+- Rouge avant implémentation : trois tests métier exposaient la distribution commune, l'absence de puissance pour le deuxième et l'absence de remontée du dixième ; un E2E mesurait encore un champ opaque séparé. Ces défauts sont maintenant couverts par les régressions.
+- Lint, TypeScript, frontières et build production : PASS.
+- Suite unitaire : **178 tests, 43 fichiers PASS**. Boîtes personnelles et idempotence après sérialisation, trois seuils individuels, pool léger en deuxième place, remontée contrôlée 10e vers 5e, conservation des vrais progrès/frappes/MPM et du mot à finir, refus d'une remontée devenue inutile en deuxième place, petite attaque permettant à un deuxième proche de challenger le meneur ; tests v1 conservés explicitement pour la compatibilité des courses lancées.
+- Suite intégration PostgreSQL jetable : **52 tests, 18 fichiers PASS**. Le meneur franchit son checkpoint sans donner de boîte à l'autre joueur ; ce dernier frappe lui-même jusqu'à son seuil, recharge l'objet réellement persisté, activation concurrente/idempotente, autorisations et révision du texte gardées. Les dix migrations sont réappliquées depuis zéro uniquement dans le harnais jetable.
+
+- E2E finaux : `race.spec.ts` et `lobby-acceptance.spec.ts`, **10/10 PASS en 2,3 min** sur Chrome, build production et PostgreSQL jetable. Boîtes collectées indépendamment et marquées par couloir, inventaire privé/reload/activation réelle, annonces, passage révisé, course/replay/abandon et configuration FR/EN, axe et thèmes/mobile. Le nouveau scénario clique le passage, vérifie la capture transparente au focus et tape au clavier ; le serveur acquitte le vrai brouillon. Aucun champ opaque séparé n'est rendu.
+
+### Non exécuté / limites
+
+Aucune migration SQL supplémentaire requise, aucun déploiement ni réécriture d'une course déjà lancée. Pas de certification de charge à 30 joueurs ni d'équilibrage statistique exhaustif des pools. La remontée vise le milieu et respecte les frontières de mots ; le scénario 10e→5e ne promet pas ce rang dans chaque configuration. En première/deuxième place, une remontée stockée est refusée sans consommation. Le nouveau champ de capture reste natif et accessible, mais transparent : seul le passage et son curseur sont visibles. Vérifications locales sous Node 25.6.0, moteur attendu Node 24 non certifié par ce poste.
+
+## Course réelle à dix participants — 9 novembre 2026
+
+Demande utilisateur : tester dix coureurs, avec bots si nécessaire, prouver l'indépendance des boîtes et une remontée effective du dernier vers la cinquième place. Nouveau scénario reproductible : `tests/e2e/ten-racer-boxes.spec.ts`.
+
+### Passé
+
+Commande réellement exécutée :
+
+```sh
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+PLAYWRIGHT_BASE_URL=http://localhost:3109 pnpm test:browser ten-racer-boxes.spec.ts
+```
+
+**1/1 E2E PASS en 2,1 min**, sur le build production courant, Chromium/Chrome et PostgreSQL jetable créé par le harnais. Aucun changement de code applicatif requis.
+
+- Création officielle d'un compte de test et de sa salle ; configuration/départ par les vraies commandes HTTP. **Un humain au clavier et neuf bots autonomes**, niveaux 5/5/4/4/3/3/3/3/3, 100 mots anglais, correction libre et bonus actifs.
+- Les neuf bots atteignent naturellement leur première boîte pendant que l'humain reste à zéro : aucun objet et aucun checkpoint ne sont accordés à l'humain par leur progression.
+- L'humain tape lui-même le premier quart du texte dans le navigateur ; les dix premières boîtes sont reçues par dix identités distinctes, avec propriétaire et cible correspondants. L'inventaire humain ne contient que ses propres objets. Le rechargement conserve sa boîte de remontée.
+- Activation réelle du bouton de remontée : **10e → 5e**, texte cible total **100 → 57 mots**. Le nombre de frappes correctes reste **111** ; brouillon, progression, total de frappes et erreurs restent identiques avant/après. Les métriques recalculées à durée égale restent identiques. La personne reste en frappe et doit terminer les mots restants.
+- Le test poursuit ensuite la saisie et attend la fin réelle des neuf bots. **10/10 terminés** ; pour chacun, checkpoints `[25, 50, 75]`, **trois objets reçus et trois événements de réception distincts**, soit **30 attributions personnelles**. Aucun reset de progression ou attribution d'objet n'est utilisé pour obtenir ces résultats.
+- Lint, TypeScript et `check:boundaries` : PASS avec le nouveau test. Le build applicatif validé au lot précédent est réutilisé ; seules cette recette et ses preuves sont ajoutées.
+
+[Capture réelle de la remontée en cinquième place](images/ten-racer-catchup.png).
+
+### Conditions et limites
+
+Le tirage de l'objet est rendu reproductible en fixant **uniquement la seed** (`ten-racer-replay-5` dans ce passage) dans la base jetable pendant le décompte, avant toute frappe ou progression. Le test choisit une seed qui couvre le tirage de remontée et ne fabrique ni inventaire, ni progression, ni métriques, ni horodatage en course. Le texte, les identités et la simulation des bots restent réels ; les délais observés et le nombre exact de mots retirés peuvent varier sur une autre exécution. Ce test démontre l'effet d'une remontée effectivement obtenue, pas que chaque boîte du dernier contient toujours cet objet.
+
+La fixture refuse toute cible autre que `127.0.0.1/localhost:55432/typing_test`. Aucune base de développement ou de production modifiée. Il s'agit de dix participants serveur avec un navigateur humain ; ce n'est pas une mesure de charge de dix navigateurs ni de trente joueurs, et aucune preuve OAuth/déploiement n'en découle.
+
+## Effets visuels des sept bonus — 9 novembre 2026
+
+Présentation lobby uniquement, pour BONUS-03, DES-05/06 et accessibilité. Les événements serveur confirment les impacts, les destinataires reçoivent leur effet, les expéditeurs d'attaque une confirmation et les autres membres un impact sur le couloir ciblé. Pas de changement de règles, scores, DB ou transport.
+
+### Passé
+
+- Huit tests dédiés au sélecteur et au rendu : destinataire/expéditeur/observateur, sept effets distincts, refus des réceptions/événements futurs/anciens/doublons, événement bloqué traduit en impact de bouclier, fin du brouillard et absence de rejeu ancien après reload, suppression immédiate d'une ancienne impulsion de brouillard/bouclier devenue fausse.
+- Suite unitaire complète : **186 tests, 44 fichiers PASS**. Lint, TypeScript et frontières : PASS.
+- Intégration PostgreSQL jetable : **52 tests, 18 fichiers PASS**, migrations depuis zéro puis deuxième déploiement sans attente.
+- Build production avec les effets CSS : PASS. Nouvelle dépendance : aucune ; les effets utilisent les propriétés CSS transform/opacity et une liste bornée de particules.
+- Après l'ajustement de suppression des impulsions périmées : build final, 186 unitaires, lint/types/frontières PASS ; les deux scénarios visuels FR/EN sont rejoués et passent **2/2 en 28,5 s**. Captures inspectées : [brouillard sombre](images/bonus-fog-fr.png) et [remontée claire](images/bonus-catchup-fr.png).
+- `race-feedback.spec.ts`, `race.spec.ts`, `ten-racer-boxes.spec.ts` : **10/10 E2E PASS en 4,6 min** sur Chrome/port 3109 et PostgreSQL jetable. Les sept activations passent en FR/EN ; attaque bloquée, bordures persistantes, bouclier après rechargement, expiration, absence d'effet plein écran chez l'observateur, impact de piste, capture clavier à travers la couche décorative, mobile sans débordement, thème sombre/clair et mouvement réduit sont vérifiés.
+- Le scénario réel à dix participants passe aussi avec les effets actifs : un humain/neuf bots, trente boîtes personnelles, tous terminés et remontée effective. Ce passage a produit 10e→6e avec un texte cible de 100→48 mots ; les frontières de mots et positions courantes expliquent la variation, conformément au contrat de rapprochement vers le milieu. La preuve précédente 10e→5e reste une exécution distincte documentée plus haut.
+
+### Échecs intermédiaires et limites
+
+Le test navigateur a d'abord été exécuté contre le build précédent : aucun visuel de brouillard n'était trouvé, comme attendu. Les tests de rendu échouaient sans les nouveaux composants ; un test supplémentaire reproduisait le maintien d'une ancienne impulsion après dissipation/consommation, puis passe après suppression conditionnée par l'état serveur.
+
+Un rejeu a aussi détecté une fixture trop rapide : 60 % du texte préparé avec seulement cinq secondes écoulées déclenchait la limite serveur de 30 frappes/s pendant la vérification clavier. L'horodatage de la fixture est corrigé à trente secondes ; les règles applicatives restent intactes et la frappe est ensuite confirmée en DB dans les deux langues.
+
+La recette des sept effets prépare dans la seule DB jetable les objets et positions utiles pour couvrir toutes les variantes, puis utilise leurs vraies commandes d'activation et les snapshots SSE. Elle vérifie la présentation et les autorisations habituelles, sans prétendre que ces sept objets ont tous été tirés naturellement dans une même course. La course à dix est le scénario séparé avec vrai clavier et bots autonomes.
+
+Aucun test de charge à trente clients, déploiement, connexion OAuth réelle ou nouvelle migration. Les commandes locales utilisent Node 25.6.0 ; Node 24 attendu par le projet n'est pas certifié par ce poste. En mouvement réduit, bordures et notifications demeurent statiques, particules/mouvements supprimés. Les effets sont décoratifs et le journal traduit existant reste la source des annonces accessibles.
+
+
+## Course stable et bonus automatiques — 9 novembre 2026
+
+Demande utilisateur : retirer le panneau « Boîtes mystères » qui déplace la saisie, conserver les surfaces de course stables et appliquer les bonus au ramassage. Module propriétaire : lobby, domaine pour l’activation atomique et présentation pour les surfaces. Aucun changement de transport ni migration SQL.
+
+### Preuves intermédiaires
+
+- Deux nouveaux tests de ramassage ont d’abord échoué (`usedAt: null`), puis passent avec application immédiate et exactement une réception/application. Un test supplémentaire vérifie la reprise automatique des objets utiles des agrégats historiques v1. Les tirages simultanés utiles sont couverts sur 80 seeds/dix joueurs.
+- Les tests FR/EN du journal ont d’abord échoué sur le titre d’inventaire visible. Ils passent ensuite avec `RaceBonusLog` traduit `sr-only`, sans cartes ni boutons et avec annonces d’application/blocage.
+- Les deux E2E de stabilité exécutés contre l’ancien build ont d’abord échoué sur `.race-items` encore présent.
+- Premier passage du nouveau build : la course réelle à dix termine avec trente boîtes personnelles automatiquement consommées ; l’humain remonte de 10e à 5e, cible totale 100→54 mots, 113 frappes correctes après la dernière lettre réellement tapée. Le test compare les métriques avant/après avec exactement cette lettre supplémentaire : aucun crédit de frappe n’est produit par le bonus. Focus et dimensions des deux surfaces sont inchangés. [Capture de ce premier passage](images/ten-racer-auto-catchup.png).
+- Ce premier passage navigateur a aussi relevé quatre échecs Axe sur la piste défilante non focalisable au clavier. Correction : piste et passage accessibles au clavier, contour de focus visible. Un scénario visuel EN perdait l’icône de remontée lorsqu’une deuxième boîte naturelle était automatiquement ramassée ; sa fixture visuelle réserve désormais les autres seuils et fait défiler le couloir observé, tandis que le scénario réel à dix couvre les ramassages naturels successifs. Le couloir personnel est également épinglé en tête avec son vrai rang pour rester visible lorsque le classement change.
+
+### Conditions et limites
+
+Fixtures visuelles et sélection déterministe de seed restent limitées à PostgreSQL jetable `127.0.0.1/localhost:55432/typing_test`. Les sept effets sont préparés pour leur couverture visuelle, puis activés uniquement par l’avancement serveur ; aucun clic `item` n’est nécessaire. La course à dix utilise un vrai clavier et neuf bots autonomes ; seule sa seed est choisie pendant le décompte. Ce n’est pas une charge de dix navigateurs ou trente clients. Aucun déploiement ni connexion OAuth réelle. Node 25.6.0 utilisé sur ce poste, Node 24 attendu par package.json non certifié ici.
+
+
+### État final validé
+
+- **189 unitaires / 44 fichiers PASS** sur l’état final, dont les régressions d’activation/reprise et de rendu accessible.
+- **52 intégrations / 18 fichiers PASS** sur PostgreSQL jetable ; migrations depuis zéro puis second déploiement sans migration en attente. L’intégration des boîtes vérifie réception/application persistées atomiquement, contrôle de propriété et absence de second effet lors de répétitions concurrentes de l’ancienne commande.
+- **Lint, TypeScript, `check:boundaries` et build production PASS**. Aucune dépendance ni migration ajoutée pour cette demande.
+- [Capture finale FR sombre de la surface stable](images/stable-race-fr.png) : panneau supprimé, couloir personnel épinglé et focus conservé sur le passage.
+
+- **10/10 E2E PASS en 4,3 min sur le build final**, Chrome local/port 3109 : sept effets automatiques FR/EN, clair/sombre, mouvement réduit, mobile, Axe, décompte sans déplacement, frappe continue sans requête `item`, coordonnées exactes inchangées de la piste, du couloir personnel et de la saisie, rechargement sans double application ; régressions de course/configuration/rejeu également vertes.
+- Course finale réelle à dix : **10e→5e automatiquement**, cible totale **100→54 mots**, **110 frappes correctes** après la dernière lettre réellement tapée, sans frappe ajoutée par le bonus. Les **dix coureurs terminent**, chacun avec **trois réceptions et trois consommations uniques au même horodatage**, soit trente boîtes personnelles consommées. Seed `ten-racer-replay-1` choisie pendant le décompte, sans injection de progression/objet en course. [Capture finale avec le couloir personnel en 5e place épinglé](images/ten-racer-auto-catchup-final.png).
+
+
+## Tous les coureurs visibles et texte compact — 9 novembre 2026
+
+La demande utilisateur remplace la piste défilante précédente : tous les coureurs sont visibles simultanément, avec une fenêtre de frappe plus petite et fixe, dont le contenu suit la position courante. Présentation du module lobby uniquement (`race-track.tsx`, `race.css`, `race-passage.tsx`), sans modification du moteur, des bonus automatiques, des métriques, des contrats ou de la DB.
+
+### Vérifications réalisées
+
+- Nouveau `tests/e2e/race-track-layout.spec.ts` : deux vrais comptes/salles isolés, un humain et neuf ou vingt-neuf bots configurés par les commandes HTTP autorisées, 100 mots aléatoires, bonus désactivés pour isoler la géométrie. Aucun état de course ou texte injecté en DB.
+- RED sur le build précédent : les deux scénarios échouent sur le débordement de la piste (`scrollHeight > clientHeight`). Premier ajustement : tous visibles à 1280×720, mais personnages trop petits à 900×600 ; les libellés/marges/aide sont compactés. Le cas trente sur mobile révèle ensuite la nécessité de trois colonnes ; l’en-tête mobile reçoit également sa propre hauteur pour éviter de chevaucher la piste. Les tests conservent les assertions de taille et de visibilité.
+- La recette vérifie dix/trente couloirs et personnages contenus dans la piste et la fenêtre, sans défilement horizontal/vertical, à 1280×720, 900×600 et 360×780 ; petite surface de texte (au plus 145 px au bureau), 250 caractères réellement tapés, rectangle de frappe inchangé, focus conservé, défilement interne positif, curseur visible à la frappe et après redimensionnement, et Axe WCAG 2 A/AA. FR/sombre, EN/clair/mouvement réduit sont couverts. Le conseil de clavier physique est conservé sur mobile.
+- **189 unitaires / 44 fichiers PASS**, **52 intégrations / 18 fichiers PASS**, **lint, TypeScript, frontières et build production final PASS**. Intégrations sur PostgreSQL jetable, migrations depuis zéro puis second déploiement sans attente. Aucune nouvelle dépendance ou migration pour cette demande.
+
+### Limites
+
+Trente participants serveur et un navigateur permettent de vérifier cette présentation ; ce n’est pas un test de charge de trente navigateurs. Aucun déploiement, connexion OAuth réelle ou base de développement/production modifiée. Les MPM/statuts des cartes denses restent accessibles aux lecteurs d’écran ; les noms longs sont tronqués visuellement avec leur intitulé complet. Node 25.6.0 utilisé sur ce poste, Node 24 requis par le projet non certifié ici.
+
+
+Les deux nouvelles recettes passent sur le build final : affichage intégral de dix et trente coureurs aux trois dimensions, sans chevauchement de l’en-tête, suivi du curseur après 250 caractères et redimensionnement, Axe sans violation. Captures inspectées : [10 coureurs FR/sombre](images/all-10-racers.png), [30 coureurs EN/clair](images/all-30-racers.png), [30 coureurs sur mobile](images/all-30-racers-mobile.png).
+
+
+**12/12 E2E PASS en 5,3 min sur le build final** : `race-track-layout.spec.ts`, `race.spec.ts`, `race-feedback.spec.ts` et `ten-racer-boxes.spec.ts`. Les sept effets, l’activation automatique, la stabilité de la piste/du couloir personnel/de la saisie, l’accessibilité, la reprise, les résultats et la configuration restent verts. La course réelle à un humain/neuf bots termine les dix coureurs, chacun avec trois boîtes personnelles reçues/consommées une seule fois ; nouvelle remontée automatique **10e→5e**, cible totale **100→60 mots**, **113 frappes correctes** après la dernière lettre réellement tapée. [Capture de la grille compacte avec cette remontée](images/compact-ten-racer-catchup.png).

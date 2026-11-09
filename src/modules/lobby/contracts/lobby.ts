@@ -1,3 +1,4 @@
+import type { RaceSettings, RaceState, RaceSnapshot } from "./race";
 export type LobbyActor = {
   playerIdentityId: string;
   kind: "guest" | "account";
@@ -38,6 +39,8 @@ export type LobbyMember = {
   lastSeenAt: number;
 };
 export type Lobby = {
+  raceSettings?: RaceSettings;
+  race?: RaceState | null;
   id: string;
   visibility: LobbyVisibility;
   code: string;
@@ -51,7 +54,8 @@ export type Lobby = {
 };
 export type LobbySnapshot = Omit<
   Lobby,
-  "members" | "bannedPlayerIdentityIds"
+  "members" | "bannedPlayerIdentityIds" | "race"
 > & {
+  race?: RaceSnapshot | null;
   members: Array<Omit<LobbyMember, "lastSeenAt"> & { online: boolean }>;
 };

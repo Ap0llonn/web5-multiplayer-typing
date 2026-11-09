@@ -25,7 +25,7 @@ export function summarizePublicLobby(
     name: room.name,
     capacity: room.capacity,
     participantCount: members.filter((member) => member.role === "PARTICIPANT")
-      .length,
+      .length + (room.raceSettings?.bots?.length ?? 0),
     spectatorCount: members.filter((member) => member.role === "SPECTATOR")
       .length,
     hostName: host.displayName,

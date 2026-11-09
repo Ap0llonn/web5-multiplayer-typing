@@ -1,4 +1,4 @@
-# Jeu de frappe multijoueur — socle Sprint 1
+# Jeu de frappe multijoueur
 
 Next.js App Router, TypeScript strict, Tailwind, Better Auth, PostgreSQL/Prisma. Monolithe modulaire inspiré de Type : lire [architecture](docs/ARCHITECTURE.md) et [exigences](docs/EXIGENCES.md) avant toute modification.
 
@@ -18,11 +18,11 @@ pnpm infra:up
 pnpm exec prisma migrate deploy
 ```
 
-Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL est utilisé par le socle ; Redis et S3 sont provisionnés pour la suite, sans intégration métier ni upload de photo à ce stade.
+Pour arrêter les services sans effacer les données : `pnpm infra:down`. PostgreSQL possède identités, profils, salles et courses. Les photos de profil validées et redimensionnées sont stockées dans PostgreSQL ; Redis et S3 restent provisionnés pour de futurs usages.
 
 `pnpm dev` et `pnpm build` génèrent automatiquement le client Prisma avant Next.js. Les migrations et la génération sont distinctes : `prisma migrate deploy` ne crée pas `src/generated/prisma/client.ts`. Pour les commandes de types, tests ou seed lancées seules, conserver `pnpm db:generate` comme préparation explicite.
 
-Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. UI volontairement minimale : quatre scénarios Chromium passent en CI, dont le parcours à deux sessions, le thème sombre après reload et l’absence de débordement horizontal de l’accueil à 360 px. La recette clavier, les contrastes, le sans-flash et la couverture mobile de toutes les pages restent à faire ; voir [les preuves et limites exactes](docs/verification.md).
+Ouvrir http://localhost:3000. Langue du navigateur FR/EN, repli FR ; choix explicite conservé par cookie. Thème système initial puis choix clair/sombre conservé localement. Les parcours existants et la course humaine ont une recette locale Chromium, clavier, mobile et axe ; voir [les preuves et limites exactes](docs/verification.md). Une recette locale ne certifie pas le VPS, les callbacks OAuth externes ou une charge à 30 participants.
 
 ## Authentification
 
@@ -32,7 +32,13 @@ GitHub ET Discord sont requis pour la remise. Chaque paire CLIENT_ID/CLIENT_SECR
 
 ## Salons
 
-Compte : créer avec nom, capacité2–30 et rôle participant/spectateur. Invité ou compte : rejoindre avec code6caractères. S1 implémente « Sur code » ; annuaire public et invitations privées sont futurs. Une seule salle active par joueur, contrainte DB ; rechargement/onglets de la même identité ne doublent pas le siège. Liste présente via SSE autorisé. Reconnexion≤30secondes conserve le siège ; départ explicite transfère l'hôte au compte actif arrivé le plus tôt, sinon ferme la salle. Course, bots, bonus, photos, stats et historique restent futurs.
+Compte : créer avec nom, capacité2–30, visibilité publique/sur code et rôle participant/spectateur. Invité ou compte : rejoindre avec code6caractères. L'annuaire public et la partie rapide ouvrent le même vrai parcours d'entrée. Invitations privées et filtres avancés restent futurs. Une seule salle active par joueur, contrainte DB ; rechargement/onglets de la même identité ne doublent pas le siège. Présence via SSE autorisé. Reconnexion≤30secondes conserve le siège ; départ explicite transfère l'hôte au compte actif arrivé le plus tôt, sinon ferme la salle.
+
+## Course humaine
+
+Après la migration `20261108140000_human_race`, ouvrir une salle et rejoindre depuis une deuxième session navigateur, éventuellement invitée. L'hôte enregistre langue FR/EN, nombre de mots, correction obligatoire/libre et temps maximal, puis démarre avec au moins deux participants. Le texte apparaît au décompte 3–2–1. La frappe affiche erreurs, curseur, MPM et précision ; la piste synchronisée inclut les spectateurs sans zone de frappe. Les petits écrans affichent un conseil de clavier physique.
+
+Le serveur calcule progression, métriques, classement et délai depuis les lots de frappes et son horloge. Reload/reconnexion retrouve le dernier brouillon acquitté. Abandonner ou quitter demande confirmation pendant la course. Les résultats affichent podium/tableau ; l'hôte prépare la prochaine course ou ferme la salle. Les résultats des comptes et séries MPM sont persistés ; les invités restent limités à la course courante. Bots, bonus, configuration avancée, graphiques, statistiques de profil et historique complet restent futurs. [Contrat et limites](docs/ARCHITECTURE.md#course-humaine--demande-utilisateur-du-8-novembre-2026).
 
 ## Vérification
 
