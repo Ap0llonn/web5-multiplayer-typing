@@ -9,7 +9,10 @@ import {
   startRace,
   useRaceItem,
 } from "@/modules/lobby/domain/race-rules";
-import { distributeMysteryBoxes } from "@/modules/lobby/domain/race-bonuses";
+import {
+  applyRaceItem,
+  distributeMysteryBoxes,
+} from "@/modules/lobby/domain/race-bonuses";
 import { raceStateSchema } from "@/modules/lobby/contracts/race-schemas";
 import type { RaceItemType, RaceState } from "@/modules/lobby/contracts/race";
 
@@ -148,7 +151,7 @@ describe("mystery boxes", () => {
       "detour",
       "fog",
       "nudge",
-      "shield",
+      "shockwave",
       "shortcut",
     ]);
   });
@@ -272,6 +275,7 @@ describe("mystery boxes", () => {
   });
   it("keeps a last word to type and ranks players by their personal target lengths", () => {
     const { room, race } = running();
+    race.settings.bonuses = false; // Isolate the shortcut from automatic opponent attacks.
     const player = race.players[1];
     player.draft = text.slice(0, text.lastIndexOf(" ") + 2);
     player.progress = player.draft.length;
@@ -353,4 +357,89 @@ describe("mystery boxes", () => {
       shield: false,
     });
   });
+});
+
+it.each([1, 2, 3] as const)(
+  "strengthens personal fog at level %i",
+  (strength) => {
+    const { race } = running();
+    race.bonusRulesVersion = 2;
+    race.players[0].progress = 10;
+    const item = {
+      id: "strong-fog",
+      type: "fog" as const,
+      strength,
+      checkpoint: 25 as const,
+      receivedAt: 4000,
+      usedAt: null,
+    };
+    expect(applyRaceItem(race, race.players[1], item, 4000).ok).toBe(true);
+    expect(race.players[0].fogUntil).toBe(
+      4000 + [3000, 5000, 8000][strength - 1],
+    );
+  },
+);
+
+it("replaces shield drops with an active shockwave affecting only racers ahead once", () => {
+  const { race } = running();
+  race.bonusRulesVersion = 2;
+  const leader = race.players[0];
+  const actor = race.players[1];
+  leader.progress = 30;
+  actor.progress = 10;
+  const before = leader.text;
+  const second = {
+    ...structuredClone(leader),
+    playerIdentityId: "second",
+    progress: 20,
+  };
+  const behind = {
+    ...structuredClone(leader),
+    playerIdentityId: "behind",
+    progress: 5,
+  };
+  const finished = {
+    ...structuredClone(leader),
+    playerIdentityId: "finished",
+    status: "FINISHED" as const,
+  };
+  race.players.push(second, behind, finished);
+  const item = {
+    id: "wave",
+    type: "shockwave" as const,
+    strength: 2 as const,
+    checkpoint: 25 as const,
+    receivedAt: 4000,
+    usedAt: null,
+  };
+  expect(applyRaceItem(race, actor, item, 5000).ok).toBe(true);
+  expect(leader.text).toBe(before + " again again again");
+  expect(actor.text).toBe(text);
+  expect(second.text).toBe(before + " again again again");
+  expect(behind.text).toBe(before);
+  expect(finished.text).toBe(before);
+  expect(leader.shield).toBe(false);
+  expect(applyRaceItem(race, actor, item, 5001).ok).toBe(false);
+  expect(leader.text).toBe(before + " again again again");
+  expect(race.events.at(-1)).toMatchObject({
+    type: "shockwave",
+    targetId: second.playerIdentityId,
+    outcome: "applied",
+  });
+});
+
+it("never draws a new shield across personal box seeds", () => {
+  for (let seed = 0; seed < 100; seed++) {
+    const { race } = running();
+    race.bonusRulesVersion = 2;
+    race.id = `no-shield-${seed}`;
+    race.players[0].progress = Math.ceil(text.length * 0.5);
+    race.players[1].progress = Math.ceil(text.length * 0.25);
+    distributeMysteryBoxes(race, 5000);
+    expect(
+      race.players
+        .flatMap((p) => p.items)
+        .some((item) => item.type === "shield"),
+    ).toBe(false);
+  }
 });

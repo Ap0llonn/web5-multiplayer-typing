@@ -1,0 +1,1 @@
+ALTER TABLE "RaceResult" ADD COLUMN "rank" INTEGER;

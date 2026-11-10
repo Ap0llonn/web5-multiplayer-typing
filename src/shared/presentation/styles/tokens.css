@@ -366,11 +366,11 @@ small {
 .arcade-input:focus {
   border-color: var(--accent);
 }
-.playful-select {
+.dropdown {
   position: relative;
   min-width: 0;
 }
-.playful-select-trigger {
+.dropdown-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -378,20 +378,30 @@ small {
   cursor: pointer;
   text-align: left;
 }
-.playful-select-value {
+.dropdown-value {
   display: inline-flex;
+  min-width: 0;
   align-items: center;
   gap: 0.65rem;
 }
-.playful-select-chevron {
+.dropdown-trigger .dropdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dropdown-value > svg,
+.dropdown-chevron {
+  flex-shrink: 0;
+}
+.dropdown-chevron {
   width: 1.1rem;
   height: 1.1rem;
   transition: transform 160ms ease;
 }
-.playful-select[data-open="true"] .playful-select-chevron {
+.dropdown[data-open="true"] .dropdown-chevron {
   transform: rotate(180deg);
 }
-.playful-select-menu {
+.dropdown-menu {
   position: absolute;
   z-index: 20;
   inset-inline: 0;
@@ -409,11 +419,11 @@ small {
     0 12px 24px #101b3320;
   list-style: none;
 }
-.playful-select-menu[data-above="true"] {
+.dropdown-menu[data-above="true"] {
   top: auto;
   bottom: calc(100% + 0.5rem);
 }
-.playful-select-option {
+.dropdown-option {
   display: flex;
   min-height: 48px;
   align-items: center;
@@ -425,11 +435,11 @@ small {
   font-weight: 800;
   cursor: pointer;
 }
-.playful-select-option[aria-selected="true"] {
+.dropdown-option[data-active="true"] {
   background: var(--blue);
   color: #fff;
 }
-.playful-select-trigger:disabled {
+.dropdown-trigger:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -725,3 +735,73 @@ small {
     scroll-behavior: auto !important;
   }
 }
+
+.race-podium { display: flex; align-items: end; justify-content: center; gap: clamp(.4rem, 2vw, 1.5rem); padding: 3rem 0 1rem; list-style: none; }
+.race-podium .podium-reveal { position: relative; display: flex; flex: 1; max-width: 15rem; min-width: 0; flex-direction: column; align-items: center; gap: .65rem; padding: 1.2rem .5rem; border: 2px solid var(--border); border-radius: 1.3rem 1.3rem .4rem .4rem; background: var(--panel); text-align: center; overflow-wrap: anywhere; animation: podium-rise .9s cubic-bezier(.16,1,.3,1) both; }
+.podium-reveal[data-rank="3"] { order: 3; min-height: 13rem; border-color: #ad784f; }
+.podium-reveal[data-rank="2"] { order: 1; min-height: 15rem; border-color: #94a3b8; }
+.podium-reveal[data-rank="1"] { order: 2; min-height: 18rem; border-color: #dba928; box-shadow: 0 0 35px #dba92840; background: linear-gradient(160deg, #dba92825, var(--panel)); }
+.podium-crown { position: absolute; top: -2.7rem; color: #dba928; font-size: 3rem; filter: drop-shadow(0 4px 12px #dba92870); }
+@keyframes podium-rise { 0% { opacity: 0; transform: translateY(5rem) scale(.7); } 70% { opacity: 1; transform: translateY(-.6rem) scale(1.03); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .race-podium .podium-reveal { animation: none; } }
+.race-podium .player-character { width: clamp(3rem, 10vw, 6rem); }
+.race-results-scroll { overflow-x: auto; animation: results-reveal .5s 3.4s both; }
+.race-results-scroll table { width: 100%; text-align: left; }
+.race-results-scroll th, .race-results-scroll td { padding: .6rem; }
+@keyframes results-reveal { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .race-results-scroll { animation: none; } }
+
+.podium-stage { position: relative; isolation: isolate; padding-top: 1rem; }
+.podium-stage[data-celebrating="true"] { animation: victory-impact .65s var(--victory-delay) both; }
+.podium-victory { position: relative; z-index: 2; padding: 1rem .4rem; text-align: center; animation: victory-title .65s cubic-bezier(.16,1,.3,1) var(--victory-delay) both; }
+.podium-victory-kicker { font-size: clamp(1.8rem, 6vw, 4rem); line-height: 1; font-weight: 1000; color: var(--text); text-shadow: 3px 4px 0 #dba92870; letter-spacing: -.06em; }
+.podium-victory-name { margin-top: .7rem; font-size: clamp(1rem, 3vw, 1.5rem); font-weight: 900; overflow-wrap: anywhere; }
+.podium-burst { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: 2rem; background: radial-gradient(ellipse at 50% 55%, #f9c84670 0%, #f9c84620 35%, transparent 70%); animation: victory-burst 1.7s var(--victory-delay) both; }
+.podium-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; border-radius: 1rem; }
+.podium-confetti i { position: absolute; left: var(--confetti-x); top: 0; width: .5rem; height: 1rem; border-radius: 2px; animation: victory-confetti 2.8s cubic-bezier(.15,.65,.5,1) calc(var(--victory-delay) + var(--confetti-lag)) both; }
+.podium-stage[data-celebrating="true"] .podium-reveal[data-rank="1"] .player-character { animation: victory-jump 1.2s calc(var(--victory-delay) + .5s) both; }
+@keyframes victory-impact { 0%,100% { transform: translate(0,0); } 12% { transform: translate(-6px,3px) rotate(-.5deg); } 25% { transform: translate(6px,-3px) rotate(.5deg); } 40% { transform: translate(-4px,2px); } 58% { transform: translate(4px,-2px); } 75% { transform: translate(-2px,1px); } }
+@keyframes victory-title { from { opacity: 0; transform: scale(.3) rotate(-8deg); } 65% { opacity: 1; transform: scale(1.08) rotate(2deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes victory-burst { from { opacity: 0; transform: scale(.4); } 25% { opacity: 1; } to { opacity: .6; transform: scale(1); } }
+@keyframes victory-confetti { 0% { opacity: 0; transform: translateY(-1rem) rotate(0deg); } 8% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--confetti-drift), 32rem) rotate(var(--confetti-turn)); } }
+@keyframes victory-jump { 0%,100% { transform: translateY(0) rotate(0); } 25% { transform: translateY(-1.8rem) rotate(-10deg); } 50% { transform: translateY(0) rotate(5deg); } 75% { transform: translateY(-.8rem) rotate(-5deg); } }
+@media (prefers-reduced-motion: reduce) { .podium-confetti { display: none; } .podium-stage, .podium-victory, .podium-burst, .podium-stage .player-character { animation: none !important; } }
+
+/* Explicit tracks prevent the live race stylesheet from spreading podium cards. */
+.podium-stage .race-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 15rem)); justify-content: center; align-items: end; gap: clamp(.4rem, 2vw, 1.5rem); width: min(100%, 48rem); margin: 1.5rem auto; padding: 3rem 0 1rem; }
+.podium-stage .race-podium .podium-reveal { width: 100%; max-width: none; order: initial; }
+.podium-stage .race-podium [data-rank="1"] { grid-column: 2; grid-row: 1; border-color: #dba928; }
+.podium-stage .race-podium [data-rank="2"] { grid-column: 1; grid-row: 1; border-color: #94a3b8; }
+.podium-stage .race-podium [data-rank="3"] { grid-column: 3; grid-row: 1; border-color: #ad784f; }
+@property --spot-x { syntax: '<length-percentage>'; inherits: false; initial-value: 50vw; }
+.race-results > .podium-spotlight { position: fixed; inset: 0; z-index: 100; pointer-events: none; background: radial-gradient(ellipse 8rem 13rem at var(--spot-x) var(--winner-y), transparent 20%, #0009 55%, #000 85%); opacity: 0; visibility: hidden; animation: spotlight-search 4s var(--spotlight-delay) linear forwards; }
+@keyframes spotlight-search {
+  0%, 8% { visibility: visible; opacity: 1; --spot-x: -20vw; }
+  24% { opacity: 1; --spot-x: 18vw; }
+  43% { opacity: 1; --spot-x: 82vw; }
+  60% { opacity: 1; --spot-x: 28vw; }
+  78% { opacity: 1; --spot-x: var(--winner-x); }
+  90% { opacity: 1; --spot-x: var(--winner-x); }
+  100% { opacity: 0; --spot-x: var(--winner-x); visibility: hidden; }
+}
+.podium-stage[data-celebrating="true"] + .race-results-scroll { animation-delay: var(--results-delay); }
+@media (prefers-reduced-motion: reduce) { .race-results > .podium-spotlight { display: none; } }
+
+.podium-comic-chaos { position: absolute; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
+.podium-comic-chaos span { position: absolute; left: 3%; top: 30%; max-width: 40%; padding: .6rem 1rem; border: 3px solid var(--text, #222b49); background: #ffdb7e; color: #222b49; box-shadow: 5px 5px 0 #222b49; font-weight: 1000; font-size: clamp(.65rem, 1.5vw, 1.15rem); transform: rotate(-12deg); animation: comic-chaos 5s calc(var(--victory-delay) + .2s) both; }
+.podium-comic-chaos span:nth-child(2) { left: auto; right: 3%; top: 42%; background: #ffab98; animation-delay: calc(var(--victory-delay) + 1s); }
+.podium-comic-chaos span:nth-child(3) { left: 10%; top: 67%; background: #92ddbd; animation-delay: calc(var(--victory-delay) + 1.8s); }
+.podium-shockrings { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+.podium-shockrings i { position: absolute; left: 50%; top: 55%; width: 18rem; height: 18rem; margin: -9rem; border: 12px double #f9c846; border-radius: 50%; animation: stadium-shockwave 1.6s var(--victory-delay) both; }
+.podium-shockrings i:nth-child(2) { animation-delay: calc(var(--victory-delay) + .4s); border-color: #ffab98; }
+.podium-shockrings i:nth-child(3) { animation-delay: calc(var(--victory-delay) + .8s); border-color: #7397ff; }
+.podium-fanclub { position: relative; text-align: center; font-size: clamp(1.2rem, 4vw, 3rem); letter-spacing: .15em; animation: fanclub-bounce .35s var(--victory-delay) 12 alternate both; }
+.podium-stage .podium-confetti i { animation-duration: 5s; }
+@keyframes comic-chaos { 0% { opacity: 0; scale: .1; } 10%,75% { opacity: 1; scale: 1; } 20% { scale: 1.15; } 100% { opacity: 0; scale: .9; } }
+@keyframes stadium-shockwave { from { opacity: .8; transform: scale(.1); } to { opacity: 0; transform: scale(5); } }
+@keyframes fanclub-bounce { from { opacity: 0; transform: translateY(1rem) rotate(-3deg); } to { opacity: 1; transform: translateY(-.5rem) rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) { .podium-comic-chaos, .podium-shockrings { display: none; } .podium-fanclub { animation: none; } }
+
+/* Continuous celebration until the results component is unmounted. */
+.podium-stage .podium-confetti i { animation-iteration-count: infinite; }
+@media (prefers-reduced-motion: reduce) { .podium-stage .podium-confetti { display: none; } }

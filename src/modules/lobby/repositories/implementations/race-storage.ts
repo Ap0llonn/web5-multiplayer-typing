@@ -1,7 +1,11 @@
 import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import type { RaceState } from "../../contracts/race";
-import { raceMetrics } from "../../domain/race-rules";
+import {
+  rankedRacePlayers,
+  raceMetrics,
+  raceStandings,
+} from "../../domain/race-rules";
 
 export function raceData(race: RaceState) {
   return {
@@ -18,8 +22,25 @@ export async function saveRaceResults(
   race: RaceState,
 ) {
   if (race.endedAt === null) return;
-  // Only account results become history. Guest data stays in the current room aggregate.
-  for (const player of race.players.filter((p) => p.kind === "account")) {
+  await tx.raceArchive.upsert({
+    where: { id: race.id },
+    create: {
+      id: race.id,
+      results: {
+        players: raceStandings(race, race.endedAt).map((player) => ({
+          ...player,
+          samples:
+            race.players
+              .find((p) => p.playerIdentityId === player.playerIdentityId)
+              ?.samples.map((sample) => ({ ...sample })) ?? [],
+        })),
+      },
+    },
+    update: {},
+  });
+  const rankings = rankedRacePlayers(race);
+  // Human results survive room resets, including guests who later register.
+  for (const player of race.players.filter((p) => p.kind !== "bot")) {
     const elapsedMs = Math.max(
       0,
       (player.finishedAt ?? race.endedAt) - race.startsAt,
@@ -36,6 +57,10 @@ export async function saveRaceResults(
         playerIdentityId: player.playerIdentityId,
         finishedAt: new Date(race.endedAt),
         status: player.status,
+        rank:
+          rankings.findIndex(
+            (p) => p.playerIdentityId === player.playerIdentityId,
+          ) + 1,
         ...raceMetrics(player, elapsedMs),
         errors: player.errors,
         elapsedMs,

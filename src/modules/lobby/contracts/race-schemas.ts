@@ -101,6 +101,7 @@ const itemTypeSchema = z.enum([
   "clear",
   "nudge",
   "catchup",
+  "shockwave",
 ]);
 const itemSchema = z.object({
   id: z.string(),

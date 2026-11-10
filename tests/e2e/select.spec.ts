@@ -292,3 +292,136 @@ for (const [locale, messages] of [
     });
   }
 }
+
+for (const [locale, messages] of [
+  ["fr", fr],
+  ["en", en],
+] as const)
+  test(`${locale}: every settings dropdown shares keyboard controls and controlled values persist`, async ({
+    browser,
+  }, testInfo) => {
+    const context = await browser.newContext({
+      viewport: { width: 900, height: 800 },
+      colorScheme: locale === "fr" ? "dark" : "light",
+      extraHTTPHeaders: {
+        "x-forwarded-for": locale === "fr" ? "192.0.2.186" : "192.0.2.187",
+      },
+    });
+    const origin = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+    let code: string | undefined;
+    try {
+      await createAccount(context);
+      const created = await (
+        await context.request.post("/api/lobbies", {
+          headers: { origin },
+          data: { name: "Shared dropdowns", capacity: 4, role: "PARTICIPANT" },
+        })
+      ).json();
+      expect(created.ok).toBe(true);
+      code = created.value.code;
+      expect(
+        (
+          await context.request.post(`/api/lobbies/${code}/race/configure`, {
+            headers: { origin },
+            data: {
+              language: "en",
+              wordCount: 30,
+              durationSeconds: 120,
+              correction: "free",
+              mode: "coherent",
+              bots: [{ id: "dropdown-bot", level: 3 }],
+            },
+          })
+        ).ok(),
+      ).toBe(true);
+      const page = await context.newPage();
+      await page.goto(`/${locale}/play/room/settings`);
+      const t = messages.race;
+      const mode = page.getByRole("combobox", {
+        name: t.textMode,
+        exact: true,
+      });
+      const level = page.getByRole("combobox", {
+        name: t.botName.replace("{number}", "1"),
+        exact: true,
+      });
+      await expect(mode).toBeVisible();
+      for (const dropdown of await page.getByRole("combobox").all())
+        expect(await dropdown.evaluate((el) => el.tagName)).toBe("BUTTON");
+      await mode.click();
+      await page.getByRole("option", { name: t.random, exact: true }).hover();
+      await page
+        .getByRole("heading", { name: t.settings, level: 2, exact: true })
+        .click();
+      await expect(mode).toContainText(t.coherent);
+      await expect(
+        page.getByRole("textbox", { name: t.includeCharacters, exact: true }),
+      ).toBeDisabled();
+      await mode.focus();
+      await mode.press("Enter");
+      await mode.press("End");
+      await mode.press("Escape");
+      await expect(mode).toContainText(t.coherent);
+      await mode.press("Enter");
+      await mode.press("End");
+      await mode.press("Enter");
+      await expect(mode).toContainText(t.random);
+      await expect(mode).toBeFocused();
+      await expect(
+        page.getByRole("textbox", { name: t.includeCharacters, exact: true }),
+      ).toBeEnabled();
+      await level.click();
+      await level.press("End");
+      await level.press("Enter");
+      await expect(level).toContainText(t.botLevel.replace("{level}", "5"));
+      await expect(level).toBeFocused();
+      await level.press("Enter");
+      expect(
+        (
+          await new AxeBuilder({ page })
+            .include("main")
+            .withTags(["wcag2a", "wcag2aa"])
+            .analyze()
+        ).violations,
+      ).toEqual([]);
+      await page.screenshot({
+        path: testInfo.outputPath(`shared-dropdown-${locale}.png`),
+      });
+      await level.press("Escape");
+      await page.getByRole("button", { name: t.save, exact: true }).click();
+      await expect
+        .poll(async () => {
+          const result = await (
+            await context.request.get("/api/lobbies/me")
+          ).json();
+          return result.value?.raceSettings;
+        })
+        .toMatchObject({
+          mode: "random",
+          bots: [{ id: "dropdown-bot", level: 5 }],
+        });
+      await page.reload();
+      await expect(mode).toContainText(t.random);
+      await expect(level).toContainText(t.botLevel.replace("{level}", "5"));
+      await page.setViewportSize({ width: 360, height: 780 });
+      await level.click();
+      const menu = page.getByRole("listbox", {
+        name: t.botName.replace("{number}", "1"),
+        exact: true,
+      });
+      const bounds = await menu.boundingBox();
+      if (!bounds) throw Error("Dropdown missing");
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(360);
+      expect(bounds.y).toBeGreaterThanOrEqual(0);
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(780);
+      await level.press("Escape");
+    } finally {
+      if (code)
+        await context.request.post(`/api/lobbies/${code}/leave`, {
+          headers: { origin },
+          data: {},
+        });
+      await context.close();
+    }
+  });

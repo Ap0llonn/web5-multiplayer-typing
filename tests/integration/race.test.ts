@@ -1,3 +1,4 @@
+import { readRaceArchive } from "@/modules/lobby/server";
 import { generateRaceText } from "@/modules/lobby/domain/race-text";
 import { afterAll, expect, it } from "vitest";
 import { prisma } from "@/shared/infrastructure/db/prisma";
@@ -94,7 +95,7 @@ it("locks concurrent starts and rejects outsider/spectator edits, stale batches 
   );
   expect(outsider).toMatchObject({ ok: false, error: { code: "FORBIDDEN" } });
 });
-it("resumes the author's draft, hides it from peers, atomically saves only account results and replays", async () => {
+it("resumes the author's draft, hides it from peers, atomically saves human results and replays", async () => {
   const s = await setup();
   const start = await s.races.start(s.code, s.host);
   if (!start.ok || !start.value.race) throw Error("Race missing");
@@ -123,17 +124,33 @@ it("resumes the author's draft, hides it from peers, atomically saves only accou
   const saved = await prisma.raceResult.findMany({
     where: { raceId: race.id },
   });
-  expect(saved).toHaveLength(1);
-  expect(saved[0].playerIdentityId).toBe(s.host.playerIdentityId);
+  expect(saved).toHaveLength(2);
+  const archive = await readRaceArchive(race.id, s.host.playerIdentityId);
+  expect(archive.ok && archive.value.players).toHaveLength(2);
+  expect(
+    archive.ok && archive.value.players.map((p) => p.displayName),
+  ).toContain(s.guest.displayName);
+  expect(archive.ok && JSON.stringify(archive.value)).not.toContain('"draft"');
+  expect(await readRaceArchive(race.id, "outsider")).toMatchObject({
+    ok: false,
+    error: { code: "NOT_FOUND" },
+  });
+
+  expect(saved.map((row) => row.playerIdentityId)).toContain(
+    s.host.playerIdentityId,
+  );
   expect(await s.races.reset(s.code, s.host, false)).toMatchObject({
     ok: true,
     value: { state: "WAITING", race: null },
   });
+  expect((await readRaceArchive(race.id, s.host.playerIdentityId)).ok).toBe(
+    true,
+  );
   expect(await s.races.start(s.code, s.host)).toMatchObject({
     ok: true,
     value: { state: "COUNTDOWN" },
   });
-  expect(await prisma.raceResult.count({ where: { raceId: race.id } })).toBe(1);
+  expect(await prisma.raceResult.count({ where: { raceId: race.id } })).toBe(2);
   await getLobbyService().leaveLobby(s.code, s.host);
   expect(
     (await prisma.lobby.findUnique({ where: { code: s.code } }))?.race,
@@ -161,7 +178,7 @@ it("persists a race that reaches its deadline before accepting a replay request"
   });
   expect(
     await prisma.raceResult.count({ where: { raceId: started.value.race.id } }),
-  ).toBe(1);
+  ).toBe(2);
   expect(await s.races.reset(s.code, s.host, false)).toMatchObject({
     ok: true,
     value: { state: "WAITING" },
@@ -382,7 +399,7 @@ it("persists every configuration field under the room lock, rejects overcapacity
   expect(stored.ok && stored.value?.state).toBe("RESULTS");
   expect(
     await prisma.raceResult.count({ where: { raceId: started.value.race.id } }),
-  ).toBe(1);
+  ).toBe(2);
   expect(
     await s.races.configure(s.code, s.host, {
       ...settings,

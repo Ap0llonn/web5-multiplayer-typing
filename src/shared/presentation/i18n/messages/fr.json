@@ -169,7 +169,31 @@
     "progressTitle": "Ta progression",
     "progressUnavailable": "Ton MPM au fil du temps apparaîtra ici lorsque les courses et leurs résultats seront disponibles.",
     "historyTitle": "Historique des courses",
-    "historyUnavailable": "L’historique sera disponible avec les courses."
+    "historyUnavailable": "L’historique sera disponible avec les courses.",
+    "metricsDescription": "Résultats enregistrés de vos courses.",
+    "chartDescription": "MPM des 30 dernières courses, de la plus ancienne à la plus récente.",
+    "historyEmpty": "Aucune course enregistrée.",
+    "historyLimit": "Les 100 dernières courses, 10 par page.",
+    "legacyRanks": "Les anciens résultats sans classement sont exclus du total des victoires.",
+    "date": "Date",
+    "rank": "Rang",
+    "status": "Statut",
+    "finished": "Terminée",
+    "timeout": "Temps écoulé",
+    "abandoned": "Abandon",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "raceDetails": "Détails de la course",
+    "grossWpm": "MPM brut",
+    "errorsCount": "Erreurs",
+    "duration": "Durée",
+    "durationSeconds": "{seconds} s",
+    "fullResults": "Résultats complets",
+    "resultsUnavailable": "Ces résultats sont indisponibles pour ce compte ou cette ancienne course.",
+    "raceCurves": "Évolution des MPM",
+    "raceCurveLabel": "Évolution des MPM de {name}",
+    "sampleLabel": "{seconds} s : {wpm} MPM",
+    "noSamples": "Aucun échantillon enregistré."
   },
   "play": {
     "kickMember": "Expulser {name}",
@@ -245,7 +269,9 @@
       "catchupDescription": "Raccourcit vos mots restants pour vous rapprocher du milieu du peloton. Ne termine pas la course et ne change pas vos MPM.",
       "strength1": "Léger",
       "strength2": "Moyen",
-      "strength3": "Puissant"
+      "strength3": "Puissant",
+      "shockwave": "Onde de choc",
+      "shockwaveDescription": "Ajoute immédiatement 2 à 4 mots à tous les concurrents encore en course devant vous."
     },
     "settings": "Réglages de la course",
     "summary": "{language} · {words} mots · {mode}",
@@ -282,7 +308,7 @@
     "time": "Temps",
     "status": "Statut",
     "secondsShort": "s",
-    "saved": "Les résultats des comptes sont enregistrés. Ceux des invités restent dans cette salle jusqu’à la prochaine course.",
+    "saved": "Les résultats sont sauvegardés. Créez un compte depuis votre session invitée pour retrouver vos statistiques et votre historique.",
     "replay": "Préparer la prochaine course",
     "close": "Fermer la salle",
     "waitingReplay": "En attente de la prochaine course préparée par l’hôte.",
@@ -355,7 +381,16 @@
       "nudge": "Un petit élan !",
       "catchup": "Remontée !",
       "blocked": "Attaque bloquée !",
-      "sent": "{item} envoyé !"
-    }
+      "sent": "{item} envoyé !",
+      "shockwave": "Onde de choc !"
+    },
+    "victoryHype": "MAIS OUI !",
+    "victoryName": "{name} remporte la course !",
+    "enablePodiumSound": "Activer le son",
+    "mutePodiumSound": "Couper le son",
+    "stadiumLostIt": "LE STADE A PERDU LA TÊTE",
+    "historicMoment": "UN MOMENT HISTORIQUE",
+    "totallyNecessary": "BUDGET CÉLÉBRATION : OUI",
+    "audioCredits": "Crédits audio"
   }
 }

@@ -444,7 +444,8 @@ for (const locale of ["fr", "en"] as const)
       ).toBeDisabled();
       await s.h
         .getByRole("combobox", { name: t.textMode, exact: true })
-        .selectOption("random");
+        .click();
+      await s.h.getByRole("option", { name: t.random, exact: true }).click();
       await s.h
         .getByRole("combobox", { name: t.complexity, exact: true })
         .click();
@@ -481,7 +482,13 @@ for (const locale of ["fr", "en"] as const)
           name: t.botName.replace("{number}", "1"),
           exact: true,
         })
-        .selectOption("5");
+        .click();
+      await s.h
+        .getByRole("option", {
+          name: t.botLevel.replace("{level}", "5"),
+          exact: true,
+        })
+        .click();
       await s.h
         .getByRole("spinbutton", { name: t.capacity, exact: true })
         .fill("2");
@@ -587,7 +594,8 @@ for (const locale of ["fr", "en"] as const)
         .click();
       await s.h
         .getByRole("combobox", { name: t.textMode, exact: true })
-        .selectOption("coherent");
+        .click();
+      await s.h.getByRole("option", { name: t.coherent, exact: true }).click();
       await s.h
         .getByRole("button", {
           name: t.removeBot.replace("{number}", "1"),
@@ -641,6 +649,166 @@ test("typing happens directly on the race text without a separate visible typing
     await expect
       .poll(async () => (await roomSnapshot(s.h)).self?.draft)
       .toBe(target.text.slice(0, 4));
+  } finally {
+    await s.close();
+  }
+});
+
+test("guest race history survives signup and a new sign-in", async ({
+  browser,
+}) => {
+  const s = await group(browser, "en");
+  try {
+    const guest = await s.join("Guest Racer", "PARTICIPANT");
+    await s.h.getByRole("button", { name: en.race.start, exact: true }).click();
+    await expect(
+      guest.getByRole("textbox", { name: en.race.typingArea, exact: true }),
+    ).toBeEnabled();
+    for (const page of [guest, s.h]) {
+      const response = await page.request.post(
+        `/api/lobbies/${s.code}/race/abandon`,
+        { headers: { origin: s.origin }, data: {} },
+      );
+      expect(response.ok()).toBe(true);
+    }
+    await guest.goto("/en/signup");
+    const username = `gh${crypto.randomUUID().replaceAll("-", "").slice(0, 14)}`;
+    await guest.getByLabel(en.username, { exact: true }).fill(username);
+    await guest
+      .getByLabel(en.email, { exact: true })
+      .fill(`${username}@example.test`);
+    await guest
+      .getByLabel(en.password, { exact: true })
+      .fill("test-password-123");
+    await guest.getByRole("button", { name: en.signup, exact: true }).click();
+    await expect(guest).toHaveURL(/\/en\/?$/);
+    await guest.goto("/en/profile");
+    await expect(guest.getByRole("table")).toBeVisible();
+    await expect(guest.getByRole("table").locator("tbody tr")).toHaveCount(1);
+    await guest
+      .getByRole("link", { name: en.profile.fullResults, exact: true })
+      .click();
+    await expect(guest).toHaveURL(/\/profile\/races\//);
+    await expect(guest.getByRole("table").locator("tbody tr")).toHaveCount(2);
+    await expect(guest.locator(".race-podium")).toHaveCount(0);
+    await expect(guest.locator(".podium-spotlight")).toHaveCount(0);
+    await expect(
+      guest.getByRole("button", { name: en.race.mutePodiumSound, exact: true }),
+    ).toHaveCount(0);
+    await expect(guest.locator(".race-results-scroll")).toHaveCSS(
+      "animation-name",
+      "none",
+    );
+    await guest.setViewportSize({ width: 390, height: 844 });
+    await expect(guest.locator("body")).toHaveJSProperty("scrollWidth", 390);
+    await guest.screenshot({
+      path: "/tmp/race-archive-mobile.png",
+      fullPage: true,
+    });
+    await guest.goto("/en/profile");
+    await guest.getByRole("button", { name: en.logout, exact: true }).click();
+    await expect(guest).toHaveURL(/\/en\/?$/);
+    await guest.goto("/en/login");
+    await guest.getByLabel(en.username, { exact: true }).fill(username);
+    await guest
+      .getByLabel(en.password, { exact: true })
+      .fill("test-password-123");
+    await guest.getByRole("button", { name: en.login, exact: true }).click();
+    await expect(guest).toHaveURL(/\/en\/?$/);
+    await guest.goto("/en/profile");
+    await expect(guest.getByRole("table").locator("tbody tr")).toHaveCount(1);
+  } finally {
+    await s.close();
+  }
+});
+
+test("winner gets a dramatic celebration with a calm reduced-motion alternative", async ({
+  browser,
+}) => {
+  test.setTimeout(60000);
+  const s = await group(browser, "en");
+  try {
+    await s.h.evaluate(() => {
+      const originalSource = AudioContext.prototype.createBufferSource;
+      AudioContext.prototype.createBufferSource = function () {
+        document.documentElement.dataset.podiumClaps = String(
+          Number(document.documentElement.dataset.podiumClaps ?? 0) + 1,
+        );
+        return originalSource.call(this);
+      };
+      const original = AudioContext.prototype.createOscillator;
+      AudioContext.prototype.createOscillator = function () {
+        document.documentElement.dataset.podiumNotes = String(
+          Number(document.documentElement.dataset.podiumNotes ?? 0) + 1,
+        );
+        return original.call(this);
+      };
+    });
+    const guest = await s.join("Guest Racer", "PARTICIPANT");
+    await s.h.getByRole("button", { name: en.race.start, exact: true }).click();
+    const race = await roomSnapshot(s.h);
+    await typeRace(s.h, race.text, en.race.typingArea);
+    expect(
+      (
+        await guest.request.post(`/api/lobbies/${s.code}/race/abandon`, {
+          headers: { origin: s.origin },
+          data: {},
+        })
+      ).ok(),
+    ).toBe(true);
+    await expect(s.h.locator('[data-celebrating="true"]')).toBeVisible();
+    const sound = s.h.getByRole("button", {
+      name: en.race.mutePodiumSound,
+      exact: true,
+    });
+    await sound.click();
+    await expect(
+      s.h.getByRole("button", { name: en.race.enablePodiumSound, exact: true }),
+    ).toHaveAttribute("aria-pressed", "false");
+    await s.h
+      .getByRole("button", { name: en.race.enablePodiumSound, exact: true })
+      .click();
+    await expect
+      .poll(() =>
+        s.h.evaluate(() =>
+          Number(document.documentElement.dataset.podiumClaps ?? 0),
+        ),
+      )
+      .toBeGreaterThanOrEqual(2);
+    await expect(s.h.locator(".podium-victory-kicker")).toHaveText(
+      en.race.victoryHype,
+    );
+    await expect(s.h.locator(".podium-confetti i")).toHaveCount(96);
+    await expect(s.h.locator(".podium-confetti i").first()).toHaveCSS(
+      "animation-iteration-count",
+      "infinite",
+    );
+    await expect(s.h.locator(".race-results-scroll")).toHaveCSS(
+      "opacity",
+      "1",
+      { timeout: 10000 },
+    );
+    const first = await s.h
+      .locator('.podium-reveal[data-rank="1"]')
+      .boundingBox();
+    const stage = await s.h.locator(".podium-stage").boundingBox();
+    if (!first || !stage) throw Error("Podium missing");
+    expect(
+      Math.abs(first.x + first.width / 2 - stage.x - stage.width / 2),
+    ).toBeLessThan(2);
+    await expect(s.h.locator(".podium-spotlight")).toHaveCSS(
+      "visibility",
+      "hidden",
+      { timeout: 10000 },
+    );
+    await s.h.screenshot({ path: "/tmp/dramatic-podium.png", fullPage: true });
+    await s.h.emulateMedia({ reducedMotion: "reduce" });
+    await expect(s.h.locator(".podium-confetti")).toBeHidden();
+    await expect(s.h.locator(".podium-spotlight")).toBeHidden();
+    await expect(s.h.locator(".podium-stage")).toHaveCSS(
+      "animation-name",
+      "none",
+    );
   } finally {
     await s.close();
   }

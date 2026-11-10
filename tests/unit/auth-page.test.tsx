@@ -92,3 +92,25 @@ for (const [locale, messages] of [
     expect(html).not.toContain("<form");
   });
 }
+
+it("lets a guest register without signing out first", async () => {
+  translations.locale = "en";
+  vi.stubEnv("DATABASE_URL", "postgresql://test:test@localhost:5432/test");
+  vi.stubEnv(
+    "BETTER_AUTH_SECRET",
+    "test-secret-at-least-thirty-two-characters",
+  );
+  vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3000");
+  vi.mocked(getCurrentActor).mockResolvedValue({
+    ok: true,
+    value: { playerIdentityId: "guest", kind: "guest", displayName: "Guest" },
+  });
+  const html = renderToStaticMarkup(
+    <NextIntlClientProvider locale="en" messages={en} timeZone="UTC">
+      {await AuthPage({ mode: "signup" })}
+    </NextIntlClientProvider>,
+  );
+  expect(html).toContain("<form");
+  expect(html).toContain('name="email"');
+  expect(html).not.toContain(en.guestWarning);
+});

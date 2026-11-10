@@ -16,3 +16,6 @@ export {
   joinLobbySchema,
   roomCodeSchema,
 } from "./contracts/lobby-schemas";
+
+export { readProfileMetrics } from "./repositories/implementations/profile-metrics";
+export { readRaceArchive } from "./repositories/implementations/race-archive";

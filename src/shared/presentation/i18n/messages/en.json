@@ -169,7 +169,31 @@
     "progressTitle": "Your progress",
     "progressUnavailable": "Your WPM over time will appear here once races and results are available.",
     "historyTitle": "Race history",
-    "historyUnavailable": "Race history will be available when races are ready."
+    "historyUnavailable": "Race history will be available when races are ready.",
+    "metricsDescription": "Your saved race results.",
+    "chartDescription": "WPM for the last 30 races, oldest to newest.",
+    "historyEmpty": "No saved races yet.",
+    "historyLimit": "The latest 100 races, 10 per page.",
+    "legacyRanks": "Older results without rankings are excluded from the win total.",
+    "date": "Date",
+    "rank": "Rank",
+    "status": "Status",
+    "finished": "Finished",
+    "timeout": "Timed out",
+    "abandoned": "Abandoned",
+    "previous": "Previous",
+    "next": "Next",
+    "raceDetails": "Race details",
+    "grossWpm": "Gross WPM",
+    "errorsCount": "Errors",
+    "duration": "Duration",
+    "durationSeconds": "{seconds} s",
+    "fullResults": "Full results",
+    "resultsUnavailable": "These results are unavailable for this account or this older race.",
+    "raceCurves": "WPM over time",
+    "raceCurveLabel": "WPM over time for {name}",
+    "sampleLabel": "{seconds} s: {wpm} WPM",
+    "noSamples": "No samples recorded."
   },
   "play": {
     "kickMember": "Remove {name}",
@@ -245,7 +269,9 @@
       "catchupDescription": "Shortens your remaining words to bring you toward the middle of the pack. Never finishes the race or changes your WPM.",
       "strength1": "Light",
       "strength2": "Medium",
-      "strength3": "Strong"
+      "strength3": "Strong",
+      "shockwave": "Shockwave",
+      "shockwaveDescription": "Immediately adds 2 to 4 words to every racer still typing ahead of you."
     },
     "settings": "Race settings",
     "summary": "{language} · {words} words · {mode}",
@@ -282,7 +308,7 @@
     "time": "Time",
     "status": "Status",
     "secondsShort": "s",
-    "saved": "Account results are saved. Guest results remain in this room until the next race.",
+    "saved": "Results are saved. Create an account from your guest session to keep your statistics and history.",
     "replay": "Prepare next race",
     "close": "Close room",
     "waitingReplay": "Waiting for the host to prepare the next race.",
@@ -355,7 +381,16 @@
       "nudge": "A little boost!",
       "catchup": "Catch-up boost!",
       "blocked": "Attack blocked!",
-      "sent": "{item} sent!"
-    }
+      "sent": "{item} sent!",
+      "shockwave": "Shockwave!"
+    },
+    "victoryHype": "NO WAY. LET’S GO!",
+    "victoryName": "{name} takes the win!",
+    "enablePodiumSound": "Enable sound",
+    "mutePodiumSound": "Mute sound",
+    "stadiumLostIt": "THE CROWD HAS LOST IT",
+    "historicMoment": "A HISTORIC MOMENT",
+    "totallyNecessary": "CELEBRATION BUDGET: YES",
+    "audioCredits": "Audio credits"
   }
 }

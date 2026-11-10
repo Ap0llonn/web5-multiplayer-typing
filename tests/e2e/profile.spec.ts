@@ -118,10 +118,12 @@ test("profile uses the existing themes and translations without fake race data o
           messages.profile.title,
         );
         await expect(
-          page.getByText(messages.profile.statsUnavailable, { exact: true }),
+          page.getByText(messages.profile.metricsDescription, { exact: true }),
         ).toBeVisible();
         await expect(
-          page.getByText(messages.profile.historyUnavailable, { exact: true }),
+          page
+            .getByText(messages.profile.historyEmpty, { exact: true })
+            .first(),
         ).toBeVisible();
         expect(
           await page.evaluate(

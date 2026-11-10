@@ -1,4 +1,5 @@
 import {
+  Radio,
   CloudFog,
   Route,
   Shield,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import type { RaceItemType } from "../../public";
 export const raceItemIcons = {
+  shockwave: Radio,
   shortcut: Scissors,
   detour: Route,
   fog: CloudFog,

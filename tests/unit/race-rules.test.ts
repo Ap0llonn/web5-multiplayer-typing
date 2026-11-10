@@ -50,6 +50,23 @@ function running(text = "abc") {
   return r;
 }
 describe("server-authoritative race", () => {
+  it("ends immediately when the last participant finishes, excluding spectators", () => {
+    const r = running();
+    joinRoom(r, { ...guest, playerIdentityId: "watcher" }, "SPECTATOR", 3100);
+    const batch = { raceId: "race-1", sequence: 1, edits: ["a", "b", "c"] };
+    expect(editRace(r, host, batch, 4000).ok).toBe(true);
+    expect(r.state).toBe("RACING");
+    expect(r.race?.endedAt).toBeNull();
+    expect(editRace(r, guest, batch, 5000).ok).toBe(true);
+    expect(r.state).toBe("RESULTS");
+    expect(r.race?.endedAt).toBe(5000);
+    expect(snapshot(r, 5000).race?.players.map((p) => p.status)).toEqual([
+      "FINISHED",
+      "FINISHED",
+    ]);
+    advanceRace(r, 6000);
+    expect(r.race?.endedAt).toBe(5000);
+  });
   it("allows a spectator host to start with two humans and freezes ranking rules for timeout versus abandonment", () => {
     const r = room();
     r.members[0].role = "SPECTATOR";

@@ -1,6 +1,10 @@
 import "server-only";
 import { failure } from "@/shared/contracts/operation-result";
-import { identitySupervisor, profileSupervisor } from "./container";
+import {
+  identitySupervisor,
+  profileSupervisor,
+  playerIdentityRepository,
+} from "./container";
 import { profileNameSchema } from "./contracts/profile";
 import { resizeProfilePhoto } from "./infrastructure/profile-photo";
 import { readSession } from "./infrastructure/session-reader";
@@ -63,3 +67,6 @@ export async function getCurrentProfilePhoto(headers: Headers) {
     return failure("INTERNAL");
   }
 }
+
+export const linkGuestSignup = (guestUserId: string, accountUserId: string) =>
+  playerIdentityRepository.linkGuestSignup(guestUserId, accountUserId);

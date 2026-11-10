@@ -6,7 +6,11 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { anonymous, username } from "better-auth/plugins";
 import { prisma } from "../db/prisma";
 import { readServerEnv } from "../env/server";
-export function createAuthentication() {
+export type GuestAccountLink = (
+  guestUserId: string,
+  accountUserId: string,
+) => Promise<void>;
+export function createAuthentication(onGuestSignup?: GuestAccountLink) {
   const env = readServerEnv(process.env);
   return betterAuth({
     database: prismaAdapter(prisma, { provider: "postgresql" }),
@@ -45,6 +49,14 @@ export function createAuthentication() {
       username({ minUsernameLength: 3, maxUsernameLength: 20 }),
       anonymous({
         disableDeleteAnonymousUser: true,
+        onLinkAccount: async ({ anonymousUser, newUser, ctx }) => {
+          if (
+            ctx.path !== "/sign-up/email" ||
+            anonymousUser.user.id === newUser.user.id
+          )
+            return;
+          await onGuestSignup?.(anonymousUser.user.id, newUser.user.id);
+        },
         generateName: (ctx) => {
           const parsed = z
             .object({ name: z.string().trim().min(3).max(20) })
@@ -61,4 +73,11 @@ export function createAuthentication() {
   });
 }
 let instance: ReturnType<typeof createAuthentication> | undefined;
-export const getAuth = () => (instance ??= createAuthentication());
+let guestSignup: GuestAccountLink | undefined;
+export const getAuth = (onGuestSignup?: GuestAccountLink) => {
+  if (onGuestSignup) guestSignup = onGuestSignup;
+  return (instance ??= createAuthentication(async (guest, account) => {
+    if (!guestSignup) throw new Error("Guest signup handler unavailable");
+    await guestSignup(guest, account);
+  }));
+};

@@ -923,3 +923,85 @@ Les deux nouvelles recettes passent sur le build final : affichage intégral de 
 
 
 **12/12 E2E PASS en 5,3 min sur le build final** : `race-track-layout.spec.ts`, `race.spec.ts`, `race-feedback.spec.ts` et `ten-racer-boxes.spec.ts`. Les sept effets, l’activation automatique, la stabilité de la piste/du couloir personnel/de la saisie, l’accessibilité, la reprise, les résultats et la configuration restent verts. La course réelle à un humain/neuf bots termine les dix coureurs, chacun avec trois boîtes personnelles reçues/consommées une seule fois ; nouvelle remontée automatique **10e→5e**, cible totale **100→60 mots**, **113 frappes correctes** après la dernière lettre réellement tapée. [Capture de la grille compacte avec cette remontée](images/compact-ten-racer-catchup.png).
+
+
+## Dropdown partagé — 9 novembre 2026
+
+Demande utilisateur : un menu déroulant commun utilisé dans toute l’application. Le propriétaire est shared/presentation, avec données traduites et règles conservées dans les présentations métier. `Dropdown` remplace `Select` et les listes natives du mode de texte et du niveau des bots. Huit usages déclaratifs couvrent rôles, visibilités, langue de texte, mode, complexité, correction et niveaux individuels.
+
+### Contrôles réalisés
+
+- Recherche dans `src` : aucun `<select>`, `<option>`, import `ui/select`, ancien `<Select>` ou classe `playful-select` restant. Un seul propriétaire des rôles combobox/listbox/option : `shared/presentation/ui/dropdown.tsx`.
+- Nouveau test de configuration FR/EN : contrôles partagés, annulation par clic extérieur après survol, Échap, validation clavier, conservation du focus, changement immédiat des filtres selon le mode, niveau de bot contrôlé, sauvegarde réelle et rechargement, menu dans la fenêtre à 360 px, Axe WCAG 2 A/AA. Le test EN a d’abord échoué sur `SELECT` au lieu de `BUTTON` contre l’ancien build. La première fixture FR ne patientait pas suffisamment pour charger le formulaire ; l’attente explicite du contrôle est ajoutée avant l’inventaire des combobox.
+- Tests existants de mode/niveau de bot adaptés aux interactions DOM du composant commun. Les tests de rôle conservent la recherche par caractères, les raccourcis clavier, Tab, les icônes/chevrons dans les contrôles et la vraie soumission de FormData.
+- **189 unitaires / 44 fichiers PASS**, **52 intégrations / 18 fichiers PASS**, **lint, TypeScript, frontières et build production PASS**. PostgreSQL jetable uniquement, migrations depuis zéro et second déploiement sans attente. Aucune nouvelle dépendance ou migration SQL.
+
+### Limites
+
+Recette navigateur Chrome local sur le build de production et base jetable. Les lecteurs d’écran physiques, Safari et appareils tactiles réels ne sont pas certifiés par Axe/Chrome. Aucun déploiement ni connexion OAuth réelle. Node 25.6.0 utilisé sur ce poste, Node 24 attendu par le projet non certifié ici. Les courses à dix/trente ont été validées au lot précédent ; les changements actuels concernent les menus et les parcours de réglages, pas les règles de course.
+
+
+**Résultat final : 21 scénarios E2E distincts validés sur le même build applicatif.** Le passage groupé `play-join.spec.ts race.spec.ts select.spec.ts` donne 19 PASS en 2,2 min ; les deux nouveaux tests s’arrêtent alors sur un sélecteur de titre ambigu (h1 et h2 identiques). Après précision du niveau du titre dans les seuls tests, `select.spec.ts` repasse **8/8 en 9,1 s**, dont les deux cas contrôlés FR/EN. Les treize scénarios adhésion/course du passage groupé et les huit scénarios dropdown sont tous verts. Aucune correction applicative nécessaire après ce build. [Capture FR sombre](images/shared-dropdown-fr.png), [capture EN claire](images/shared-dropdown-en.png).
+
+## Métriques du profil — 9 novembre 2026
+
+État local : lint, typecheck, check:boundaries PASS ; 189 tests unitaires PASS ; 53 tests d'intégration PASS sur PostgreSQL jetable, migration et replay inclus. Nouveau test profile-metrics : agrégats connus, victoire FINISHED/rang 1, anciens rangs inconnus, isolement par identité. Premier essai PostgreSQL bloqué par mémoire partagée système ; relance autorisée réussie. Compilation lancée avec cache SWC temporaire après refus d'accès au cache utilisateur. E2E du profil non exécutés à ce stade. Limites : 100 derniers résultats visibles, 30 points au graphique, anciennes victoires non reconstructibles. Aucune migration de base inconnue ou production.
+
+Résultats finaux : build de production PASS après relance avec accès au cache SWC ; 3 E2E profil PASS avec Chrome installé, serveur local port 3107 et PostgreSQL jetable. Les tentatives initiales E2E ont rencontré le port 3000 occupé puis le navigateur Playwright absent ; ces blocages ont été contournés sans modifier le serveur existant. La recette navigateur couvre édition/photo/session, états vides, FR/EN, clair/sombre et largeurs 360/820/1440 avec axe. Les agrégats non vides sont vérifiés en intégration ; le graphique et la pagination avec résultats ne disposent pas encore d'une recette navigateur dédiée.
+
+
+### Compléments du profil — 10 novembre 2026
+
+AUTH-06 / HIST-02 : le profil propose aux invités la création de compte. La présentation lobby ouvre les détails personnels persistés dans chaque ligne : MPM brut, erreurs, durée, en FR/EN, sans nouvelle requête ni nouvel accès intermodule. Identité, photo, édition, cinq métriques et graphique restent présents. HIST-02 reste partiel : ces détails personnels ne constituent pas la page complète des résultats multijoueurs et graphiques. La limite de 100 courses et les anciens rangs inconnus restent explicites. Vérifications : 6 tests ciblés profil/historique, types et frontières ; lint ciblé. Build, intégration et E2E non exécutés pour cette modification de présentation.
+
+
+### Invités → inscription locale — 10 novembre 2026
+
+PASS : 195 unitaires avant ajout du test de garde de formulaire, puis 9 tests auth-page dont ce nouveau test ; 54 intégrations sur PostgreSQL jetable ; nouvelle exécution ciblée du parcours et du contrôle d’ancienne session PASS ; lint global puis ciblé final, typecheck, frontières et build production PASS. E2E production Chrome local sur PostgreSQL jetable : 1/1 scénario course invitée → inscription par formulaire → profil/historique → déconnexion attendue → nouvelle connexion → historique conservé. Première exécution sans navigateur disponible, puis échec révélant la garde d’inscription invitée, corrigée ; une course entre navigation et déconnexion dans le test corrigée par attente de l’URL. OAuth et suite E2E complète non exécutés.
+
+Limites : nouvelles courses humaines persistées seulement ; les courses invitées anciennes déjà supprimées ne sont pas récupérables. Transfert réservé à l’inscription email depuis la session invitée officielle ; aucune fusion avec un compte existant. Le formulaire invité d’inscription reste accessible sans logout ; lien d’inscription ajouté à la navigation des invités. Aucune migration, aucun reset ou déploiement de base nécessaire pour ce changement.
+
+
+### Résultats complets et podium — 10 novembre 2026
+
+PASS : 196 unitaires puis test podium ciblé additionnel (ordre 3/2/1, délai vainqueur, quatrième concurrent présent au tableau) ; 54 intégrations sur PostgreSQL jetable, avec accès archive, refus d’un tiers et conservation après reset ; lint, types, frontières et build. E2E Chrome production 1/1 : invité → inscription → historique → résultats complets deux concurrents → ordre podium → animations réduites → largeur mobile 390 px sans débordement de page → reconnexion. Capture mobile /tmp/race-archive-mobile.png inspectée. Le tableau défile horizontalement sur mobile. Migration appliquée au Docker local typing_dev identifié, sans reset, application redémarrée. Suite E2E globale et contrôle OAuth non exécutés ; archives historiques absentes non reconstituées.
+
+
+### Onde de choc à la place du bouclier — 10 novembre 2026
+
+PASS : 199 unitaires ; 19 tests bonus ciblés après renforcement du cas multi-cibles (devant / derrière / terminé / rejeu) ; 54 intégrations PostgreSQL jetable ; lint, types, frontières et build. E2E Chrome production FR/EN : 2/2 coffres automatiques, piste et focus stables. Les anciens tests de tirage attendaient le bouclier et ont été adaptés au nouveau pouvoir ; le test du dernier mot isole désormais le raccourci des attaques automatiques adverses. Compatibilité de lecture des anciens boucliers maintenue ; aucun nouveau tirage shield. Suite E2E globale non exécutée.
+
+
+### Célébration dramatique — 10 novembre 2026
+
+PASS : 4 tests ciblés podium/historique (incluant absence de fausse victoire après abandon), lint global et ciblé, types, frontières, build. Chrome production sur PostgreSQL jetable : 1/1 course effectivement terminée par frappe, annonce de victoire, 36 confettis, résultats visibles, confettis masqués et tremblement supprimé en reduced-motion. Capture /tmp/dramatic-podium.png inspectée. Suite intégration et E2E globale non réexécutées pour cette modification de présentation.
+
+
+### Centrage et projecteur — 10 novembre 2026
+
+PASS : deux tests podium ciblés, lint global puis ciblé final, types, frontières et build. E2E Chrome production sur PostgreSQL jetable 1/1 : victoire réelle, centre de la marche du gagnant à moins de 2 px du centre de la scène, voile disparu après la séquence et voile/confettis masqués en animations réduites. Capture finale /tmp/dramatic-podium.png inspectée. Intégration et suite E2E globale non réexécutées pour cette modification de présentation.
+
+
+### Audio et pauses du podium — 10 novembre 2026
+
+PASS : 4 tests ciblés timing/podium, types, frontières, lint global et build. Chrome production sur PostgreSQL jetable 1/1 : victoire réelle, programmation d'oscillateurs sur AudioContext natif en état running, bouton mute/unmute et aria-pressed, centrage et mode reduced-motion. Ce contrôle vérifie la programmation audio native, pas une écoute humaine de la fanfare. Suite intégration et E2E globale non réexécutées (présentation uniquement). Son synthétisé original, aucune ressource externe ; autoplay soumis à la politique du navigateur.
+
+
+### Faux stade et célébration excessive — 10 novembre 2026
+
+PASS : 4 tests ciblés podium/timing, types, frontières, lint global puis ciblé final et build. E2E Chrome production sur PostgreSQL jetable 1/1 : victoire réelle, plus de 60 sources audio natives programmées pour applaudissements/foule, oscillateurs, mute/unmute, 96 confettis, centrage et reduced-motion. Pas d'écoute humaine certifiée ; sons de foule et clameurs synthétiques. Suite intégration et E2E globale non réexécutées pour cette modification de présentation.
+
+
+### Enregistrements réels et confettis continus — 10 novembre 2026
+
+PASS : 4 tests ciblés podium/timing, types, frontières, lint et build. Chrome production sur PostgreSQL jetable 1/1 : deux fichiers audio locaux décodés et sources natives programmées, mute/unmute, confettis animation-iteration-count infinite, puis masqués en reduced-motion. Sources téléchargées et vérifiées : WAV PCM 44,1 kHz stéréo Kevin MacLeod / CC BY 3.0 ; Vorbis 44,1 kHz mono Starlite / domaine public. Crédits et licence exposés dans public/audio/credits.txt via lien traduit. Pas d'écoute humaine certifiée. Suites intégration et E2E globale non réexécutées pour cette modification de présentation.
+
+
+### Consultation sans podium — 10 novembre 2026
+
+PASS : 3 tests ciblés podium, types, frontières, lint ciblé et build. Chrome production sur PostgreSQL jetable 1/1 : historique → résultats sans podium, projecteur ni bouton son ; tableau sans animation ; mobile et historique après reconnexion. La cérémonie de fin de course reste couverte par les tests podium existants. Suites intégration et E2E globale non réexécutées pour ce changement de présentation.
+
+
+### Vérification avant push — 10 novembre 2026
+
+État final : 203 unitaires et 54 intégrations PostgreSQL jetable PASS ; lint global, typecheck, frontières et git diff --check PASS. Dernier build et scénario Chrome historique sans podium PASS au changement précédent, sans modification de code source depuis. Suite E2E globale non réexécutée ; preuves ciblées et limites conservées ci-dessus.

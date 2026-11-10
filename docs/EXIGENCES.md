@@ -4,6 +4,8 @@ Version initiale du 3 octobre 2026 · Référence : `1789876438454.pdf`, **Web V
 
 Ce fichier est le livrable `docs/EXIGENCES.md` imposé aux pages 1, 10 et 11 du PDF. Il couvre **90 IDs officiels uniques**. Les phases sont le découpage du projet, pas une suppression d'exigences finales. Les obligations sans ID sont suivies séparément en fin de document.
 
+**Menus déroulants communs (9 novembre 2026) :** `shared/presentation/ui/Dropdown` remplace le contrôle `Select` historique et les listes natives de mode/niveau de bot. Toutes les listes de choix utilisent désormais le même composant contrôlé ou non contrôlé, labels FR/EN, thèmes et navigation clavier communs. Les entrées et autorisations serveur restent inchangées. Portée DES-05/06, A11Y-02/04, I18N-01 et configuration ; contrat courant en fin d’ARCHITECTURE.md, recette dans verification.md.
+
 ## Lire les statuts et les preuves
 
 **Réglages derrière un engrenage (9 novembre 2026) :** décision utilisateur suivante : retirer le panneau volumineux du salon et ouvrir une page de configuration dédiée. L'engrenage ouvre `/play/room/settings`, avec retour explicite et présence maintenue. CONF-12 conserve la consultation partagée et temps réel sur cette page ; le formulaire reste réservé à l'hôte et Démarrer reste au salon. Propriétaires : composition play et présentation lobby. Aucun statut relevé sur la seule base de ce déplacement d'interface ; preuve dans verification.md.
@@ -87,7 +89,7 @@ Les issues indiquent la prise en charge ; leur présence ou leur état de tablea
 | AUTH-03 | p. 4 | Invité ne crée pas de salle, n'a ni historique persistant ni photo ; avatar généré | S1 : réaliser et vérifier | partiel | S1 : [#1](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/1), [#4](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/4), [#8](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/8), [#9](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/9) | modules/lobby/domain/lobby-rules.ts ; presentation/lobby-panel.tsx | **CI main 80b7a5c, 03/10/2026** : Refus création invité PASS ; avatar initiales généré ; aucune photo ni historique invité implémenté ; [rapport](verification.md) | L’invité rejoint seulement ; identité de session nécessaire au jeu ≠ historique persistant |
 | AUTH-04 | p. 4 | Compte peut téléverser photo JPEG PNG WebP ≤2 Mo validée serveur ; redimensionnée avant affichage | Après S1 : implémentation finale | complet | S1 : [#1](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/1) ; Après S1 : [#13](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/13) | identity/infrastructure/profile-photo.ts ; identity/presentation/profile ; composition/profile/http.ts ; prisma/migrations/20261007130000_profile_photo | **Local 07/10/2026, arbre non commité** : formats réels JPEG/PNG/WebP, taille, signature, pixels et WebP 256×256 vérifiés ; photo privée persistée et rechargée dans le navigateur ; [rapport](verification.md#profil-personnel--7-octobre-2026) | Stockage des sorties redimensionnées en PostgreSQL ; invités refusés, original/métadonnées supprimés ; pas de nouvelle preuve VPS |
 | AUTH-05 | p. 4 | Compte peut modifier pseudo d'affichage | Après S1 : implémentation finale | complet | S1 : [#1](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/1) ; Après S1 : [#13](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/13) | identity/contracts/profile.ts ; DefaultProfileSupervisor ; PrismaProfileRepository ; composition/profile/profile-page.tsx | **Local 07/10/2026, arbre non commité** : pseudo trimé 3–20, contrôles refusés, session propre obligatoire, nom persisté après rechargement/reconnexion ; [rapport](verification.md#profil-personnel--7-octobre-2026) | Identifiant de connexion conservé ; noms des adhésions déjà créées restent leurs instantanés, nouveaux acteurs utilisent le pseudo modifié |
-| AUTH-06 | p. 4 | Profil : meilleur MPM, MPM moyen, précision moyenne, courses, victoires, graphique MPM dans temps | Après S1 : implémentation finale | non fait | S1 : [#1](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/1) ; Après S1 : [#24](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/24) | identity/presentation/profile/profile-statistics.tsx : présentation et états indisponibles uniquement | **À produire** : Jeu de résultats connu : 5 statistiques et graphique MPM conformes | Page disponible au 07/10/2026 ; course/résultats futurs, aucun agrégateur ou graphique fictif ; cette présentation ne réalise pas AUTH-06 |
+| AUTH-06 | p. 4 | Profil : meilleur MPM, MPM moyen, précision moyenne, courses, victoires, graphique MPM dans temps | Après S1 : implémentation finale | partiel | Après S1 : #24 | composition/profile ; lobby/profile-metrics ; presentation/race/profile-history ; migration profile_rank | 09/11/2026 : 189 unitaires et 53 intégrations PASS, lint/types/frontières PASS | Cinq métriques et graphique 30 courses ; anciennes victoires sans rang exclues explicitement ; validation navigateur restante |
 
 ## Salles et visibilité
 
@@ -189,7 +191,7 @@ Les issues indiquent la prise en charge ; leur présence ou leur état de tablea
 | ID | Source | Exigence et sous-critères | Échéance prévue | Statut actuel | Issues | Fichiers principaux constatés | Tests associés et preuves | Notes et choix |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | HIST-01 | p. 8 | Chaque course terminée dans historique compte, paginé | Après S1 : implémentation finale | non fait | S1 : [#1](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/1) ; Après S1 : [#24](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/24) | Réalisation non vérifiée ; spécification dans [CDC](CAHIER_DES_CHARGES.md) | **À produire** : Course terminée visible par compte ; pagination stable et autorisation | Obligatoire à la finale ; implémentation après S1 |
-| HIST-02 | p. 8 | Historique ouvre page résultats complète de la course | Après S1 : implémentation finale | non fait | S1 : [#1](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/1) ; Après S1 : [#24](https://github.com/Ap0llonn/web5-multiplayer-typing/issues/24) | Réalisation non vérifiée ; spécification dans [CDC](CAHIER_DES_CHARGES.md) | **À produire** : Résultats complets et graphiques réhydratés après nouvelle session | Obligatoire à la finale ; implémentation après S1 |
+| HIST-02 | p. 8 | Historique ouvre page résultats complète de la course | Après S1 : implémentation finale | partiel | Après S1 : #24 | RaceArchive ; composition/profile/race-results-page ; podium et courbes lobby | 10/11/2026 : 54 intégrations PASS, E2E ciblé Chrome PASS ; verification.md | Nouvelles courses archivées ; anciennes sans archive explicitement indisponibles ; suite E2E complète non exécutée |
 
 ## Internationalisation
 
@@ -320,3 +322,68 @@ Les repères `DOC-*` et `ANNEXE-A` suivants sont des repères locaux de traçabi
 ## Mise à jour avant la remise
 
 Pour chaque ligne modifiée, remplacer « À produire » par un rapport réel et ajouter les fichiers/tests effectivement présents. Conserver les échecs, non-exécutions et limites. Pour une exigence partielle, nommer les sous-critères couverts et ceux absents. Le numéro de commit doit permettre de reproduire la preuve ; une issue fermée ou un test ancien d'une version différente ne suffit pas.
+
+### AUTH-06 / HIST-01 — profil, 9 novembre 2026
+
+Implémentation des cinq métriques, graphique des 30 dernières courses et historique des 100 dernières (10 par page). Le rang des nouvelles courses est persisté ; anciens résultats sans rang explicitement exclus des victoires. AUTH-06 partiel en raison de cette limite historique ; HIST-01 partiel : navigation limitée aux 100 dernières courses. HIST-02 reste non réalisé. Tests : `tests/integration/profile-metrics.test.ts`, régressions unitaires du profil et du moteur.
+
+
+### Coffres renforcés — 9 novembre 2026
+
+Demande utilisateur : effets plus perceptibles (BONUS, module lobby). Pour les coffres personnels : brouillard 3/5/8 secondes selon la force ; détour et raccourci 2/4/6 mots ; coup de pouce 2 mots. Bouclier, nettoyage, rattrapage et limite de trois coffres inchangés. Les règles historiques version 1 sont conservées. Tests : `race-bonuses.test.ts` et `race-personal-boxes.test.ts`.
+
+
+### Compléments du profil — 10 novembre 2026
+
+AUTH-06 / HIST-02 : le profil propose aux invités la création de compte. La présentation lobby ouvre les détails personnels persistés dans chaque ligne : MPM brut, erreurs, durée, en FR/EN, sans nouvelle requête ni nouvel accès intermodule. Identité, photo, édition, cinq métriques et graphique restent présents. HIST-02 reste partiel : ces détails personnels ne constituent pas la page complète des résultats multijoueurs et graphiques. La limite de 100 courses et les anciens rangs inconnus restent explicites. Vérifications : 6 tests ciblés profil/historique, types et frontières ; lint ciblé. Build, intégration et E2E non exécutés pour cette modification de présentation.
+
+
+### Conservation invité → inscription — 10 novembre 2026
+
+Décision utilisateur prioritaire : sauvegarder les résultats de tous les humains, invités inclus, dans RaceResult ; les bots restent exclus. Cela remplace les anciennes règles « résultats comptes uniquement » sans ouvrir la page profil aux invités. Les résultats survivent au reset et à la fermeture de salle.
+
+Le hook officiel Better Auth onLinkAccount est injecté depuis composition/auth dans le handler officiel. Sur /sign-up/email uniquement, identity réaffecte transactionnellement la PlayerIdentity de la session anonyme vérifiée au nouvel utilisateur compte vérifié en DB. L'identité stable conserve résultats, rangs et adhésions ; aucune copie ni recalcul des courses. Les anciens invités dont les résultats n'ont jamais été persistés ne peuvent être reconstruits. Pas de rattachement par pseudo, email ou ID navigateur ; aucune fusion à la connexion à un compte existant. Sans cookie invité valide, aucune récupération automatique. OAuth ne constitue pas une preuve de ce parcours d'inscription locale.
+
+Tests : tests/integration/guest-signup-history.test.ts (course invitée finie, persistance, inscription authentique, autre invité inchangé, nouvelle connexion et métriques/historique) ; régressions race.test.ts adaptées aux résultats humains ; scénario navigateur ajouté dans tests/e2e/race.spec.ts. Aucun nouveau schéma DB nécessaire.
+
+
+### HIST-02 — résultats archivés et podium, 10 novembre 2026
+
+Le module lobby sauvegarde un RaceArchive immuable par course terminée dans la même transaction que RaceResult. Le JSON validé contient le classement et les métriques de tous les participants (humains et bots) et leurs échantillons MPM, sans brouillons, cookies ou sessions. Migration 20261110160000_race_archive. La composition /profile/races/[raceId] résout le compte depuis la session réelle ; lobby autorise la lecture uniquement avec un résultat personnel pour cette course. Un non-participant reçoit le même NOT_FOUND qu’une archive absente. L'identité invitée conservée à l'inscription garde son droit d'accès. Les archives survivent au reset et à la fermeture du salon.
+
+Depuis le profil, chaque course ouvre le classement complet et les courbes individuelles. Les anciennes courses sans archive affichent une indisponibilité explicite : ni classement des invités/bots ni échantillons perdus ne sont inventés. Le podium partagé avec la fin de course révèle les concurrents dans l'ordre 3, 2, 1 avec délais de 1,2 s, socles bronze/argent/or et couronne. Les résultats détaillés apparaissent après la révélation ; prefers-reduced-motion affiche tout immédiatement. Aucune génération de nom, logo ou dessin d'identité de marque.
+
+
+### Bouclier remplacé par onde de choc — 10 novembre 2026
+
+Décision utilisateur : retirer le bouclier des tirages et proposer un pouvoir actif. Le module lobby ajoute shockwave : activation automatique au ramassage, ajout de 2/3/4 mots selon la force à tous les concurrents TYPING strictement devant l'acteur, humains ou bots. Aucun effet sur les concurrents derrière, à égalité ou terminés. Sans cible, le pouvoir n'est pas tiré pour les coffres personnels. Chaque cible reçoit un événement traduit et un feedback visuel ; la réutilisation est refusée. Les anciennes données shield restent lisibles pour compatibilité, sans nouveau tirage de bouclier. Pas de migration SQL. Tests race-bonuses et suite unitaires.
+
+
+### Célébration de victoire renforcée — 10 novembre 2026
+
+Demande utilisateur : révélation du podium plus spectaculaire. Présentation lobby uniquement : impact bref avec tremblement local, halo doré, confettis déterministes décoratifs, saut du personnage et annonce FR/EN synchronisés à la révélation du rang 1. La célébration exige un rang 1 FINISHED : aucun faux vainqueur si tous abandonnent ou expirent. Le classement et les règles métier restent inchangés. prefers-reduced-motion supprime tremblement, saut et confettis ; les annonces et résultats restent visibles immédiatement. Tests : race-podium.test.tsx et scénario navigateur de victoire réelle dans race.spec.ts.
+
+
+### Projecteur et centrage — 10 novembre 2026
+
+Correction de styles concurrents entre race.css et tokens.css : grille explicite de trois colonnes, gagnant toujours centré, même avec deux concurrents. Présentation uniquement : voile noir plein écran décoratif et non bloquant, projecteur gauche/droite puis ciblage de la marche du vainqueur, révélation et confettis synchronisés après l'introduction de 3 s. Les coordonnées du gagnant suivent redimensionnement et défilement. Le voile disparaît en fin d'animation, sans flash répété ; animations réduites : aucun voile ni balayage. Le podium sans FINISHED ne déclenche pas la séquence.
+
+
+### Son et rythme du podium — 10 novembre 2026
+
+Présentation lobby : troisième place à 0 s, deuxième à 2,4 s, puis recherche de la première à 4,8 s et victoire à 8,4 s pour trois places. Avec deux concurrents, deuxième à 0 s, recherche à 2,4 s et victoire à 6 s. Le voile/projecteur n'est plus joué durant les révélations bronze/argent. Roulement synthétisé Web Audio durant la recherche, fanfare originale synchronisée à la victoire ; bouton son traduit FR/EN et aria-pressed. Aucune requête audio externe ni piste sous copyright. Le contexte audio et ses nœuds sont nettoyés au démontage. Le son peut nécessiter une interaction si le navigateur bloque l'autoplay ; la prochaine interaction tente la reprise sans rejouer une séquence passée. Couper/réactiver agit sur le volume sans recommencer la timeline. En reduced-motion : pas de roulement ni projecteur, fanfare immédiate si autorisée.
+
+
+### Célébration volontairement excessive — 10 novembre 2026
+
+Demande utilisateur : exagération comique de la victoire. Présentation lobby : 96 confettis, trois ondes de choc, pancartes FR/EN, fan-club décoratif. Web Audio synthétise un fond de foule filtré, 65 claquements d'applaudissements, dix clameurs à formants et trois doubles klaxons, en plus du roulement et de la fanfare. Aucun enregistrement de personnes ni ressource externe. Un compresseur commun limite l'accumulation des couches ; mute et nettoyage AudioContext conservés. Reduced-motion supprime les pancartes animées, ondes et confettis et laisse le fan-club statique. Aucun changement des règles ou données de course.
+
+
+### Confettis permanents et enregistrements réels — 10 novembre 2026
+
+Demande utilisateur prioritaire : confettis en boucle tant que les résultats sont montés, masqués en reduced-motion. Les bruitages synthétiques (fanfare, foule, klaxons et roulement) sont remplacés par deux enregistrements locaux décodés via Web Audio : public/audio/drum-roll.wav (Kevin MacLeod, CC BY 3.0, extrait de lecture pendant la recherche) et public/audio/crowd-cheer.ogg (Starlite, domaine public, applaudissements et cris à la victoire). Sources, licences, transformations de lecture et date figurent dans public/audio/credits.txt, accessible depuis un lien traduit sur les résultats. Pas de requête à un tiers pendant la partie. Gain, compresseur, mute, nettoyage du contexte et reprise après interaction conservés. Le son de foule reste fini ; seuls les confettis sont permanents.
+
+
+### Historique sans podium — 10 novembre 2026
+
+La consultation /profile/races/[raceId] affiche désormais immédiatement le tableau et les courbes, sans podium, projecteur, confettis, commandes audio ni lecture sonore. La composition passe showPodium=false au composant de résultats partagé. La cérémonie reste active à la fin d'une course en direct. Aucun changement de données ou de droits d'accès.

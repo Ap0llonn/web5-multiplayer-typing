@@ -4,22 +4,34 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { Icon } from "./icon";
 
-type SelectOption = { value: string; label: string; icon?: ReactNode };
-type SelectProps = {
-  name: string;
+export type DropdownOption = { value: string; label: string; icon?: ReactNode };
+export type DropdownProps = {
+  name?: string;
   label: string;
-  defaultValue: string;
-  options: readonly [SelectOption, ...SelectOption[]];
+  options: readonly [DropdownOption, ...DropdownOption[]];
   disabled?: boolean;
-};
+} & (
+  | {
+      value: string;
+      onValueChange: (value: string) => void;
+      defaultValue?: never;
+    }
+  | {
+      defaultValue: string;
+      value?: never;
+      onValueChange?: (value: string) => void;
+    }
+);
 
-export function Select({
+export function Dropdown({
   name,
   label,
   defaultValue,
+  value: controlledValue,
+  onValueChange,
   options,
   disabled = false,
-}: SelectProps) {
+}: DropdownProps) {
   const id = useId();
   const controlId = `${id}-control`;
   const labelId = `${id}-label`;
@@ -28,14 +40,17 @@ export function Select({
   const control = useRef<HTMLButtonElement>(null);
   const optionNodes = useRef<Array<HTMLLIElement | null>>([]);
   const search = useRef({ text: "", time: 0 });
-  const [value, setValue] = useState(
+  const [internalValue, setInternalValue] = useState(
     options.find((option) => option.value === defaultValue)?.value ??
       options[0].value,
   );
   const selectedIndex = Math.max(
     0,
-    options.findIndex((option) => option.value === value),
+    options.findIndex(
+      (option) => option.value === (controlledValue ?? internalValue),
+    ),
   );
+  const value = options[selectedIndex].value;
   const [activeIndex, setActiveIndex] = useState(selectedIndex);
   const [open, setOpen] = useState(false);
   const [placement, setPlacement] = useState({ above: false, height: 240 });
@@ -59,7 +74,9 @@ export function Select({
   }
 
   function commit(index = activeIndex) {
-    setValue(options[index].value);
+    const next = options[index].value;
+    if (controlledValue === undefined) setInternalValue(next);
+    if (next !== value) onValueChange?.(next);
     setOpen(false);
   }
 
@@ -70,13 +87,12 @@ export function Select({
         event.target instanceof Node &&
         !root.current?.contains(event.target)
       ) {
-        setValue(options[activeIndex].value);
         setOpen(false);
       }
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [expanded, activeIndex, options]);
+  }, [expanded]);
 
   useEffect(() => {
     if (expanded)
@@ -167,14 +183,14 @@ export function Select({
       <label id={labelId} htmlFor={controlId}>
         {label}
       </label>
-      <div className="playful-select" data-open={expanded}>
+      <div className="dropdown" data-open={expanded}>
         <input type="hidden" name={name} value={value} disabled={disabled} />
         <button
           ref={control}
           id={controlId}
           type="button"
           role="combobox"
-          className="arcade-input playful-select-trigger"
+          className="arcade-input dropdown-trigger"
           aria-labelledby={labelId}
           aria-expanded={expanded}
           aria-haspopup="listbox"
@@ -183,24 +199,26 @@ export function Select({
             expanded ? `${id}-option-${activeIndex}` : undefined
           }
           disabled={disabled}
+          title={options[selectedIndex].label}
           onKeyDown={onKeyDown}
           onClick={() => (expanded ? setOpen(false) : openMenu())}
           onBlur={(event) => {
-            if (expanded && !root.current?.contains(event.relatedTarget))
-              commit();
+            if (!root.current?.contains(event.relatedTarget)) setOpen(false);
           }}
         >
-          <span className="playful-select-value">
+          <span className="dropdown-value">
             {options[selectedIndex].icon}
-            {options[selectedIndex].label}
+            <span className="dropdown-label">
+              {options[selectedIndex].label}
+            </span>
           </span>
-          <Icon name="chevron" className="playful-select-chevron" />
+          <Icon name="chevron" className="dropdown-chevron" />
         </button>
         <ul
           id={menuId}
           role="listbox"
           aria-labelledby={labelId}
-          className="playful-select-menu"
+          className="dropdown-menu"
           hidden={!expanded}
           data-above={placement.above}
           style={{ maxHeight: placement.height }}
@@ -213,8 +231,9 @@ export function Select({
               id={`${id}-option-${index}`}
               key={option.value}
               role="option"
-              aria-selected={index === activeIndex}
-              className="playful-select-option"
+              aria-selected={index === selectedIndex}
+              data-active={index === activeIndex}
+              className="dropdown-option"
               onPointerDown={(event) => event.preventDefault()}
               onPointerMove={(event) => {
                 if (event.pointerType === "mouse") setActiveIndex(index);
@@ -224,11 +243,11 @@ export function Select({
                 control.current?.focus();
               }}
             >
-              <span className="playful-select-value">
+              <span className="dropdown-value">
                 {option.icon}
-                {option.label}
+                <span className="dropdown-label">{option.label}</span>
               </span>
-              {index === activeIndex && <Icon name="check" />}
+              {index === selectedIndex && <Icon name="check" />}
             </li>
           ))}
         </ul>

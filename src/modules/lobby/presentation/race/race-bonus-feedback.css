@@ -461,3 +461,5 @@
     display: none;
   }
 }
+[data-bonus-visual="shockwave"], [data-impact="shockwave"] { --bonus-color: #ff784f; }
+[data-bonus-visual="shockwave"] .race-bonus-particles span { border: 3px solid #ff784f; border-radius: 50%; width: 8rem; height: 8rem; animation-name: bonus-shield-ring; }

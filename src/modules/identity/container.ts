@@ -6,7 +6,10 @@ import type { IdentitySupervisor } from "./supervisors/interfaces/identity-super
 import { PrismaProfileRepository } from "./repositories/implementations/prisma-profile-repository";
 import { DefaultProfileSupervisor } from "./supervisors/implementations/default-profile-supervisor";
 import type { ProfileSupervisor } from "./supervisors/interfaces/profile-supervisor";
+export const playerIdentityRepository = new PrismaPlayerIdentityRepository(
+  prisma,
+);
 export const identitySupervisor: IdentitySupervisor =
-  new DefaultIdentitySupervisor(new PrismaPlayerIdentityRepository(prisma));
+  new DefaultIdentitySupervisor(playerIdentityRepository);
 export const profileSupervisor: ProfileSupervisor =
   new DefaultProfileSupervisor(new PrismaProfileRepository(prisma));

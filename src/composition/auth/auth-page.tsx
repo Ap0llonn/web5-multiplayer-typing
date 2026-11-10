@@ -25,12 +25,12 @@ export async function AuthPage({ mode }: { mode: "login" | "signup" }) {
         </Link>
       }
     >
-      {actor.ok ? (
+      {actor.ok && !(actor.value.kind === "guest" && mode === "signup") ? (
         <div>
           <p>{t("guestWarning")}</p>
           <SignOutButton />
         </div>
-      ) : actor.error.code !== "UNAUTHENTICATED" ? (
+      ) : !actor.ok && actor.error.code !== "UNAUTHENTICATED" ? (
         <p role="alert">{t(actor.error.messageKey)}</p>
       ) : (
         <AuthForm

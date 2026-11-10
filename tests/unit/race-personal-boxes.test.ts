@@ -75,7 +75,7 @@ describe("personal race boxes", () => {
     expect(restored.events).toEqual(race.events);
     expect(restored.players[1].items).toEqual([]);
   });
-  it("never leaves a newly collected item waiting, including simultaneous fog and shield draws", () => {
+  it("never leaves a newly collected item waiting, including simultaneous fog and shockwave draws", () => {
     for (let seed = 0; seed < 80; seed++) {
       const { race } = raceWith(10);
       race.id = `auto-${seed}`;
@@ -197,7 +197,7 @@ it("keeps a front-runner's attack small while allowing a close second to challen
     usedAt: null,
   };
   expect(applyRaceItem(race, second, item, 5000).ok).toBe(true);
-  expect(leader.text.split(" ")).toHaveLength(101);
+  expect(leader.text.split(" ")).toHaveLength(102);
   expect(second.progress).toBe(progress);
   expect(raceSnapshot(room, 5000)?.players[0].playerIdentityId).toBe(
     second.playerIdentityId,

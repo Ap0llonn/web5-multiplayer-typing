@@ -13,8 +13,15 @@ import en from "@/shared/presentation/i18n/messages/en.json";
 import fr from "@/shared/presentation/i18n/messages/fr.json";
 
 const translations = vi.hoisted(() => ({ locale: "en" }));
+vi.mock("@/modules/lobby/server", () => ({ readProfileMetrics: vi.fn() }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-vi.mock("@/modules/identity/server", () => ({ getCurrentProfile: vi.fn() }));
+vi.mock("@/modules/identity/server", () => ({
+  getCurrentProfile: vi.fn(),
+  getCurrentActor: vi.fn().mockResolvedValue({
+    ok: false,
+    error: { code: "INTERNAL", messageKey: "errors.INTERNAL" },
+  }),
+}));
 vi.mock("next-intl/server", () => ({
   getTranslations: async (namespace?: "profile") =>
     createTranslator({
@@ -59,7 +66,7 @@ for (const [locale, messages] of [
     expect(html).toContain("@original-login");
     expect(html).toContain(messages.profile.displayName);
     expect(html).toContain(messages.profile.statsUnavailable);
-    expect(html).toContain(messages.profile.historyUnavailable);
+
     expect(html.match(/<dd/g)).toHaveLength(5);
     expect(html).toContain('type="file"');
   });
@@ -77,6 +84,7 @@ for (const [locale, messages] of [
             ? messages.profile.signInNotice
             : messages.errors.INTERNAL,
       );
+      if (code === "FORBIDDEN") expect(html).toContain('href="/signup"');
       if (code === "INTERNAL") expect(html).toContain('role="alert"');
     }
   });

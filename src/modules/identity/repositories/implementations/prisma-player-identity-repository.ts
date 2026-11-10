@@ -4,6 +4,29 @@ import { success, failure } from "@/shared/contracts/operation-result";
 import type { PlayerIdentityRepository } from "../interfaces/player-identity-repository";
 export class PrismaPlayerIdentityRepository implements PlayerIdentityRepository {
   constructor(private readonly db: PrismaClient) {}
+  async linkGuestSignup(guestUserId: string, accountUserId: string) {
+    try {
+      return await this.db.$transaction(async (tx) => {
+        const guest = await tx.user.findUnique({ where: { id: guestUserId } });
+        const account = await tx.user.findUnique({
+          where: { id: accountUserId },
+        });
+        if (!guest?.isAnonymous || !account || account.isAnonymous)
+          return failure("FORBIDDEN");
+        const source = await tx.playerIdentity.findUnique({
+          where: { authUserId: guestUserId },
+        });
+        if (!source) return success(undefined);
+        await tx.playerIdentity.update({
+          where: { id: source.id },
+          data: { authUserId: accountUserId },
+        });
+        return success(undefined);
+      });
+    } catch {
+      return failure("INTERNAL");
+    }
+  }
   async ensureForAuthUser(authUserId: string) {
     try {
       const identity = await this.db.playerIdentity.upsert({

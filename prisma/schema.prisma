@@ -181,6 +181,7 @@ model PracticeText {
 }
 
 model RaceResult {
+  rank Int?
   raceId String
   playerIdentityId String
   player PlayerIdentity @relation(fields: [playerIdentityId], references: [id], onDelete: Cascade)
@@ -202,4 +203,9 @@ model PracticeWord {
   word String
   source String
   @@id([language, word])
+}
+
+model RaceArchive {
+ id String @id
+ results Json
 }

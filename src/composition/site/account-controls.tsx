@@ -29,6 +29,14 @@ export async function getAccountControls() {
             {actor.value.displayName}
           </span>
         )}
+        {actor.value.kind === "guest" && (
+          <Link
+            href="/signup"
+            className={buttonStyles({ variant: "pink", size: "small" })}
+          >
+            {t("signup")}
+          </Link>
+        )}
         <SignOutButton />
       </div>
     );

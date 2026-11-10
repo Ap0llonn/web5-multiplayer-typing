@@ -18,3 +18,4 @@ export type {
   RaceUseItemInput,
   RaceBonusEvent,
 } from "./contracts/race";
+export type { RaceArchive } from "./contracts/race-archive";

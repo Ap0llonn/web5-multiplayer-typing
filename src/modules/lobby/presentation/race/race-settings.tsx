@@ -6,7 +6,7 @@ import type { OperationResult } from "@/shared/contracts/operation-result";
 import { Button } from "@/shared/presentation/ui/button";
 import { Field, Input } from "@/shared/presentation/ui/field";
 import { Card } from "@/shared/presentation/ui/card";
-import { Select } from "@/shared/presentation/ui/select";
+import { Dropdown } from "@/shared/presentation/ui/dropdown";
 
 export function RaceSettingsPanel({
   room,
@@ -139,7 +139,7 @@ export function RaceSettingsPanel({
               });
             }}
           >
-            <Select
+            <Dropdown
               name="language"
               label={t("language")}
               defaultValue={settings.language}
@@ -160,21 +160,20 @@ export function RaceSettingsPanel({
                 disabled={pending}
               />
             </Field>
-            <Field label={t("textMode")}>
-              <select
-                name="mode"
-                className="arcade-input"
-                value={mode}
-                disabled={pending}
-                onChange={(e) =>
-                  setMode(e.target.value === "random" ? "random" : "coherent")
-                }
-              >
-                <option value="coherent">{t("coherent")}</option>
-                <option value="random">{t("random")}</option>
-              </select>
-            </Field>
-            <Select
+            <Dropdown
+              name="mode"
+              label={t("textMode")}
+              value={mode}
+              disabled={pending}
+              onValueChange={(value) =>
+                setMode(value === "random" ? "random" : "coherent")
+              }
+              options={[
+                { value: "coherent", label: t("coherent") },
+                { value: "random", label: t("random") },
+              ]}
+            />
+            <Dropdown
               name="complexity"
               label={t("complexity")}
               defaultValue={settings.complexity ?? "medium"}
@@ -188,7 +187,7 @@ export function RaceSettingsPanel({
             <p className="text-sm text-muted sm:col-span-2">
               {t(mode === "random" ? "randomDifficulty" : "coherentDifficulty")}
             </p>
-            <Select
+            <Dropdown
               name="correction"
               label={t("correction")}
               defaultValue={settings.correction}
@@ -255,7 +254,7 @@ export function RaceSettingsPanel({
             <p className="text-sm text-muted sm:col-span-2">
               {t(mode === "random" ? "filtersHint" : "coherentFilters")}
             </p>
-            <Select
+            <Dropdown
               name="visibility"
               label={t("visibility")}
               defaultValue={room.visibility}
@@ -284,33 +283,33 @@ export function RaceSettingsPanel({
               <p className="text-sm text-muted">{t("botsHint")}</p>
               {bots.map((bot, index) => (
                 <div className="flex flex-wrap items-end gap-3" key={bot.id}>
-                  <Field label={t("botName", { number: index + 1 })}>
-                    <select
-                      className="arcade-input"
-                      value={bot.level}
-                      onChange={(e) => {
-                        const level = Number(e.target.value);
-                        if (
-                          level === 1 ||
-                          level === 2 ||
-                          level === 3 ||
-                          level === 4 ||
-                          level === 5
-                        )
-                          setBots(
-                            bots.map((b) =>
-                              b.id === bot.id ? { ...b, level } : b,
-                            ),
-                          );
-                      }}
-                    >
-                      {([1, 2, 3, 4, 5] as const).map((level) => (
-                        <option key={level} value={level}>
-                          {t("botLevel", { level })}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
+                  <Dropdown
+                    label={t("botName", { number: index + 1 })}
+                    value={String(bot.level)}
+                    disabled={pending}
+                    onValueChange={(value) => {
+                      const level = Number(value);
+                      if (
+                        level === 1 ||
+                        level === 2 ||
+                        level === 3 ||
+                        level === 4 ||
+                        level === 5
+                      )
+                        setBots(
+                          bots.map((b) =>
+                            b.id === bot.id ? { ...b, level } : b,
+                          ),
+                        );
+                    }}
+                    options={[
+                      { value: "1", label: t("botLevel", { level: 1 }) },
+                      { value: "2", label: t("botLevel", { level: 2 }) },
+                      { value: "3", label: t("botLevel", { level: 3 }) },
+                      { value: "4", label: t("botLevel", { level: 4 }) },
+                      { value: "5", label: t("botLevel", { level: 5 }) },
+                    ]}
+                  />
                   <Button
                     variant="paper"
                     type="button"

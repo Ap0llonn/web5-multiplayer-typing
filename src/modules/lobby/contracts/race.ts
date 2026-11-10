@@ -31,7 +31,8 @@ export type RaceItemType =
   | "shield"
   | "clear"
   | "nudge"
-  | "catchup";
+  | "catchup"
+  | "shockwave";
 export type RaceCheckpoint = 25 | 50 | 75;
 export type RaceItem = {
   id: string;

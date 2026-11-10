@@ -1,6 +1,8 @@
+import { ProfileHistory } from "@/modules/lobby/presentation/race/profile-history";
 import { headers } from "next/headers";
 import { getFormatter, getTranslations } from "next-intl/server";
-import { getCurrentProfile } from "@/modules/identity/server";
+import { readProfileMetrics } from "@/modules/lobby/server";
+import { getCurrentActor, getCurrentProfile } from "@/modules/identity/server";
 import { ProfileForm } from "@/modules/identity/presentation/profile/profile-form";
 import { ProfileAvatar } from "@/modules/identity/presentation/profile/profile-avatar";
 import { ProfileStatistics } from "@/modules/identity/presentation/profile/profile-statistics";
@@ -30,10 +32,10 @@ export async function ProfilePage() {
               )}
             </p>
             <Link
-              href={result.error.code === "FORBIDDEN" ? "/play" : "/login"}
+              href={result.error.code === "FORBIDDEN" ? "/signup" : "/login"}
               className={buttonStyles({ variant: "blue", className: "mt-6" })}
             >
-              {t(result.error.code === "FORBIDDEN" ? "join" : "login")}
+              {t(result.error.code === "FORBIDDEN" ? "signup" : "login")}
               <Icon name="arrow" />
             </Link>
           </>
@@ -45,6 +47,11 @@ export async function ProfilePage() {
       </Card>
     );
   }
+  const actor = await getCurrentActor(await headers());
+  const metrics =
+    actor.ok && actor.value.kind === "account"
+      ? await readProfileMetrics(actor.value.playerIdentityId)
+      : null;
   const profile = result.value;
   const format = await getFormatter();
   return (
@@ -109,7 +116,12 @@ export async function ProfilePage() {
             <ProfileForm profile={profile} />
           </Card>
         </div>
-        {await ProfileStatistics()}
+        <div className="grid min-w-0 gap-6">
+          {await ProfileStatistics({
+            metrics: metrics?.ok ? metrics.value : null,
+          })}
+          {metrics?.ok && <ProfileHistory rows={metrics.value.history} />}
+        </div>
       </div>
     </div>
   );

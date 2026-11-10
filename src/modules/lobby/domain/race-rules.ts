@@ -1,3 +1,5 @@
+import type { RaceState } from "../contracts/race";
+
 import {
   failure,
   success,
@@ -346,36 +348,7 @@ export function raceSnapshot(
 ): RaceSnapshot | null {
   const race = room.race;
   if (!race) return null;
-  const order = { FINISHED: 0, TYPING: 1, TIMEOUT: 2, ABANDONED: 3 };
-  const players = [...race.players]
-    .sort(
-      (a, b) =>
-        order[a.status] - order[b.status] ||
-        (a.status === "FINISHED"
-          ? (a.finishedAt ?? 0) - (b.finishedAt ?? 0)
-          : raceProgress(b) - raceProgress(a)) ||
-        a.playerIdentityId.localeCompare(b.playerIdentityId),
-    )
-    .map((p, index) => {
-      const elapsedMs = Math.max(0, (p.finishedAt ?? now) - race.startsAt);
-      return {
-        playerIdentityId: p.playerIdentityId,
-        displayName: p.displayName,
-        kind: p.kind,
-        character: p.character,
-        progress: p.progress,
-        targetLength: p.text.length,
-        bonusesReceived: p.bonusesReceived,
-        boxCheckpoints: p.boxCheckpoints ?? [],
-        fogUntil: p.fogUntil,
-        shield: p.shield,
-        status: p.status,
-        errors: p.errors,
-        rank: index + 1,
-        elapsedMs,
-        ...raceMetrics(p, elapsedMs),
-      };
-    });
+  const players = raceStandings(race, now);
   const self = race.players.find((p) => p.playerIdentityId === viewer);
   return {
     id: race.id,
@@ -398,4 +371,39 @@ export function raceSnapshot(
         }
       : null,
   };
+}
+
+export function rankedRacePlayers(race: RaceState) {
+  const order = { FINISHED: 0, TYPING: 1, TIMEOUT: 2, ABANDONED: 3 };
+  return [...race.players].sort(
+    (a, b) =>
+      order[a.status] - order[b.status] ||
+      (a.status === "FINISHED"
+        ? (a.finishedAt ?? 0) - (b.finishedAt ?? 0)
+        : raceProgress(b) - raceProgress(a)) ||
+      a.playerIdentityId.localeCompare(b.playerIdentityId),
+  );
+}
+
+export function raceStandings(race: RaceState, now: number) {
+  return rankedRacePlayers(race).map((p, index) => {
+    const elapsedMs = Math.max(0, (p.finishedAt ?? now) - race.startsAt);
+    return {
+      playerIdentityId: p.playerIdentityId,
+      displayName: p.displayName,
+      kind: p.kind,
+      character: p.character,
+      progress: p.progress,
+      targetLength: p.text.length,
+      bonusesReceived: p.bonusesReceived,
+      boxCheckpoints: p.boxCheckpoints ?? [],
+      fogUntil: p.fogUntil,
+      shield: p.shield,
+      status: p.status,
+      errors: p.errors,
+      rank: index + 1,
+      elapsedMs,
+      ...raceMetrics(p, elapsedMs),
+    };
+  });
 }
