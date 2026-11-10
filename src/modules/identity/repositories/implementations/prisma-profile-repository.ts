@@ -64,10 +64,19 @@ export class PrismaProfileRepository implements ProfileRepository {
     }
   }
 
-  async readPhoto(authUserId: string) {
+  async readPhoto(authUserId: string, playerIdentityId?: string) {
     try {
       const photo = await this.db.profilePhoto.findFirst({
-        where: { authUserId, user: { isAnonymous: false } },
+        where: {
+          ...(playerIdentityId
+            ? {
+                user: {
+                  isAnonymous: false,
+                  playerIdentity: { id: playerIdentityId },
+                },
+              }
+            : { authUserId, user: { isAnonymous: false } }),
+        },
         select: { data: true },
       });
       return photo ? success(photo.data) : failure("NOT_FOUND");

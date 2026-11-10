@@ -14,11 +14,13 @@ import "./join-player-form.css";
 import { Button } from "@/shared/presentation/ui/button";
 
 export function JoinPlayerForm({
+  hasProfilePhoto = false,
   code,
   actor,
   initialCharacter = "cobalt",
   alreadyJoined = false,
 }: {
+  hasProfilePhoto?: boolean;
   code: string;
   actor: Actor | null;
   initialCharacter?: LobbyCharacter;
@@ -96,6 +98,7 @@ export function JoinPlayerForm({
                 />
               )}
               <CharacterPicker
+                hasProfilePhoto={hasProfilePhoto}
                 character={character}
                 onChange={setCharacter}
                 disabled={pending}
@@ -122,6 +125,7 @@ export function JoinPlayerForm({
                 />
               )}
               <CharacterPicker
+                hasProfilePhoto={hasProfilePhoto}
                 character={character}
                 onChange={setCharacter}
                 disabled={pending}

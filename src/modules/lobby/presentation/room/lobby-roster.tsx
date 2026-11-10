@@ -45,7 +45,10 @@ export function LobbyRoster({
             data-player-id={member.playerIdentityId}
             key={member.playerIdentityId}
           >
-            <PlayerCharacter character={member.character} />
+            <PlayerCharacter
+              character={member.character}
+              playerIdentityId={member.playerIdentityId}
+            />
             <div className="lobby-player-info">
               <span className="lobby-player-name">{member.displayName}</span>
               <span className="lobby-player-status">

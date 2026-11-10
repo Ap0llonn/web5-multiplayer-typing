@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type ReactNode, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/shared/presentation/i18n/navigation";
 import { Button } from "@/shared/presentation/ui/button";
@@ -10,7 +10,13 @@ import type { OperationResult } from "@/shared/contracts/operation-result";
 import type { Profile } from "../../contracts/profile";
 import { MAX_PROFILE_PHOTO_BYTES } from "../../contracts/profile";
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+export function ProfileForm({
+  profile,
+  actions,
+}: {
+  profile: Profile;
+  actions?: ReactNode;
+}) {
   const t = useTranslations();
   const router = useRouter();
   const lock = useRef(false);
@@ -68,7 +74,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
     <form
       onSubmit={submit}
       className="grid gap-5"
-      aria-labelledby="profile-edit-title"
+      aria-label={t("profile.editTitle")}
       onChange={() => {
         setSaved(false);
         setError("");
@@ -127,15 +133,18 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <p role="status" className={saved ? "text-sm font-bold" : "sr-only"}>
         {saved ? t("profile.saved") : ""}
       </p>
-      <Button
-        type="submit"
-        variant="blue"
-        disabled={pending}
-        className="w-full sm:w-fit"
-      >
-        {pending ? t("pending") : t("profile.save")}
-        <Icon name="check" />
-      </Button>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button
+          type="submit"
+          variant="blue"
+          disabled={pending}
+          className="w-full sm:w-fit"
+        >
+          {pending ? t("pending") : t("profile.save")}
+          <Icon name="check" />
+        </Button>
+        {actions}
+      </div>
     </form>
   );
 }

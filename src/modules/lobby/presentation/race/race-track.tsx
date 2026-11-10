@@ -120,7 +120,10 @@ export function RaceTrack({
                     left: `calc(${progress}% - ${progress / 100} * var(--race-runner-size))`,
                   }}
                 >
-                  <PlayerCharacter character={player.character} />
+                  <PlayerCharacter
+                    character={player.character}
+                    playerIdentityId={player.playerIdentityId}
+                  />
                   {impact && ImpactIcon && (
                     <span
                       key={impact.id}

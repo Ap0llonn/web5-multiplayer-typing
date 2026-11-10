@@ -56,7 +56,7 @@ export function ProfileHistory({ rows }: { rows: ProfileHistoryRow[] }) {
                 fill="currentColor"
               >
                 <title>
-                  {format.dateTime(row.finishedAt)}: {format.number(row.wpm)}
+                  {`${format.dateTime(row.finishedAt)}: ${format.number(row.wpm)}`}
                 </title>
               </circle>
             ))}
@@ -95,7 +95,7 @@ export function ProfileHistory({ rows }: { rows: ProfileHistoryRow[] }) {
                       "status",
                       "raceDetails",
                     ].map((key) => (
-                      <th className="p-2" key={key}>
+                      <th className="px-4 py-4" key={key}>
                         {t(key)}
                       </th>
                     ))}
@@ -104,23 +104,23 @@ export function ProfileHistory({ rows }: { rows: ProfileHistoryRow[] }) {
                 <tbody>
                   {rows.slice(page * 10, page * 10 + 10).map((row) => (
                     <tr key={row.raceId}>
-                      <td className="p-2">
+                      <td className="px-4 py-4">
                         {format.dateTime(row.finishedAt, {
                           dateStyle: "short",
                           timeStyle: "short",
                         })}
                       </td>
-                      <td className="p-2">{row.rank ?? "—"}</td>
-                      <td className="p-2">
+                      <td className="px-4 py-4">{row.rank ?? "—"}</td>
+                      <td className="px-4 py-4">
                         {format.number(row.wpm, { maximumFractionDigits: 1 })}
                       </td>
-                      <td className="p-2">
+                      <td className="px-4 py-4">
                         {format.number(row.accuracy, {
                           maximumFractionDigits: 1,
                         })}{" "}
                         %
                       </td>
-                      <td className="p-2">
+                      <td className="px-4 py-4">
                         {t(
                           row.status === "FINISHED"
                             ? "finished"
@@ -129,7 +129,7 @@ export function ProfileHistory({ rows }: { rows: ProfileHistoryRow[] }) {
                               : "abandoned",
                         )}
                       </td>
-                      <td className="p-2">
+                      <td className="px-4 py-4">
                         <>
                           <Link
                             href={`/profile/races/${encodeURIComponent(row.raceId)}`}
@@ -137,7 +137,7 @@ export function ProfileHistory({ rows }: { rows: ProfileHistoryRow[] }) {
                           >
                             {t("fullResults")}
                           </Link>
-                          <details>
+                          <details className="mt-3">
                             <summary className="cursor-pointer font-bold">
                               {t("raceDetails")}
                             </summary>

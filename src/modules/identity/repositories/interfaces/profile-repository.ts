@@ -7,5 +7,8 @@ export interface ProfileRepository {
     authUserId: string,
     input: ProfileUpdateInput,
   ): Promise<OperationResult<Profile>>;
-  readPhoto(authUserId: string): Promise<OperationResult<Uint8Array>>;
+  readPhoto(
+    authUserId: string,
+    playerIdentityId?: string,
+  ): Promise<OperationResult<Uint8Array>>;
 }

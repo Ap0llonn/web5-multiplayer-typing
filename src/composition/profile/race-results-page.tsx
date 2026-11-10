@@ -27,7 +27,11 @@ export async function RaceResultsPage({
       <h1 className="my-6 text-3xl font-black">{t("profile.fullResults")}</h1>
       {result?.ok ? (
         <>
-          <RaceResults race={result.value} showPodium={false} />
+          <RaceResults
+            raceId={(await params).raceId}
+            race={result.value}
+            showPodium={false}
+          />
           <RaceResultCharts race={result.value} />
         </>
       ) : (

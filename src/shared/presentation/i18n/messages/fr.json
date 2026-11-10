@@ -143,6 +143,8 @@
   "profile": {
     "title": "Mon profil",
     "eyebrow": "Ton coin du clubhouse",
+    "editButton": "Modifier le profil",
+    "closeEditor": "Fermer",
     "editTitle": "À ton image",
     "editDescription": "Le nom que voit ta bande, et une photo qui te ressemble.",
     "displayName": "Pseudo d’affichage",
@@ -213,6 +215,7 @@
     "backButton": "Retour",
     "characterLabel": "Choisis ton personnage",
     "characters": {
+      "profile": "Photo de profil",
       "cobalt": "Bleu",
       "coral": "Corail",
       "mint": "Menthe",

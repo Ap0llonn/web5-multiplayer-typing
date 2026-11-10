@@ -31,6 +31,8 @@ export function createRoom(
   code: string,
   now: number,
 ): OperationResult<Lobby> {
+  if (input.character === "profile" && !actor.hasProfilePhoto)
+    return failure("FORBIDDEN");
   if (actor.kind !== "account") return failure("FORBIDDEN");
   const parsed = validateCreateInput(input);
   if (!parsed.success) return failure("VALIDATION");
@@ -62,6 +64,8 @@ export function joinRoom(
   now: number,
   character?: LobbyCharacter,
 ): OperationResult<Lobby> {
+  if (character === "profile" && !actor.hasProfilePhoto)
+    return failure("FORBIDDEN");
   if (character !== undefined && !characterSchema.safeParse(character).success)
     return failure("VALIDATION");
   if (room.bannedPlayerIdentityIds.includes(actor.playerIdentityId))
@@ -81,7 +85,9 @@ export function joinRoom(
   }
   if (
     role === "PARTICIPANT" &&
-    room.members.filter((m) => m.role === "PARTICIPANT").length + (room.raceSettings?.bots?.length ?? 0) >= room.capacity
+    room.members.filter((m) => m.role === "PARTICIPANT").length +
+      (room.raceSettings?.bots?.length ?? 0) >=
+      room.capacity
   )
     return failure("ROOM_FULL");
   room.members.push({

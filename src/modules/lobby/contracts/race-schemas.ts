@@ -155,7 +155,7 @@ export const raceStateSchema = z
           })
           .optional(),
         displayName: z.string(),
-        character: z.enum(["cobalt", "coral", "mint", "butter"]),
+        character: z.enum(["cobalt", "coral", "mint", "butter", "profile"]),
         draft: z.string(),
         sequence: z.number(),
         progress: z.number(),

@@ -64,11 +64,11 @@ for (const [locale, messages] of [
     );
     expect(html).toContain("Player");
     expect(html).toContain("@original-login");
-    expect(html).toContain(messages.profile.displayName);
+    expect(html).toContain(messages.profile.editButton);
     expect(html).toContain(messages.profile.statsUnavailable);
 
     expect(html.match(/<dd/g)).toHaveLength(5);
-    expect(html).toContain('type="file"');
+    expect(html).not.toContain('type="file"');
   });
   it(`never exposes a form on guest, visitor or service failure in ${locale}`, async () => {
     translations.locale = locale;

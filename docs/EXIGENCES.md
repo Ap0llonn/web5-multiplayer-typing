@@ -387,3 +387,13 @@ Demande utilisateur prioritaire : confettis en boucle tant que les résultats so
 ### Historique sans podium — 10 novembre 2026
 
 La consultation /profile/races/[raceId] affiche désormais immédiatement le tableau et les courbes, sans podium, projecteur, confettis, commandes audio ni lecture sonore. La composition passe showPodium=false au composant de résultats partagé. La cérémonie reste active à la fin d'une course en direct. Aucun changement de données ou de droits d'accès.
+
+
+### Podium dans le viewport et crédits discrets — 10 novembre 2026
+
+Demande utilisateur : enlever le lien de crédits audio de l'écran et rendre le podium visible sans défilement manuel. Les attributions/licences sont conservées avec les fichiers audio dans public/audio/credits.txt. À l'ouverture des résultats en direct, la scène est centrée dans le viewport après le focus du titre ; styles compacts pour petits écrans et hauteurs inférieures à 800 px. La consultation d'archives ne déclenche pas ce défilement.
+
+
+### Photo comme personnage — 10 novembre 2026
+
+AUTH-06 / présentation lobby : option FR/EN « Photo de profil » dans les choix de personnage à la création et à l’entrée, visible uniquement avec photo existante. Choix persisté et rendu dans la salle, la piste et les résultats. Aucun nouveau nom ou logo généré. Tests : character-picker, player-photo-access, lobby-rules, profile-character (intégration et navigateur).

@@ -5,15 +5,44 @@ const colors = {
   coral: { face: "#ffab98", edge: "#d4796b", top: "#ffdbcc" },
   mint: { face: "#92ddbd", edge: "#5aa78e", top: "#cdf4df" },
   butter: { face: "#ffdb7e", edge: "#d2a64d", top: "#fff0bc" },
-} satisfies Record<LobbyCharacter, { face: string; edge: string; top: string }>;
+} satisfies Record<
+  Exclude<LobbyCharacter, "profile">,
+  { face: string; edge: string; top: string }
+>;
 
 export function PlayerCharacter({
   character,
   className = "",
+  playerIdentityId,
+  raceId,
 }: {
   character: LobbyCharacter;
   className?: string;
+  playerIdentityId?: string;
+  raceId?: string;
 }) {
+  if (character === "profile")
+    return (
+      <svg
+        viewBox="0 0 128 136"
+        aria-hidden="true"
+        className={`player-character ${className}`}
+        data-character="profile"
+      >
+        <image
+          href={
+            playerIdentityId
+              ? `/api/players/photo?player=${encodeURIComponent(playerIdentityId)}${raceId ? `&race=${encodeURIComponent(raceId)}` : ""}`
+              : "/api/profile/photo"
+          }
+          x="16"
+          y="8"
+          width="96"
+          height="112"
+          preserveAspectRatio="xMidYMid slice"
+        />
+      </svg>
+    );
   const color = colors[character];
 
   return (

@@ -73,3 +73,50 @@ export async function handleProfilePhoto(request: Request) {
     },
   });
 }
+
+export async function handlePlayerPhoto(request: Request) {
+  const { z } = await import("zod");
+  const { getCurrentActor } = await import("@/modules/identity/server");
+  const { getLobbyService, readRaceArchive } =
+    await import("@/modules/lobby/server");
+  const parsed = z
+    .object({
+      player: z.string().min(1).max(128),
+      race: z.string().min(1).max(100).optional(),
+    })
+    .strict()
+    .safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!parsed.success) return resultResponse(failure("VALIDATION"));
+  const actor = await getCurrentActor(request.headers);
+  if (!actor.ok) return resultResponse(actor);
+  const room = await getLobbyService().currentLobby(actor.value);
+  const archive = parsed.data.race
+    ? await readRaceArchive(parsed.data.race, actor.value.playerIdentityId)
+    : null;
+  const archivedParticipant =
+    archive?.ok &&
+    archive.value.players.some(
+      (player) => player.playerIdentityId === parsed.data.player,
+    );
+  if (
+    !archivedParticipant &&
+    parsed.data.player !== actor.value.playerIdentityId &&
+    (!room.ok ||
+      !room.value?.members.some(
+        (member) => member.playerIdentityId === parsed.data.player,
+      ))
+  )
+    return resultResponse(failure("NOT_FOUND"));
+  const photo = await getCurrentProfilePhoto(
+    request.headers,
+    parsed.data.player,
+  );
+  if (!photo.ok) return resultResponse(photo);
+  return new Response(new Uint8Array(photo.value), {
+    headers: {
+      "content-type": "image/webp",
+      "cache-control": "private, no-store",
+      "x-content-type-options": "nosniff",
+    },
+  });
+}

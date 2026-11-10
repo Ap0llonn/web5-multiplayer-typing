@@ -1005,3 +1005,18 @@ PASS : 3 tests ciblés podium, types, frontières, lint ciblé et build. Chrome 
 ### Vérification avant push — 10 novembre 2026
 
 État final : 203 unitaires et 54 intégrations PostgreSQL jetable PASS ; lint global, typecheck, frontières et git diff --check PASS. Dernier build et scénario Chrome historique sans podium PASS au changement précédent, sans modification de code source depuis. Suite E2E globale non réexécutée ; preuves ciblées et limites conservées ci-dessus.
+
+
+### Crédits masqués et podium visible sans scroll — 10 novembre 2026
+
+PASS : 5 tests ciblés podium/timing ; types, frontières, lint ciblé et build. Chrome production sur PostgreSQL jetable 1/1 : arrivée réelle puis viewport 390×667 avant les résultats ; scène centrée verticalement à moins de 3 px du centre, entièrement dans le viewport sans action de défilement ; aucun lien crédits audio, centrage horizontal, son et reduced-motion vérifiés. Le premier scénario tentait la frappe en viewport mobile, où l'interface de course est volontairement masquée ; test corrigé pour terminer sur desktop puis changer de viewport avant révélation. Capture /tmp/dramatic-podium.png inspectée. Attributions audio conservées dans les fichiers distribués. Suites intégration et E2E globale non réexécutées.
+
+
+### Photo comme personnage — 10 novembre 2026
+
+Passé : lint global, typecheck, check:boundaries, 204 tests unitaires existants puis 5 nouveaux tests présentation/accès photo, 55 tests intégration sur PostgreSQL jetable (migration appliquée deux fois sans changement à la seconde exécution), build de production, scénario navigateur profile-character avec Chrome installé (upload réel, option absente avant photo, sélection, création, rendu et réponse image WebP). Échecs intermédiaires corrigés : attente de migration versionnée, session API isolée du navigateur, clic sur input visuellement masqué remplacé par son label visible. Première tentative PostgreSQL et build limitée par les permissions système ; relances autorisées réussies. Chromium Playwright absent, Chrome installé utilisé. Non exécuté : suite E2E complète, déploiement ou migration de la base applicative. La migration 20261110190000_profile_character reste à appliquer à la base locale avant utilisation de ce choix. Environnement de vérification Node 25.6.0, avertissement moteur (projet exige Node 24).
+
+
+### Correctif 500 photo — 10 novembre 2026
+
+Diagnostic réel : app locale dans Docker, PostgreSQL publié sur 55434 ; le .env hôte pointe vers 5432 sans serveur. Dans le conteneur app, seule la migration 20261110190000_profile_character était en attente. Migration additive appliquée à typing_dev via docker compose exec app, client Prisma régénéré et app locale redémarrée. Aucune migration de production.

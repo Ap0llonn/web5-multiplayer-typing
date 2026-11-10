@@ -7,7 +7,13 @@ import { getCurrentActor } from "@/modules/identity/server";
 import en from "@/shared/presentation/i18n/messages/en.json";
 
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-vi.mock("@/modules/identity/server", () => ({ getCurrentActor: vi.fn() }));
+vi.mock("@/modules/identity/server", () => ({
+  getCurrentActor: vi.fn(),
+  getCurrentProfile: vi.fn(async () => ({
+    ok: true,
+    value: { photoVersion: 1 },
+  })),
+}));
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => createTranslator({ locale: "en", messages: en }),
 }));
@@ -37,6 +43,7 @@ it("accounts create only from the dedicated page with settings and characters", 
   expect(html).toContain('name="name"');
   expect(html).toContain('name="capacity"');
   expect(html).toContain('name="character"');
+  expect(html).toContain('value="profile"');
   expect(html).toContain('name="visibility" value="CODE"');
   expect(html).not.toContain('name="code"');
 });

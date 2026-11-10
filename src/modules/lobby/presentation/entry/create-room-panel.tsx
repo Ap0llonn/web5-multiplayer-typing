@@ -6,7 +6,11 @@ import { Card } from "@/shared/presentation/ui/card";
 import { useLobbyRoom } from "../room/use-lobby-room";
 import { CreateRoomCard } from "./create-room-card";
 
-export function CreateRoomPanel() {
+export function CreateRoomPanel({
+  hasProfilePhoto = false,
+}: {
+  hasProfilePhoto?: boolean;
+}) {
   const t = useTranslations();
   const router = useRouter();
   const { room, pending, messageKey, send } = useLobbyRoom();
@@ -38,6 +42,7 @@ export function CreateRoomPanel() {
         </Card>
       ) : (
         <CreateRoomCard
+          hasProfilePhoto={hasProfilePhoto}
           pending={pending}
           onSubmit={(data) => {
             void enter("/api/lobbies", {

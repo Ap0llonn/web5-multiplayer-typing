@@ -32,9 +32,13 @@ export class DefaultProfileSupervisor implements ProfileSupervisor {
     });
   }
 
-  async currentPhoto(principal: AuthPrincipal | null) {
+  async currentPhoto(
+    principal: AuthPrincipal | null,
+    playerIdentityId?: string,
+  ) {
     if (!principal) return failure("UNAUTHENTICATED");
-    if (principal.kind !== "account") return failure("FORBIDDEN");
-    return this.repository.readPhoto(principal.authUserId);
+    if (!playerIdentityId && principal.kind !== "account")
+      return failure("FORBIDDEN");
+    return this.repository.readPhoto(principal.authUserId, playerIdentityId);
   }
 }

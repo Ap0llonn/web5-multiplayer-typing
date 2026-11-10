@@ -32,6 +32,7 @@ it("reveals third, second, then first while retaining the full ranking", () => {
   );
   expect(html).toContain("animation-delay:8.4s");
   expect(html).toContain("Player 4");
+  expect(html).not.toContain('href="/audio/credits.txt"');
   expect(html).toContain(en.race.stadiumLostIt);
   expect(html).toContain(en.race.totallyNecessary);
   expect(html.match(/--confetti-x:/g)).toHaveLength(96);

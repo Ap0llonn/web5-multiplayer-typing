@@ -3,6 +3,7 @@ export type LobbyActor = {
   playerIdentityId: string;
   kind: "guest" | "account";
   displayName: string;
+  hasProfilePhoto?: boolean;
 };
 export type LobbyVisibility = "PUBLIC" | "CODE";
 export type PublicLobbySummary = {
@@ -15,7 +16,7 @@ export type PublicLobbySummary = {
   state: LobbyState;
 };
 export type LobbyRole = "PARTICIPANT" | "SPECTATOR";
-export type LobbyCharacter = "cobalt" | "coral" | "mint" | "butter";
+export type LobbyCharacter = "cobalt" | "coral" | "mint" | "butter" | "profile";
 export type LobbyState =
   | "WAITING"
   | "COUNTDOWN"

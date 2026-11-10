@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { getCurrentActor } from "@/modules/identity/server";
+import { getCurrentActor, getCurrentProfile } from "@/modules/identity/server";
 import { CreateRoomPanel } from "@/modules/lobby/presentation/entry/create-room-panel";
 import { Link } from "@/shared/presentation/i18n/navigation";
 import { buttonStyles } from "@/shared/presentation/ui/button";
@@ -8,6 +8,10 @@ import { buttonStyles } from "@/shared/presentation/ui/button";
 export async function CreatePage() {
   const t = await getTranslations();
   const actor = await getCurrentActor(await headers());
+  const profile =
+    actor.ok && actor.value.kind === "account"
+      ? await getCurrentProfile(await headers())
+      : null;
   return (
     <section
       className="mx-auto grid w-full max-w-2xl gap-6 py-8"
@@ -20,7 +24,11 @@ export async function CreatePage() {
         </h1>
       </div>
       {actor.ok && actor.value.kind === "account" ? (
-        <CreateRoomPanel />
+        <CreateRoomPanel
+          hasProfilePhoto={
+            !!(profile?.ok && profile.value.photoVersion !== null)
+          }
+        />
       ) : !actor.ok && actor.error.code !== "UNAUTHENTICATED" ? (
         <p role="alert">{t(actor.error.messageKey)}</p>
       ) : (
@@ -34,9 +42,6 @@ export async function CreatePage() {
           </Link>
         </div>
       )}
-      <Link href="/" className="font-bold underline underline-offset-4">
-        {t("home")}
-      </Link>
     </section>
   );
 }

@@ -805,3 +805,19 @@ small {
 /* Continuous celebration until the results component is unmounted. */
 .podium-stage .podium-confetti i { animation-iteration-count: infinite; }
 @media (prefers-reduced-motion: reduce) { .podium-stage .podium-confetti { display: none; } }
+
+/* Keep the entire reveal visible on short laptop and mobile viewports. */
+@media (max-height: 800px), (max-width: 600px) {
+  .podium-stage { padding-top: .25rem; }
+  .podium-stage .podium-victory { padding: .35rem; }
+  .podium-stage .podium-victory-kicker { font-size: clamp(1.35rem, 4vw, 2.5rem); }
+  .podium-stage .podium-victory-name { margin-top: .35rem; font-size: 1rem; }
+  .podium-stage .race-podium { margin-block: .5rem; padding-top: 2rem; }
+  .podium-stage .race-podium .podium-reveal { gap: .3rem; padding: .6rem .3rem; }
+  .podium-stage .race-podium [data-rank="1"] { min-height: 12rem; }
+  .podium-stage .race-podium [data-rank="2"] { min-height: 10.5rem; }
+  .podium-stage .race-podium [data-rank="3"] { min-height: 9rem; }
+  .podium-stage .player-character { width: 3rem; height: 3.4rem; }
+  .podium-stage .podium-crown { top: -2rem; font-size: 2.3rem; }
+  .podium-stage .podium-fanclub { font-size: 1.2rem; }
+}

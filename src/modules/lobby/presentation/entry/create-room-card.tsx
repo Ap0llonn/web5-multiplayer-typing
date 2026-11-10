@@ -11,9 +11,17 @@ import { Icon } from "@/shared/presentation/ui/icon";
 import { Dropdown } from "@/shared/presentation/ui/dropdown";
 import { LobbyRoleField } from "./lobby-role-field";
 
-type RoomFormProps = { pending: boolean; onSubmit: (data: FormData) => void };
+type RoomFormProps = {
+  hasProfilePhoto?: boolean;
+  pending: boolean;
+  onSubmit: (data: FormData) => void;
+};
 
-export function CreateRoomCard({ pending, onSubmit }: RoomFormProps) {
+export function CreateRoomCard({
+  pending,
+  onSubmit,
+  hasProfilePhoto,
+}: RoomFormProps) {
   const t = useTranslations();
   const [character, setCharacter] = useState<LobbyCharacter>("cobalt");
   return (
@@ -70,6 +78,7 @@ export function CreateRoomCard({ pending, onSubmit }: RoomFormProps) {
         />
         <p className="text-sm text-muted">{t("lobbies.visibilityHint")}</p>
         <CharacterPicker
+          hasProfilePhoto={hasProfilePhoto}
           character={character}
           onChange={setCharacter}
           disabled={pending}

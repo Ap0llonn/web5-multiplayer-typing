@@ -11,7 +11,7 @@ export const raceArchiveSchema = z.object({
         playerIdentityId: z.string(),
         displayName: z.string(),
         kind: z.enum(["account", "guest", "bot"]),
-        character: z.enum(["cobalt", "coral", "mint", "butter"]),
+        character: z.enum(["cobalt", "coral", "mint", "butter", "profile"]),
         rank: z.number().int().positive(),
         status: z.enum(["FINISHED", "TIMEOUT", "ABANDONED", "TYPING"]),
         wpm: z.number(),

@@ -748,6 +748,7 @@ test("winner gets a dramatic celebration with a calm reduced-motion alternative"
     await s.h.getByRole("button", { name: en.race.start, exact: true }).click();
     const race = await roomSnapshot(s.h);
     await typeRace(s.h, race.text, en.race.typingArea);
+    await s.h.setViewportSize({ width: 390, height: 667 });
     expect(
       (
         await guest.request.post(`/api/lobbies/${s.code}/race/abandon`, {
@@ -757,6 +758,20 @@ test("winner gets a dramatic celebration with a calm reduced-motion alternative"
       ).ok(),
     ).toBe(true);
     await expect(s.h.locator('[data-celebrating="true"]')).toBeVisible();
+    await expect(s.h.locator('a[href="/audio/credits.txt"]')).toHaveCount(0);
+    await expect
+      .poll(() =>
+        s.h.locator(".podium-stage").evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          return Math.abs(rect.top + rect.height / 2 - window.innerHeight / 2);
+        }),
+      )
+      .toBeLessThan(3);
+    const revealBox = await s.h.locator(".podium-stage").boundingBox();
+    expect(revealBox?.y).toBeGreaterThanOrEqual(0);
+    expect((revealBox?.y ?? 0) + (revealBox?.height ?? 0)).toBeLessThanOrEqual(
+      667,
+    );
     const sound = s.h.getByRole("button", {
       name: en.race.mutePodiumSound,
       exact: true,

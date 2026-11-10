@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { getLocale, getTranslations } from "next-intl/server";
-import { getCurrentActor } from "@/modules/identity/server";
+import { getCurrentActor, getCurrentProfile } from "@/modules/identity/server";
 import { getLobbyService, roomCodeSchema } from "@/modules/lobby/server";
 import { redirect } from "@/shared/presentation/i18n/navigation";
 import { JoinPlayerForm } from "./join-player-form";
@@ -26,8 +26,13 @@ export async function PlayerPage({
         (player) => player.playerIdentityId === actor.value.playerIdentityId,
       );
   }
+  const profile =
+    actor.ok && actor.value.kind === "account"
+      ? await getCurrentProfile(await headers())
+      : null;
   return (
     <JoinPlayerForm
+      hasProfilePhoto={!!(profile?.ok && profile.value.photoVersion !== null)}
       code={parsed.data}
       actor={actor.ok ? actor.value : null}
       initialCharacter={member?.character}

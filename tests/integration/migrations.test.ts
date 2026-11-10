@@ -17,6 +17,7 @@ it("has exactly the versioned migrations and rejects impossible capacity at the 
     "20261109120100_dictionary_words",
     "20261109170000_profile_rank",
     "20261110160000_race_archive",
+    "20261110190000_profile_character",
   ]);
   expect(rows.every((r) => r.finished_at)).toBe(true);
   const constraints = await prisma.$queryRaw<

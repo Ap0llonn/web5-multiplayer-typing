@@ -60,9 +60,15 @@ export async function updateCurrentProfile(headers: Headers, form: FormData) {
   }
 }
 
-export async function getCurrentProfilePhoto(headers: Headers) {
+export async function getCurrentProfilePhoto(
+  headers: Headers,
+  playerIdentityId?: string,
+) {
   try {
-    return await profileSupervisor.currentPhoto(await readSession(headers));
+    return await profileSupervisor.currentPhoto(
+      await readSession(headers),
+      playerIdentityId,
+    );
   } catch {
     return failure("INTERNAL");
   }

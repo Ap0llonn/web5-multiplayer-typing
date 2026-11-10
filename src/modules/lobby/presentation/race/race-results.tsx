@@ -9,8 +9,10 @@ import { PlayerCharacter } from "../characters/player-character";
 export function RaceResults({
   race,
   showPodium = true,
+  raceId,
 }: {
   showPodium?: boolean;
+  raceId?: string;
   race: { players: Omit<RaceArchive["players"][number], "samples">[] };
 }) {
   const t = useTranslations("race");
@@ -23,6 +25,7 @@ export function RaceResults({
   const timing = podiumTiming(race.players.length);
   const [muted, setMuted] = useState(false);
   usePodiumAudio(Boolean(winner), timing.search, timing.winner, muted);
+  const stageRef = useRef<HTMLDivElement>(null);
   const winnerRef = useRef<HTMLLIElement>(null);
   const [spot, setSpot] = useState({ x: "50vw", y: "60vh" });
   useEffect(() => {
@@ -34,14 +37,22 @@ export function RaceResults({
           y: `${(winnerRef.current?.offsetParent?.getBoundingClientRect().top ?? rect.top) + (winnerRef.current?.offsetTop ?? 0) + rect.height / 2}px`,
         });
     };
-    update();
+    const frame = requestAnimationFrame(() => {
+      if (showPodium)
+        stageRef.current?.scrollIntoView({
+          block: "center",
+          behavior: "instant",
+        });
+      update();
+    });
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, { passive: true });
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update);
     };
-  }, []);
+  }, [showPodium]);
   const celebrationStyle = {
     "--victory-delay": `${winner ? timing.winner : timing.search}s`,
     "--spotlight-delay": `${timing.search}s`,
@@ -70,16 +81,6 @@ export function RaceResults({
         </button>
       )}
       {winner && (
-        <a
-          href="/audio/credits.txt"
-          target="_blank"
-          rel="noreferrer"
-          className="ml-3 text-sm underline"
-        >
-          {t("audioCredits")}
-        </a>
-      )}
-      {winner && (
         <div
           className="podium-spotlight"
           aria-hidden="true"
@@ -88,6 +89,7 @@ export function RaceResults({
       )}
       {showPodium && (
         <div
+          ref={stageRef}
           className="podium-stage"
           data-celebrating={Boolean(winner)}
           style={celebrationStyle}
@@ -159,7 +161,11 @@ export function RaceResults({
                   <span className="text-2xl font-black">
                     {format.number(player.rank)}
                   </span>
-                  <PlayerCharacter character={player.character} />
+                  <PlayerCharacter
+                    character={player.character}
+                    playerIdentityId={player.playerIdentityId}
+                    raceId={raceId}
+                  />
                   <strong>{player.displayName}</strong>
                   <span>{t(player.status)}</span>
                 </li>

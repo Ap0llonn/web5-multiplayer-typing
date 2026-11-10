@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { getFormatter, getTranslations } from "next-intl/server";
 import { readProfileMetrics } from "@/modules/lobby/server";
 import { getCurrentActor, getCurrentProfile } from "@/modules/identity/server";
-import { ProfileForm } from "@/modules/identity/presentation/profile/profile-form";
+import { ProfileEditModal } from "@/modules/identity/presentation/profile/profile-edit-modal";
 import { ProfileAvatar } from "@/modules/identity/presentation/profile/profile-avatar";
 import { ProfileStatistics } from "@/modules/identity/presentation/profile/profile-statistics";
 import { Link } from "@/shared/presentation/i18n/navigation";
@@ -55,7 +55,7 @@ export async function ProfilePage() {
   const profile = result.value;
   const format = await getFormatter();
   return (
-    <div className="mx-auto grid max-w-5xl gap-8 py-4 sm:py-6">
+    <div className="mx-auto grid w-full gap-8 py-4 sm:py-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-extrabold text-[var(--accent)]">
@@ -106,23 +106,15 @@ export async function ProfilePage() {
               })}
             </p>
           </Card>
-          <Card aria-labelledby="profile-edit-title">
-            <h2 id="profile-edit-title" className="text-xl font-black">
-              {t("profile.editTitle")}
-            </h2>
-            <p className="mt-1 mb-5 text-sm text-muted">
-              {t("profile.editDescription")}
-            </p>
-            <ProfileForm profile={profile} />
-          </Card>
+          <ProfileEditModal profile={profile} />
         </div>
         <div className="grid min-w-0 gap-6">
           {await ProfileStatistics({
             metrics: metrics?.ok ? metrics.value : null,
           })}
-          {metrics?.ok && <ProfileHistory rows={metrics.value.history} />}
         </div>
       </div>
+      {metrics?.ok && <ProfileHistory rows={metrics.value.history} />}
     </div>
   );
 }

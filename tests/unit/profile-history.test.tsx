@@ -40,7 +40,9 @@ for (const [locale, messages] of [
         />
       </NextIntlClientProvider>,
     );
-    expect(html).toContain("<details>");
+    expect(html).not.toContain("<title></title>");
+    expect(html).toMatch(/<title>[^<]+: 42<\/title>/);
+    expect(html).toContain('<details class="mt-3">');
     expect(html).toContain('href="/profile/races/race"');
     expect(html).toContain(messages.profile.raceDetails);
     expect(html).toContain(messages.profile.grossWpm);

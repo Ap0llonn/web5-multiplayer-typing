@@ -171,3 +171,29 @@ it("reconciles an expired host before accepting a new join", () => {
   });
   expect(room.state).toBe("CLOSED");
 });
+
+it("permits profile character only with a server-verified photo", () => {
+  expect(
+    createRoom({ ...input, character: "profile" }, host, "ABC234", 0),
+  ).toMatchObject({ ok: false });
+  expect(
+    createRoom(
+      { ...input, character: "profile" },
+      { ...host, hasProfilePhoto: true },
+      "ABC234",
+      0,
+    ),
+  ).toMatchObject({ ok: true, value: { members: [{ character: "profile" }] } });
+  expect(joinRoom(fresh(), guest, "PARTICIPANT", 1, "profile")).toMatchObject({
+    ok: false,
+  });
+  expect(
+    joinRoom(
+      fresh(),
+      { ...host, playerIdentityId: "other", hasProfilePhoto: true },
+      "PARTICIPANT",
+      1,
+      "profile",
+    ),
+  ).toMatchObject({ ok: true });
+});

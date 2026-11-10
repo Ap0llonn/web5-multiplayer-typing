@@ -1,5 +1,5 @@
 import "server-only";
-import { getCurrentActor } from "@/modules/identity/server";
+import { getCurrentActor, getCurrentProfile } from "@/modules/identity/server";
 import {
   getLobbyService,
   createLobbySchema,
@@ -26,6 +26,14 @@ export async function handleLobbyCommand(
       return resultResponse(failure("FORBIDDEN"));
     const actor = await getCurrentActor(request.headers);
     if (!actor.ok) return resultResponse(actor);
+    const profile =
+      operation === "create" || operation === "join"
+        ? await getCurrentProfile(request.headers)
+        : null;
+    const lobbyActor = {
+      ...actor.value,
+      hasProfilePhoto: !!(profile?.ok && profile.value.photoVersion !== null),
+    };
     const service = getLobbyService();
     if (operation === "current")
       return resultResponse(await service.currentLobby(actor.value));
@@ -61,7 +69,7 @@ export async function handleLobbyCommand(
       const parsed = createLobbySchema.safeParse(data);
       return resultResponse(
         parsed.success
-          ? await service.createLobby(parsed.data, actor.value)
+          ? await service.createLobby(parsed.data, lobbyActor)
           : failure("VALIDATION"),
       );
     }
@@ -84,7 +92,7 @@ export async function handleLobbyCommand(
         ? await service.joinLobby(
             parsed.data.code,
             parsed.data.role,
-            actor.value,
+            lobbyActor,
             parsed.data.character,
           )
         : failure("VALIDATION"),

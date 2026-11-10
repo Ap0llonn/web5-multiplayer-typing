@@ -166,6 +166,7 @@ model LobbyBan {
 }
 
 enum LobbyCharacter {
+ profile
  cobalt
  coral
  mint

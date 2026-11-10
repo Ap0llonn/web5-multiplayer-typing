@@ -1,5 +1,11 @@
 import { z } from "zod";
-export const characterSchema = z.enum(["cobalt", "coral", "mint", "butter"]);
+export const characterSchema = z.enum([
+  "cobalt",
+  "coral",
+  "mint",
+  "butter",
+  "profile",
+]);
 export const roomCodeSchema = z
   .string()
   .trim()

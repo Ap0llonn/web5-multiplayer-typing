@@ -16,10 +16,12 @@ export function CharacterPicker({
   character,
   onChange,
   disabled = false,
+  hasProfilePhoto = false,
 }: {
   character: LobbyCharacter;
   onChange: (character: LobbyCharacter) => void;
   disabled?: boolean;
+  hasProfilePhoto?: boolean;
 }) {
   const t = useTranslations("play");
   const id = useId();
@@ -33,7 +35,10 @@ export function CharacterPicker({
         role="radiogroup"
         aria-labelledby={`${id}-label`}
       >
-        {characters.map((choice) => (
+        {(hasProfilePhoto
+          ? [...characters, "profile" as const]
+          : characters
+        ).map((choice) => (
           <label
             className={`character-choice${character === choice ? " character-choice-selected" : ""}`}
             key={choice}

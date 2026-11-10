@@ -143,6 +143,8 @@
   "profile": {
     "title": "My profile",
     "eyebrow": "Your corner of the clubhouse",
+    "editButton": "Edit profile",
+    "closeEditor": "Close",
     "editTitle": "Make it yours",
     "editDescription": "The name your crew sees, and a photo that feels like you.",
     "displayName": "Display name",
@@ -213,6 +215,7 @@
     "backButton": "Back",
     "characterLabel": "Pick your character",
     "characters": {
+      "profile": "Profile photo",
       "cobalt": "Blue",
       "coral": "Coral",
       "mint": "Mint",

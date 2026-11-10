@@ -12,5 +12,6 @@ export interface ProfileSupervisor {
   ): Promise<OperationResult<Profile>>;
   currentPhoto(
     principal: AuthPrincipal | null,
+    playerIdentityId?: string,
   ): Promise<OperationResult<Uint8Array>>;
 }
