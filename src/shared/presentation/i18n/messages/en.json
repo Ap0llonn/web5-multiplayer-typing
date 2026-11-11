@@ -322,7 +322,7 @@
     "text": "Race text",
     "typingArea": "Typing area",
     "requiredHint": "Click the text and type directly. Correct each error with Backspace. Pasting is disabled.",
-    "freeHint": "Click the text and type directly. You can continue after an error; each mistake counts.",
+    "freeHint": "Click the text and type directly. Finishers are ranked by accuracy, then by finish time when accuracy is equal.",
     "spectating": "You are watching this race as a spectator.",
     "retrying": "Connection interrupted. Your pending edits will be retried.",
     "reconnecting": "Reconnecting. Typing will resume when your room connection is restored.",
@@ -395,5 +395,33 @@
     "historicMoment": "A HISTORIC MOMENT",
     "totallyNecessary": "CELEBRATION BUDGET: YES",
     "audioCredits": "Audio credits"
+  },
+  "heatmap": {
+    "title": "Key heatmap",
+    "mode": "Show",
+    "errors": "Errors",
+    "frequency": "Frequency",
+    "space": "Space",
+    "description": "Characters typed during completed races, with uppercase and lowercase combined. Corrected mistakes still count.",
+    "coverage": "{count, plural, =0 {No races with per-key data.} one {# race with per-key data.} other {# races with per-key data.}} Older races without this data are excluded.",
+    "empty": "Play a new race to start filling your heatmap.",
+    "detail": "{key}: {total} keystrokes, {errors} errors, accuracy {accuracy}.",
+    "noKeyData": "{key}: no recorded keystrokes.",
+    "errorLegend": "Redder keys have a higher error rate (0 to 100%).",
+    "frequencyLegend": "Bluer keys are used more often (relative to the most used key).",
+    "keyboard": "Typed character map",
+    "inspect": "Hover, tap or focus a key to see its statistics."
+  },
+  "invites": {
+    "title": "Invite someone",
+    "description": "Create a link valid for one hour and one successful entry. Opening the link does not use it up.",
+    "create": "Create a single-use link",
+    "open": "Open invitation link",
+    "link": "Invitation link",
+    "copy": "Copy link",
+    "share": "Share link",
+    "copied": "Link copied.",
+    "copyFailed": "Copying or sharing is unavailable. Select and copy the link above.",
+    "unavailable": "This invitation link has already been used, has expired or does not exist. Ask the host for a new link."
   }
 }

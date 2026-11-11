@@ -1,4 +1,5 @@
 import "server-only";
+import { invitationLinksSchema } from "../../contracts/invitation";
 import { Prisma, type PrismaClient } from "@/generated/prisma/client";
 import {
   success,
@@ -22,6 +23,7 @@ type Row = Prisma.LobbyGetPayload<{
 }>;
 function fromRow(row: Row): Lobby {
   return {
+    invitationLinks: invitationLinksSchema.parse(row.invitationLinks),
     raceSettings: raceSettingsSchema.parse(row.raceSettings),
     race: row.race === null ? null : raceStateSchema.parse(row.race),
     id: row.id,
@@ -194,6 +196,9 @@ export class PrismaLobbyRepository implements LobbyRepository {
                 where: { id: room.id },
                 data: {
                   hostPlayerIdentityId: room.hostPlayerIdentityId,
+                  invitationLinks: (room.invitationLinks ?? []).map((link) => ({
+                    ...link,
+                  })),
                   state: room.state,
                   version: room.version,
                   capacity: room.capacity,

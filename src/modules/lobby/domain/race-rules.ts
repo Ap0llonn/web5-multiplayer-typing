@@ -1,3 +1,4 @@
+import { recordKeyStatistic } from "./key-statistics";
 import type { RaceState } from "../contracts/race";
 
 import {
@@ -125,6 +126,7 @@ export function startRace(
       finishedAt: null,
       lastEditAt: now + 3000,
       budget: 8,
+      keyStatistics: [],
       samples: [],
       text,
       textRevision: 0,
@@ -246,6 +248,8 @@ export function editRace(
     const correct = updated.text[updated.draft.length] === edit;
     updated.draft += edit;
     updated.total++;
+    if (updated.keyStatistics)
+      recordKeyStatistic(updated.keyStatistics, edit, correct);
     if (correct) updated.correct++;
     else updated.errors++;
   }
@@ -378,6 +382,9 @@ export function rankedRacePlayers(race: RaceState) {
   return [...race.players].sort(
     (a, b) =>
       order[a.status] - order[b.status] ||
+      (race.settings.correction === "free" && a.status === "FINISHED"
+        ? raceMetrics(b, 0).accuracy - raceMetrics(a, 0).accuracy
+        : 0) ||
       (a.status === "FINISHED"
         ? (a.finishedAt ?? 0) - (b.finishedAt ?? 0)
         : raceProgress(b) - raceProgress(a)) ||

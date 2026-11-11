@@ -15,7 +15,14 @@ import { readServerEnv } from "@/shared/infrastructure/env/server";
 import { allowRequest } from "@/shared/infrastructure/http/rate-limit";
 export async function handleLobbyCommand(
   request: Request,
-  operation: "create" | "join" | "leave" | "current" | "heartbeat" | "kick",
+  operation:
+    | "create"
+    | "join"
+    | "leave"
+    | "current"
+    | "heartbeat"
+    | "kick"
+    | "invite",
   code?: string,
 ) {
   try {
@@ -57,6 +64,16 @@ export async function handleLobbyCommand(
     } catch {
       return resultResponse(failure("VALIDATION"));
     }
+    if (operation === "invite") {
+      if (!(await allowRequest("invite", request.headers, 10)))
+        return resultResponse(failure("RATE_LIMITED"));
+      const parsed = roomCodeSchema.safeParse(code);
+      return resultResponse(
+        parsed.success && heartbeatLobbySchema.safeParse(data).success
+          ? await service.createInvitation(parsed.data, actor.value)
+          : failure("VALIDATION"),
+      );
+    }
     if (operation === "heartbeat") {
       const parsed = roomCodeSchema.safeParse(code);
       return resultResponse(
@@ -94,6 +111,7 @@ export async function handleLobbyCommand(
             parsed.data.role,
             lobbyActor,
             parsed.data.character,
+            parsed.data.invitationToken,
           )
         : failure("VALIDATION"),
     );

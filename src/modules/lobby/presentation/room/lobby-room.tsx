@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { RoomInvite } from "./room-invite";
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import type { LobbyActor } from "../../public";
@@ -196,6 +197,9 @@ export function LobbyRoom({
         </div>
         <p>{t("shareCode")}</p>
       </div>
+      {isHost && ["WAITING", "RESULTS"].includes(room.state) && (
+        <RoomInvite key={room.code} code={room.code} />
+      )}
       {!room.race && (
         <div className="lobby-clubhouse">
           <Image

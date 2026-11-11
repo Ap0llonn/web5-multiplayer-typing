@@ -1,3 +1,4 @@
+import type { KeyStatistic } from "./key-statistics";
 import type { LobbyCharacter } from "./lobby";
 
 export type RaceSettings = {
@@ -68,6 +69,7 @@ export type RacePlayer = {
   finishedAt: number | null;
   lastEditAt: number;
   budget: number;
+  keyStatistics?: KeyStatistic[];
   samples: { elapsedMs: number; wpm: number }[];
   text: string;
   textRevision: number;

@@ -121,6 +121,7 @@ enum LobbyVisibility {
  CODE
 }
 model Lobby {
+ invitationLinks Json @default("[]")
  id String @id
  code String @unique
  name String
@@ -194,6 +195,7 @@ model RaceResult {
   errors Int
   elapsedMs Int
   bonusesReceived Int @default(0)
+  keyStatistics Json?
   samples Json
   @@id([raceId, playerIdentityId])
   @@index([playerIdentityId, finishedAt])

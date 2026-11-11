@@ -65,6 +65,13 @@ export async function saveRaceResults(
         errors: player.errors,
         elapsedMs,
         bonusesReceived: player.bonusesReceived,
+        ...(player.keyStatistics
+          ? {
+              keyStatistics: player.keyStatistics.map((entry) => ({
+                ...entry,
+              })),
+            }
+          : {}),
         samples: player.samples.map((s) => ({ ...s })),
       },
       update: {},

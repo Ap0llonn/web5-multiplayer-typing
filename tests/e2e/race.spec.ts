@@ -828,3 +828,174 @@ test("winner gets a dramatic celebration with a calm reduced-motion alternative"
     await s.close();
   }
 });
+
+for (const locale of ["fr", "en"] as const) {
+  test(`${locale}: profile heatmap retains real race keystrokes and switches modes`, async ({
+    browser,
+  }) => {
+    const s = await group(browser, locale);
+    const messages = locale === "fr" ? fr : en;
+    try {
+      const guest = await s.join("Guest Racer", "PARTICIPANT");
+      await s.h
+        .getByRole("button", { name: messages.race.start, exact: true })
+        .click();
+      await expect(
+        s.h.getByRole("textbox", {
+          name: messages.race.typingArea,
+          exact: true,
+        }),
+      ).toBeEnabled();
+      const race = await roomSnapshot(s.h);
+      const wrong = race.text[0].toLowerCase() === "x" ? "z" : "x";
+      await typeRace(s.h, wrong, messages.race.typingArea);
+      await expect
+        .poll(async () => (await roomSnapshot(s.h)).self?.draft)
+        .toBe(wrong);
+      await s.h
+        .getByRole("textbox", { name: messages.race.typingArea, exact: true })
+        .press("Backspace");
+      await expect
+        .poll(async () => (await roomSnapshot(s.h)).self?.draft)
+        .toBe("");
+      await typeRace(s.h, race.text.slice(0, 3), messages.race.typingArea);
+      await expect
+        .poll(async () => (await roomSnapshot(s.h)).self?.draft)
+        .toBe(race.text.slice(0, 3));
+      for (const page of [s.h, guest]) {
+        expect(
+          (
+            await page.request.post(`/api/lobbies/${s.code}/race/abandon`, {
+              headers: { origin: s.origin },
+              data: {},
+            })
+          ).ok(),
+        ).toBe(true);
+      }
+      await s.h.goto(`/${locale}/profile`);
+      const heatmap = s.h.getByRole("region", { name: messages.heatmap.title });
+      await expect(heatmap).toBeVisible();
+      await expect(heatmap.getByRole("status")).toHaveCount(0);
+      const select = heatmap.getByLabel(messages.heatmap.mode, { exact: true });
+      await select.selectOption("frequency");
+      await expect(
+        heatmap.getByText(messages.heatmap.frequencyLegend),
+      ).toBeVisible();
+      const key = wrong;
+      const button = heatmap
+        .getByRole("button")
+        .filter({ hasText: key })
+        .first();
+      await button.click();
+      await expect(button).toHaveAttribute("aria-pressed", "true");
+      await expect(heatmap.locator('[aria-live="polite"]')).not.toHaveText(
+        messages.heatmap.inspect,
+      );
+      await select.selectOption("errors");
+      await expect(
+        heatmap.getByText(messages.heatmap.errorLegend),
+      ).toBeVisible();
+      await s.h.reload();
+      await expect(heatmap.getByRole("status")).toHaveCount(0);
+      await s.h.setViewportSize({ width: 390, height: 844 });
+      await expect(heatmap).toBeVisible();
+      expect(
+        await heatmap.evaluate(
+          (element) => element.scrollWidth <= element.clientWidth,
+        ),
+      ).toBe(true);
+      const firstRow = heatmap
+        .getByRole("group", { name: messages.heatmap.keyboard })
+        .locator(":scope > div")
+        .first();
+      expect(
+        await firstRow
+          .getByRole("button")
+          .evaluateAll(
+            (buttons) =>
+              new Set(
+                buttons.map((button) => button.getBoundingClientRect().top),
+              ).size,
+          ),
+      ).toBe(1);
+      const violations = await new AxeBuilder({ page: s.h })
+        .include("section[aria-labelledby]")
+        .analyze();
+      expect(violations.violations).toEqual([]);
+      await s.h
+        .getByRole("button", { name: messages.dark, exact: true })
+        .click();
+      const darkViolations = await new AxeBuilder({ page: s.h })
+        .include("section[aria-labelledby]")
+        .analyze();
+      expect(darkViolations.violations).toEqual([]);
+      await heatmap.screenshot({
+        path: `/tmp/typing-key-heatmap-${locale}.png`,
+      });
+    } finally {
+      await s.close();
+    }
+  });
+}
+
+for (const locale of ["fr", "en"] as const) {
+  test(`${locale}: single-use invitation joins once and the room starts a race`, async ({
+    browser,
+  }) => {
+    const s = await group(browser, locale);
+    const messages = locale === "fr" ? fr : en;
+    const first = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": "192.0.2.203" },
+    });
+    const second = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": "192.0.2.204" },
+    });
+    try {
+      await s.h
+        .getByRole("button", { name: messages.invites.create, exact: true })
+        .click();
+      const link = s.h.getByRole("link", {
+        name: messages.invites.open,
+        exact: true,
+      });
+      await expect(link).toBeVisible();
+      const url = await link.getAttribute("href");
+      if (!url) throw Error("Invitation not generated");
+      expect(new URL(url).hash.startsWith("#invite=")).toBe(true);
+      const a = await first.newPage();
+      const b = await second.newPage();
+      await a.goto(url);
+      await b.goto(url);
+      await a.getByLabel(messages.guestName).fill("Invited Guest");
+      await a
+        .getByRole("button", { name: messages.guest, exact: true })
+        .click();
+      await expect(a).toHaveURL(new RegExp(`/${locale}/play/room/?$`));
+      await expect(a.getByTestId("room-code")).toHaveText(s.code);
+      await b.getByLabel(messages.guestName).fill("Second Guest");
+      await b
+        .getByRole("button", { name: messages.guest, exact: true })
+        .click();
+      await expect(
+        b.getByRole("alert").filter({ hasText: messages.invites.unavailable }),
+      ).toHaveText(messages.invites.unavailable);
+      await expect(s.h.getByTestId("member-row")).toHaveCount(2);
+      await s.h
+        .getByRole("button", { name: messages.race.start, exact: true })
+        .click();
+      await expect(
+        s.h.getByRole("textbox", {
+          name: messages.race.typingArea,
+          exact: true,
+        }),
+      ).toBeEnabled();
+      await expect(
+        a.getByRole("textbox", { name: messages.race.typingArea, exact: true }),
+      ).toBeEnabled();
+    } finally {
+      await first.close();
+      await second.close();
+      await s.close();
+    }
+  });
+}

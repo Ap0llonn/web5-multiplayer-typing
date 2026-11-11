@@ -1020,3 +1020,34 @@ Passé : lint global, typecheck, check:boundaries, 204 tests unitaires existants
 ### Correctif 500 photo — 10 novembre 2026
 
 Diagnostic réel : app locale dans Docker, PostgreSQL publié sur 55434 ; le .env hôte pointe vers 5432 sans serveur. Dans le conteneur app, seule la migration 20261110190000_profile_character était en attente. Migration additive appliquée à typing_dev via docker compose exec app, client Prisma régénéré et app locale redémarrée. Aucune migration de production.
+
+### Classement libre par précision — 10 novembre 2026
+
+Test de régression observé rouge avant correction, vert après. Validation finale : 49 fichiers / 210 tests unitaires passent ; lint, typecheck et check:boundaries passent. Build échoué : accès au cache natif SWC refusé. Intégration et E2E tentés avec la pile PostgreSQL jetable : initialisation PostgreSQL bloquée (création de mémoire partagée interdite). Aucun résultat navigateur validé dans cette session. Environnement Node 25.6.0 au lieu de la version 24 attendue. Aucun accès ni migration d'une base inconnue.
+
+### Carte des touches — 10 novembre 2026
+
+- Tests de collecte/cumul et présentation observés rouges avant implémentation puis verts. Cas Unicode `İ` observé rouge puis corrigé (conversion en minuscules à plusieurs points Unicode conservée sous son caractère original).
+- Passé : lint, typecheck, check:boundaries ; 51 fichiers et 218 tests unitaires ; 21 fichiers et 55 tests d'intégration PostgreSQL jetable, dont persistance après rechargement de la course, idempotence, exclusion des résultats historiques NULL et isolation par identité. Migration ajoutée à la liste attendue ; déploiement double sur DB jetable vérifié.
+- Passé : build Next.js 16.3.8. L'accès initial au cache natif SWC était refusé ; relance autorisée avec accès au cache réussie. Aucun déploiement ni migration sur une base applicative existante.
+- Passé : 2 scénarios navigateur FR/EN, Chrome installé, serveur local dédié au port 3107, PostgreSQL jetable ; scénarios FR/EN avec vraie inscription, vraie course, faute corrigée, persistance au profil, sélecteur, inspection d'une touche, rechargement, viewport mobile sans débordement horizontal, rangées alignées et axe dans les deux thèmes. Le libellé du sélecteur a été corrigé après un premier échec navigateur. Le navigateur Playwright absent et le port 3000 déjà occupé ont été contournés avec Chrome installé et un port distinct.
+- Non exécuté : suite E2E complète, OAuth réel et recette en production (hors périmètre de cette carte). Environnement Node 25.6.0 malgré la version 24 attendue par le projet ; aucun échec final attribué à cette différence.
+- La migration `20261110200000_key_statistics` doit accompagner l'installation de cette version. Les compteurs sont disponibles uniquement pour les courses lancées avec cette collecte ; les archives et résultats anciens ne sont pas inventés.
+
+### Invitations à usage unique et migration locale — 10 novembre 2026
+
+- Migration heatmap appliquée en premier à la demande utilisateur : `20261110200000_key_statistics` sur le Compose de développement local. Le shell hôte ciblait 5432 (ECONNREFUSED), alors que le PostgreSQL du projet était publié sur 55434. Exécution depuis le conteneur app avec son URL interne ; aucune modification de secret, suppression ni réinitialisation.
+- Incident durant les modifications : le code monté et rechargé à chaud a référencé le nouveau champ d'invitation avant sa migration, rendant le chargement/création des salles indisponible. Migration `20261110210000_single_use_invitations` appliquée immédiatement puis client Prisma régénéré dans app. `prisma migrate status` : 15 migrations, schéma à jour. Deux lectures indépendantes de GET /api/lobbies sur l'application locale ont ensuite rendu HTTP 200 / ok:true. Aucun test d'écriture exécuté sur cette base existante.
+- Passé : 53 fichiers / 223 tests unitaires ; 22 fichiers / 57 tests intégration sur PostgreSQL jetable, dont un seul gagnant pour deux consommateurs concurrents et rollback de consommation si l'identité a déjà une autre salle. Deux déploiements consécutifs des migrations sur la base jetable : pas de migration restante.
+- Passé : lint, typecheck, check:boundaries, build Next.js 16.3.8. Revue indépendante des frontières, atomicité, expiration, confidentialité et parcours invité sans défaut restant signalé.
+- Passé : 4 scénarios navigateur (30,3 s), Chrome installé, port 3107, PostgreSQL jetable ; parcours FR/EN de création UI et entrée par code, puis invitation générée par hôte, deux ouvertures sans consommation, vraie session invitée, une seule entrée, refus traduit du second destinataire et démarrage de course. Premier échec de test corrigé : le sélecteur d'alerte ciblait aussi l'annonceur de route Next ; le message métier était déjà correct. Aucune modification produit pour masquer l'erreur.
+- Non exécuté : suite E2E entière, partage natif sur appareil mobile, OAuth réel et déploiement de production. La copie/partage reste une action explicite de l'utilisateur ; aucun message externe envoyé par l'agent. Node hôte 25.6.0 malgré version 24 attendue ; Docker local reste l'environnement applicatif.
+
+
+### HTTP 500 persistant après migration — 10 novembre 2026
+
+Cause : le singleton Prisma global du processus Next de développement conservait le client généré avant le nouveau champ invitationLinks. La migration et la régénération seules ne remplaçaient pas cette instance. Le contrôle précédent de la liste publique était insuffisant : une liste vide n'exerce pas le mapping d'une salle existante.
+
+Diagnostic en lecture seule : les deux salles actives passent les schémas invitation, réglages et course avec un client neuf. Les requêtes authentifiées GET /api/lobbies/me et POST /api/lobbies retournaient toujours 500 dans le processus ancien. Redémarrage du seul service app, sans reset, migration supplémentaire ni changement de données. Vérification réelle dans le navigateur déjà connecté : GET /api/lobbies/me retourne {ok:true,value:null} ; fin du 500 sur cet endpoint. Le parcours de création complet avait passé les tests navigateur sur processus neuf dans la vérification précédente ; aucune création de données de test dans la base locale existante pour ce diagnostic.
+
+Passé : validation des données actives, redémarrage app, contrôle authentifié réel. Non réexécuté : suites unitaires/intégration/build/E2E (aucun code applicatif modifié lors de cette correction d'état d'exécution). Procédure locale mise à jour pour inclure le redémarrage après régénération.

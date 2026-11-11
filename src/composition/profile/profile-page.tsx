@@ -1,3 +1,4 @@
+import { KeyHeatmap } from "@/modules/lobby/presentation/race/key-heatmap";
 import { ProfileHistory } from "@/modules/lobby/presentation/race/profile-history";
 import { headers } from "next/headers";
 import { getFormatter, getTranslations } from "next-intl/server";
@@ -114,6 +115,12 @@ export async function ProfilePage() {
           })}
         </div>
       </div>
+      {metrics?.ok && (
+        <KeyHeatmap
+          statistics={metrics.value.keyStatistics}
+          races={metrics.value.heatmapRaces}
+        />
+      )}
       {metrics?.ok && <ProfileHistory rows={metrics.value.history} />}
     </div>
   );

@@ -1,3 +1,12 @@
+import {
+  invitationTokenSchema,
+  type InvitationTokens,
+} from "../../contracts/invitation";
+import {
+  createInvitation,
+  redeemInvitation,
+  INVITATION_LIFETIME_MS,
+} from "../../domain/invitation-rules";
 import { PRESENCE_GRACE_MS } from "../../contracts/presence";
 import { raceNeedsAdvance } from "../../domain/race-rules";
 import { success, failure } from "@/shared/contracts/operation-result";
@@ -28,7 +37,20 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
   constructor(
     private readonly repository: LobbyRepository,
     private readonly now: () => number = Date.now,
+    private readonly tokens?: InvitationTokens,
   ) {}
+  async createInvitation(code: string, actor: LobbyActor) {
+    if (!this.tokens) return failure("INTERNAL");
+    const token = this.tokens.create();
+    const digest = this.tokens.digest(token);
+    let expiresAt = 0;
+    const result = await this.repository.mutate(code, (room) => {
+      const now = this.now();
+      expiresAt = now + INVITATION_LIFETIME_MS;
+      return createInvitation(room, actor, digest, now);
+    });
+    return result.ok ? success({ token, expiresAt }) : result;
+  }
   async listPublicLobbies() {
     const activeSince = this.now() - PRESENCE_GRACE_MS;
     const result = await this.repository.findPublicLobbies(activeSince);
@@ -100,9 +122,21 @@ export class DefaultLobbySupervisor implements LobbySupervisor {
     role: LobbyRole,
     actor: LobbyActor,
     character?: LobbyCharacter,
+    invitationToken?: string,
   ) {
+    if (
+      invitationToken !== undefined &&
+      !invitationTokenSchema.safeParse(invitationToken).success
+    )
+      return failure("VALIDATION");
+    if (invitationToken && !this.tokens) return failure("INTERNAL");
+    const digest = invitationToken
+      ? this.tokens?.digest(invitationToken)
+      : undefined;
     const result = await this.repository.mutate(code, (room) =>
-      joinRoom(room, actor, role, this.now(), character),
+      digest
+        ? redeemInvitation(room, actor, role, character, digest, this.now())
+        : joinRoom(room, actor, role, this.now(), character),
     );
     return result.ok
       ? success(snapshot(result.value, this.now(), actor.playerIdentityId))

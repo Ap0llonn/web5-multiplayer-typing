@@ -50,6 +50,34 @@ function running(text = "abc") {
   return r;
 }
 describe("server-authoritative race", () => {
+  it("ranks free finishers by accuracy before finish time", () => {
+    const r = running();
+    if (!r.race) throw Error("Missing race");
+    r.race.settings.correction = "free";
+    expect(
+      editRace(
+        r,
+        host,
+        { raceId: "race-1", sequence: 1, edits: ["x", "x", "x"] },
+        4000,
+      ).ok,
+    ).toBe(true);
+    expect(
+      editRace(
+        r,
+        guest,
+        { raceId: "race-1", sequence: 1, edits: ["a", "b", "c"] },
+        5000,
+      ).ok,
+    ).toBe(true);
+    expect(snapshot(r, 5000).race?.players[0].playerIdentityId).toBe("guest");
+    r.race.players[0].correct = 3;
+    r.race.players[0].errors = 0;
+    expect(snapshot(r, 5000).race?.players[0].playerIdentityId).toBe("host");
+    r.race.settings.correction = "required";
+    r.race.players[0].correct = 0;
+    expect(snapshot(r, 5000).race?.players[0].playerIdentityId).toBe("host");
+  });
   it("ends immediately when the last participant finishes, excluding spectators", () => {
     const r = running();
     joinRoom(r, { ...guest, playerIdentityId: "watcher" }, "SPECTATOR", 3100);

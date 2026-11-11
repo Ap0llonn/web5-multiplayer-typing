@@ -49,19 +49,34 @@ export function JoinPlayerForm({
     setError("");
     setConflict(false);
     try {
+      const invitationToken = new URLSearchParams(
+        window.location.hash.slice(1),
+      ).get("invite");
       const { result, currentRoom } = await sendLobbyCommand(
         "/api/lobbies/join",
         {
           code,
+          ...(invitationToken !== null ? { invitationToken } : {}),
           role,
           character,
         },
       );
       if (result.ok) {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
         router.push("/play/room");
         router.refresh();
       } else {
-        setError(currentRoom ? "roomConflict" : result.error.messageKey);
+        setError(
+          currentRoom
+            ? "roomConflict"
+            : invitationToken && result.error.code === "NOT_FOUND"
+              ? "invites.unavailable"
+              : result.error.messageKey,
+        );
         setConflict(Boolean(currentRoom));
       }
     } finally {

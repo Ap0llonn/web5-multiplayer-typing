@@ -1,3 +1,4 @@
+import { keyStatisticsSchema } from "./key-statistics";
 import { z } from "zod";
 const charactersSchema = z
   .string()
@@ -166,6 +167,7 @@ export const raceStateSchema = z
         finishedAt: z.number().nullable(),
         lastEditAt: z.number(),
         budget: z.number(),
+        keyStatistics: keyStatisticsSchema.optional(),
         samples: z.array(z.object({ elapsedMs: z.number(), wpm: z.number() })),
         text: z.string().optional(),
         textRevision: z.number().int().nonnegative().default(0),

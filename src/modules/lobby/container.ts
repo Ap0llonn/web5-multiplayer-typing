@@ -1,3 +1,4 @@
+import { invitationTokens } from "./infrastructure/invitation-tokens";
 import "server-only";
 import { prisma } from "@/shared/infrastructure/db/prisma";
 import { PrismaLobbyRepository } from "./repositories/implementations/prisma-lobby-repository";
@@ -12,4 +13,6 @@ export const raceSupervisor: RaceSupervisor = new DefaultRaceSupervisor(
 );
 export const lobbySupervisor: LobbySupervisor = new DefaultLobbySupervisor(
   new PrismaLobbyRepository(prisma),
+  Date.now,
+  invitationTokens,
 );

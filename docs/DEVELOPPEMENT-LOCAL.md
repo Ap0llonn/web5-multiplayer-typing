@@ -133,6 +133,22 @@ docker compose exec -T app pnpm exec prisma migrate deploy
 docker compose exec -T app pnpm db:generate
 docker compose restart app
 docker compose exec -T app pnpm exec prisma migrate status
+docker compose restart app
 ```
 
 Si Next.js est encore lancé mais affiche `Can't reach database server at postgres`, vérifier `docker compose ps -a` : un PostgreSQL arrêté ne peut pas recevoir de migration. `start` redémarre le conteneur existant avec son volume et son port publiés, notamment 55434 sur ce poste ; aucune recréation ni suppression de volume n'est nécessaire. Les commandes de migration passent par `app` pour utiliser l'adresse interne de la même base de développement. Ne pas exécuter ces commandes sur une cible de production ou inconnue.
+
+### Migrations pendant le rechargement à chaud
+
+Le conteneur app monte les sources locales : une nouvelle propriété Prisma peut être rechargée avant que sa migration soit appliquée. Pour une modification de schéma en local, synchroniser immédiatement la base et le client dans le conteneur :
+
+```sh
+docker compose exec -T app pnpm exec prisma migrate deploy
+docker compose exec -T app pnpm exec prisma generate
+docker compose exec -T app pnpm exec prisma migrate status
+docker compose restart app
+```
+
+Utiliser ce chemin pour le Compose local : son DATABASE_URL cible le service postgres interne. La DATABASE_URL du shell hôte peut viser un autre port que celui publié par Docker. Le 10 novembre, PostgreSQL local était publié sur 55434 alors que le shell pointait 5432 ; aucun changement de secret ni reset n'a été nécessaire. Les tests restent exclusivement sur PostgreSQL jetable.
+
+Après un changement de schéma et une régénération Prisma, redémarrer aussi le processus app : le singleton global de développement conserve le client créé avant régénération pendant les rechargements à chaud. Le 10 novembre, le client ancien ne sélectionnait pas invitationLinks ; le parseur du nouveau modèle refusait alors les salles existantes. GET /api/lobbies pouvait répondre 200 si sa liste était vide pendant que GET /api/lobbies/me et la création échouaient. Vérifier l'endpoint authentifié, pas seulement la liste publique.

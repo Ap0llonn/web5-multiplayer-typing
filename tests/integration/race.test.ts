@@ -1,3 +1,4 @@
+import { readProfileMetrics } from "@/modules/lobby/server";
 import { readRaceArchive } from "@/modules/lobby/server";
 import { generateRaceText } from "@/modules/lobby/domain/race-text";
 import { afterAll, expect, it } from "vitest";
@@ -125,6 +126,42 @@ it("resumes the author's draft, hides it from peers, atomically saves human resu
     where: { raceId: race.id },
   });
   expect(saved).toHaveLength(2);
+  const metrics = await readProfileMetrics(s.host.playerIdentityId);
+  expect(metrics.ok).toBe(true);
+  if (!metrics.ok) throw Error("Metrics missing");
+  expect(metrics.value.heatmapRaces).toBe(1);
+  expect(
+    metrics.value.keyStatistics.reduce((sum, entry) => sum + entry.total, 0),
+  ).toBe(2);
+  expect(metrics.value.keyStatistics.every((entry) => entry.errors === 0)).toBe(
+    true,
+  );
+  const otherMetrics = await readProfileMetrics("outsider");
+  expect(otherMetrics).toMatchObject({
+    ok: true,
+    value: { heatmapRaces: 0, keyStatistics: [] },
+  });
+  // A legacy result remains excluded, and saving the ended race again is idempotent.
+  await prisma.raceResult.create({
+    data: {
+      raceId: `legacy-${race.id}`,
+      playerIdentityId: s.host.playerIdentityId,
+      finishedAt: new Date(),
+      status: "FINISHED",
+      wpm: 10,
+      grossWpm: 10,
+      accuracy: 100,
+      errors: 0,
+      elapsedMs: 1000,
+      samples: [],
+    },
+  });
+  await s.races.abandon(s.code, s.host);
+  expect(await readProfileMetrics(s.host.playerIdentityId)).toMatchObject({
+    ok: true,
+    value: { heatmapRaces: 1, keyStatistics: metrics.value.keyStatistics },
+  });
+
   const archive = await readRaceArchive(race.id, s.host.playerIdentityId);
   expect(archive.ok && archive.value.players).toHaveLength(2);
   expect(

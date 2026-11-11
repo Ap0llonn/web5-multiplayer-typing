@@ -1,3 +1,4 @@
+import { invitationTokenSchema } from "./invitation";
 import { z } from "zod";
 export const characterSchema = z.enum([
   "cobalt",
@@ -26,6 +27,7 @@ export const kickLobbySchema = z
   .strict();
 export const joinLobbySchema = z
   .object({
+    invitationToken: invitationTokenSchema.optional(),
     code: roomCodeSchema,
     role: z.enum(["PARTICIPANT", "SPECTATOR"]),
     character: characterSchema.optional(),

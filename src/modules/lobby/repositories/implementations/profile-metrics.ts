@@ -1,4 +1,6 @@
 import "server-only";
+import { keyStatisticsSchema } from "../../contracts/key-statistics";
+import { mergeKeyStatistics } from "../../domain/key-statistics";
 import { prisma } from "@/shared/infrastructure/db/prisma";
 import { failure, success } from "@/shared/contracts/operation-result";
 
@@ -32,7 +34,20 @@ export async function readProfileMetrics(playerIdentityId: string) {
         },
       }),
     ]);
+    const keyRows = await prisma.raceResult.findMany({
+      where: { playerIdentityId },
+      select: { keyStatistics: true },
+    });
+    const groups = [];
+    for (const row of keyRows) {
+      if (row.keyStatistics === null) continue;
+      const parsed = keyStatisticsSchema.safeParse(row.keyStatistics);
+      if (!parsed.success) return failure("INTERNAL");
+      groups.push(parsed.data);
+    }
     return success({
+      keyStatistics: mergeKeyStatistics(groups),
+      heatmapRaces: groups.length,
       wins,
       unknownRanks,
       history: history.map((row) => ({

@@ -1,0 +1,1 @@
+ALTER TABLE "Lobby" ADD COLUMN "invitationLinks" JSONB NOT NULL DEFAULT '[]';

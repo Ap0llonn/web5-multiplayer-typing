@@ -19,3 +19,7 @@ export type {
   RaceBonusEvent,
 } from "./contracts/race";
 export type { RaceArchive } from "./contracts/race-archive";
+
+export type { KeyStatistic } from "./contracts/key-statistics";
+
+export type { CreatedInvitation } from "./contracts/invitation";

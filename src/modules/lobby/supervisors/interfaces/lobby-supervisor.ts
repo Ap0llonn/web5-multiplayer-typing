@@ -1,3 +1,4 @@
+import type { CreatedInvitation } from "../../contracts/invitation";
 import type { OperationResult } from "@/shared/contracts/operation-result";
 import type {
   CreateLobbyInput,
@@ -8,6 +9,10 @@ import type {
   LobbyCharacter,
 } from "../../contracts/lobby";
 export interface LobbySupervisor {
+  createInvitation(
+    code: string,
+    actor: LobbyActor,
+  ): Promise<OperationResult<CreatedInvitation>>;
   findQuickLobby(
     playerIdentityId?: string,
   ): Promise<OperationResult<PublicLobbySummary | null>>;
@@ -21,6 +26,7 @@ export interface LobbySupervisor {
     role: LobbyRole,
     actor: LobbyActor,
     character?: LobbyCharacter,
+    invitationToken?: string,
   ): Promise<OperationResult<LobbySnapshot>>;
   leaveLobby(
     code: string,

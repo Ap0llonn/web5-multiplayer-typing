@@ -322,7 +322,7 @@
     "text": "Texte de la course",
     "typingArea": "Zone de frappe",
     "requiredHint": "Cliquez sur le texte et tapez directement. Corrigez chaque erreur avec Retour arrière. Coller est désactivé.",
-    "freeHint": "Cliquez sur le texte et tapez directement. Vous pouvez continuer après une erreur ; chaque faute compte.",
+    "freeHint": "Cliquez sur le texte et tapez directement. Les joueurs ayant terminé sont classés par précision, puis par temps à précision égale.",
     "spectating": "Vous observez cette course en tant que spectateur.",
     "retrying": "Connexion interrompue. Vos frappes en attente seront renvoyées.",
     "reconnecting": "Reconnexion en cours. La frappe reprendra au retour de la connexion à la salle.",
@@ -395,5 +395,33 @@
     "historicMoment": "UN MOMENT HISTORIQUE",
     "totallyNecessary": "BUDGET CÉLÉBRATION : OUI",
     "audioCredits": "Crédits audio"
+  },
+  "heatmap": {
+    "title": "Carte des touches",
+    "mode": "Afficher",
+    "errors": "Erreurs",
+    "frequency": "Fréquence",
+    "space": "Espace",
+    "description": "Caractères saisis pendant les courses terminées, majuscules et minuscules regroupées. Les erreurs corrigées restent comptées.",
+    "coverage": "{count, plural, =0 {Aucune course avec données par touche.} one {# course avec données par touche.} other {# courses avec données par touche.}} Les anciennes courses sans ces données sont exclues.",
+    "empty": "Jouez une nouvelle course pour commencer à remplir votre carte.",
+    "detail": "{key} : {total} frappes, {errors} erreurs, précision {accuracy}.",
+    "noKeyData": "{key} : aucune frappe enregistrée.",
+    "errorLegend": "Plus la touche est rouge, plus son taux d’erreur est élevé (0 à 100 %).",
+    "frequencyLegend": "Plus la touche est bleue, plus elle est utilisée (par rapport à la touche la plus utilisée).",
+    "keyboard": "Carte des caractères saisis",
+    "inspect": "Survolez, touchez ou sélectionnez une touche au clavier pour voir ses statistiques."
+  },
+  "invites": {
+    "title": "Inviter une personne",
+    "description": "Créez un lien valable une heure pour une seule entrée réussie. Ouvrir le lien ne le consomme pas.",
+    "create": "Créer un lien à usage unique",
+    "open": "Ouvrir le lien d’invitation",
+    "link": "Lien d’invitation",
+    "copy": "Copier le lien",
+    "share": "Partager le lien",
+    "copied": "Lien copié.",
+    "copyFailed": "Copie ou partage indisponible. Sélectionnez et copiez le lien ci-dessus.",
+    "unavailable": "Ce lien d’invitation a déjà été utilisé, a expiré ou n’existe pas. Demandez un nouveau lien à l’hôte."
   }
 }
