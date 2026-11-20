@@ -501,7 +501,7 @@ Six effets activés manuellement :
 | Type | Règle serveur |
 | --- | --- |
 | Raccourci | Retirer jusqu'à trois mots entiers du suffixe non commencé |
-| Détour | Ajouter « encore trois mots » / « three more words » au meneur encore en frappe |
+| Détour | Ajouter des mots au meneur encore en frappe (v1 : « encore trois mots » / « three more words » ; règles v2 : mots variés tirés du texte de course, déterministes par objet et cible, jamais deux identiques consécutifs — onde de choc idem) |
 | Brouillard | Masquer les lettres des mots futurs du meneur pendant exactement 4 000 ms ; le mot courant reste lisible |
 | Bouclier | Absorber le prochain détour ou brouillard, puis disparaître ; pas de cumul |
 | Éclaircie | Retirer immédiatement son propre brouillard actif |

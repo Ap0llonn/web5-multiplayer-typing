@@ -413,14 +413,18 @@ it("replaces shield drops with an active shockwave affecting only racers ahead o
     usedAt: null,
   };
   expect(applyRaceItem(race, actor, item, 5000).ok).toBe(true);
-  expect(leader.text).toBe(before + " again again again");
+  const addedTo = (player: typeof leader) =>
+    player.text.slice(before.length).trim().split(" ");
+  expect(leader.text.startsWith(before + " ")).toBe(true);
+  expect(addedTo(leader)).toHaveLength(3);
   expect(actor.text).toBe(text);
-  expect(second.text).toBe(before + " again again again");
+  expect(addedTo(second)).toHaveLength(3);
+  const afterWave = leader.text;
   expect(behind.text).toBe(before);
   expect(finished.text).toBe(before);
   expect(leader.shield).toBe(false);
   expect(applyRaceItem(race, actor, item, 5001).ok).toBe(false);
-  expect(leader.text).toBe(before + " again again again");
+  expect(leader.text).toBe(afterWave);
   expect(race.events.at(-1)).toMatchObject({
     type: "shockwave",
     targetId: second.playerIdentityId,
@@ -442,4 +446,38 @@ it("never draws a new shield across personal box seeds", () => {
         .some((item) => item.type === "shield"),
     ).toBe(false);
   }
+});
+
+it("adds varied words taken from the race text for shockwave and detour", () => {
+  const { race } = running();
+  race.bonusRulesVersion = 2;
+  const leader = race.players[0];
+  const actor = race.players[1];
+  leader.progress = 30;
+  actor.progress = 10;
+  const pool = new Set(text.split(" "));
+  const added = (before: string) =>
+    leader.text.slice(before.length).trim().split(" ");
+  let before = leader.text;
+  const wave = {
+    id: "wave-variety",
+    type: "shockwave" as const,
+    strength: 3 as const,
+    checkpoint: 25 as const,
+    receivedAt: 4000,
+    usedAt: null,
+  };
+  expect(applyRaceItem(race, actor, wave, 5000).ok).toBe(true);
+  const waveWords = added(before);
+  expect(waveWords).toHaveLength(4);
+  expect(waveWords.every((w) => pool.has(w))).toBe(true);
+  expect(new Set(waveWords).size).toBeGreaterThan(1);
+  waveWords.slice(1).forEach((w, i) => expect(w).not.toBe(waveWords[i]));
+  before = leader.text;
+  const detour = { ...wave, id: "detour-variety", type: "detour" as const };
+  expect(applyRaceItem(race, actor, detour, 5001).ok).toBe(true);
+  const detourWords = added(before);
+  expect(detourWords).toHaveLength(6);
+  expect(detourWords.every((w) => pool.has(w))).toBe(true);
+  expect(new Set(detourWords).size).toBeGreaterThan(1);
 });
