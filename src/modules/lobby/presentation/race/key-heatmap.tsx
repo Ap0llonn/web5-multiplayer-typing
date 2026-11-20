@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
+import { Dropdown } from "@/shared/presentation/ui/dropdown";
 import type { KeyStatistic } from "../../public";
 
 const keyboardRows = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm", " "];
@@ -52,21 +53,18 @@ export function KeyHeatmap({
         <h2 id={`${id}-title`} className="text-xl font-black">
           {t("title")}
         </h2>
-        <div className="grid gap-1 text-sm font-bold">
-          <label htmlFor={`${id}-mode`}>{t("mode")}</label>
-          <select
-            id={`${id}-mode`}
+        <div className="w-44">
+          <Dropdown
+            label={t("mode")}
             value={mode}
-            onChange={(event) =>
-              setMode(
-                event.target.value === "frequency" ? "frequency" : "errors",
-              )
+            onValueChange={(value) =>
+              setMode(value === "frequency" ? "frequency" : "errors")
             }
-            className="rounded-lg border border-[var(--border)] bg-[var(--panel)] px-3 py-2"
-          >
-            <option value="errors">{t("errors")}</option>
-            <option value="frequency">{t("frequency")}</option>
-          </select>
+            options={[
+              { value: "errors", label: t("errors") },
+              { value: "frequency", label: t("frequency") },
+            ]}
+          />
         </div>
       </div>
       <p className="mt-3 text-sm text-muted">{t("description")}</p>

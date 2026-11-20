@@ -876,8 +876,14 @@ for (const locale of ["fr", "en"] as const) {
       const heatmap = s.h.getByRole("region", { name: messages.heatmap.title });
       await expect(heatmap).toBeVisible();
       await expect(heatmap.getByRole("status")).toHaveCount(0);
-      const select = heatmap.getByLabel(messages.heatmap.mode, { exact: true });
-      await select.selectOption("frequency");
+      const select = heatmap.getByRole("combobox", {
+        name: messages.heatmap.mode,
+        exact: true,
+      });
+      await select.click();
+      await heatmap
+        .getByRole("option", { name: messages.heatmap.frequency, exact: true })
+        .click();
       await expect(
         heatmap.getByText(messages.heatmap.frequencyLegend),
       ).toBeVisible();
@@ -891,7 +897,10 @@ for (const locale of ["fr", "en"] as const) {
       await expect(heatmap.locator('[aria-live="polite"]')).not.toHaveText(
         messages.heatmap.inspect,
       );
-      await select.selectOption("errors");
+      await select.click();
+      await heatmap
+        .getByRole("option", { name: messages.heatmap.errors, exact: true })
+        .click();
       await expect(
         heatmap.getByText(messages.heatmap.errorLegend),
       ).toBeVisible();
