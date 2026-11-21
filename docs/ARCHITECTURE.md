@@ -687,6 +687,12 @@ Migration 20261110200000_key_statistics : RaceResult.keyStatistics JSONB nullabl
 
 Tests : key-statistics.test.ts, key-heatmap.test.tsx, intégration race.test.ts/migrations.test.ts et scénarios profile heatmap FR/EN de race.spec.ts. Voir verification.md pour les contrôles réellement exécutés. Cette livraison couvre la carte personnelle de RES-03, sans prétendre vérifier les autres graphiques par anticipation.
 
+### Retour après connexion — 20 novembre 2026
+
+Demande utilisateur : après connexion ou inscription, revenir à la page qui l'a demandée. `shared/presentation/i18n/return-path.ts` est générique : `readReturnPath(value)` retourne un chemin d'application sans préfixe de locale avec sa query, ou `null` ; `withReturnPath("/login" | "/signup", next)` construit le lien. Sont refusés les valeurs non textuelles ou > 512 caractères, tout ce qui ne commence pas par un seul `/`, les barres obliques inverses (aussi `%5C`), les caractères de contrôle, une origine différente après résolution et les routes `/login`, `/signup` et `/api`. Le fragment est toujours retiré : les jetons d'invitation y vivent et ne doivent pas transiter par `next`.
+
+`composition/auth/AuthPage` reçoit les `searchParams` de la route, valide `next` côté serveur et transmet seulement le résultat à `identity/presentation/AuthForm` (`returnTo`, défaut `/`). Le formulaire pousse ce chemin après une connexion/inscription locale et le préfixe de la locale pour le `callbackURL` OAuth officiel. Les liens croisés connexion ↔ inscription conservent `next`. `composition/site/AuthLinks` (client, `usePathname`) ajoute la page courante aux liens de la navigation ; `/play/create` renvoie vers lui-même. L'accueil n'ajoute pas de paramètre. Il s'agit uniquement d'une redirection de navigation : aucune autorisation n'en dépend, chaque page revérifie la session réelle, et le protocole Better Auth n'est pas réimplémenté.
+
 ### Invitation à usage unique — 10 novembre 2026
 
 Demande utilisateur et conception approuvée : l'hôte présent crée un lien valable une heure, consommé par une seule nouvelle entrée réussie. Module propriétaire lobby. Interface superviseur createInvitation(code, actor) -> OperationResult<CreatedInvitation> ; joinLobby accepte invitationToken optionnel validé côté serveur. Tokens 256 bits générés par adaptateur crypto injecté, seuls les digests SHA-256 sont persistés (aucun protocole d'authentification réimplémenté). Identité obtenue via la vraie session ; formulaire invité officiel inchangé.

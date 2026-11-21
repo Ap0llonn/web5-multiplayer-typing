@@ -6,6 +6,7 @@ import { SignOutButton } from "@/modules/identity/presentation/sign-out-button";
 import { Link } from "@/shared/presentation/i18n/navigation";
 import { buttonStyles } from "@/shared/presentation/ui/button";
 import { Icon } from "@/shared/presentation/ui/icon";
+import { AuthLinks } from "./auth-links";
 
 export async function getAccountControls() {
   const t = await getTranslations();
@@ -42,20 +43,5 @@ export async function getAccountControls() {
     );
   }
   if (actor.error.code !== "UNAUTHENTICATED") return undefined;
-  return (
-    <div className="nav-account-controls">
-      <Link
-        href="/login"
-        className={buttonStyles({ variant: "paper", size: "small" })}
-      >
-        {t("login")}
-      </Link>
-      <Link
-        href="/signup"
-        className={buttonStyles({ variant: "pink", size: "small" })}
-      >
-        {t("signup")}
-      </Link>
-    </div>
-  );
+  return <AuthLinks />;
 }

@@ -14,11 +14,14 @@ import {
 export function AuthForm({
   mode,
   providers = [],
+  returnTo = "/",
   onAuthenticated,
   children,
 }: {
   mode: "login" | "signup" | "guest";
   providers?: string[];
+  /** Safe in-app path, already validated with readReturnPath by the page. */
+  returnTo?: string;
   onAuthenticated?: () => Promise<void>;
   children?: ReactNode;
 }) {
@@ -64,7 +67,7 @@ export function AuthForm({
         await onAuthenticated();
         return;
       }
-      router.push("/");
+      router.push(returnTo);
       router.refresh();
     } catch {
       setError("errors.INTERNAL");
@@ -79,7 +82,7 @@ export function AuthForm({
     try {
       const result = await authClient.signIn.social({
         provider,
-        callbackURL: `/${locale}`,
+        callbackURL: returnTo === "/" ? `/${locale}` : `/${locale}${returnTo}`,
       });
       if (result.error)
         setError(

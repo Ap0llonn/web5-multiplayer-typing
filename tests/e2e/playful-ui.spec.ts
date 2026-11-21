@@ -66,7 +66,9 @@ for (const [locale, messages] of [
           .getByRole("main")
           .getByRole("link", { name: messages.login, exact: true })
           .click();
-        await expect(page).toHaveURL(new RegExp(`/${locale}/login$`));
+        await expect(page).toHaveURL(
+          new RegExp(`/${locale}/login\\?next=%2Fplay%2Fcreate$`),
+        );
         await expect(page.getByLabel(messages.username)).toBeVisible();
         await expectNoHorizontalOverflow(page);
 

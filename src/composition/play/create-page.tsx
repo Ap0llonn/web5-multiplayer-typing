@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentActor, getCurrentProfile } from "@/modules/identity/server";
 import { CreateRoomPanel } from "@/modules/lobby/presentation/entry/create-room-panel";
 import { Link } from "@/shared/presentation/i18n/navigation";
+import { withReturnPath } from "@/shared/presentation/i18n/return-path";
 import { buttonStyles } from "@/shared/presentation/ui/button";
 
 export async function CreatePage() {
@@ -34,10 +35,16 @@ export async function CreatePage() {
       ) : (
         <div className="grid gap-4 rounded-3xl border-2 border-[var(--border)] bg-[var(--panel)] p-6">
           <p>{t(actor.ok ? "guestLimit" : "accountRequired")}</p>
-          <Link href="/login" className={buttonStyles({ variant: "ink" })}>
+          <Link
+            href={withReturnPath("/login", "/play/create")}
+            className={buttonStyles({ variant: "ink" })}
+          >
             {t("login")}
           </Link>
-          <Link href="/signup" className={buttonStyles({ variant: "paper" })}>
+          <Link
+            href={withReturnPath("/signup", "/play/create")}
+            className={buttonStyles({ variant: "paper" })}
+          >
             {t("signup")}
           </Link>
         </div>

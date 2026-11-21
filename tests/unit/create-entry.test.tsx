@@ -71,6 +71,9 @@ for (const kind of ["guest", "signed-out", "error"] as const) {
     const html = await render();
     expect(html).not.toContain("<form");
     if (kind === "error") expect(html).toContain('role="alert"');
-    else expect(html).toContain('href="/login"');
+    else {
+      expect(html).toContain('href="/login?next=%2Fplay%2Fcreate"');
+      expect(html).toContain('href="/signup?next=%2Fplay%2Fcreate"');
+    }
   });
 }

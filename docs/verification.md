@@ -1051,3 +1051,12 @@ Cause : le singleton Prisma global du processus Next de développement conservai
 Diagnostic en lecture seule : les deux salles actives passent les schémas invitation, réglages et course avec un client neuf. Les requêtes authentifiées GET /api/lobbies/me et POST /api/lobbies retournaient toujours 500 dans le processus ancien. Redémarrage du seul service app, sans reset, migration supplémentaire ni changement de données. Vérification réelle dans le navigateur déjà connecté : GET /api/lobbies/me retourne {ok:true,value:null} ; fin du 500 sur cet endpoint. Le parcours de création complet avait passé les tests navigateur sur processus neuf dans la vérification précédente ; aucune création de données de test dans la base locale existante pour ce diagnostic.
 
 Passé : validation des données actives, redémarrage app, contrôle authentifié réel. Non réexécuté : suites unitaires/intégration/build/E2E (aucun code applicatif modifié lors de cette correction d'état d'exécution). Procédure locale mise à jour pour inclure le redémarrage après régénération.
+
+### Retour après connexion — 20 novembre 2026
+
+- Tests observés rouges avant implémentation (5 échecs : module absent, liens sans `next`), puis verts : `tests/unit/return-path.test.ts`, `tests/unit/auth-return.test.tsx`, `create-entry.test.tsx`, `site-account-controls.test.tsx`.
+- Passé : lint, typecheck, check:boundaries ; 55 fichiers / 233 tests unitaires ; build Next.js 16.3.8.
+- Passé : 13 scénarios navigateur sur `navigation.spec.ts`, `playful-ui.spec.ts` et `profile.spec.ts`, Chrome installé, port 3107, PostgreSQL jetable embarqué. Couvre : `href` avec `next` sur `/play`, `/play/create` et `/lobbies` FR/EN et trois largeurs ; inscription réelle depuis `/play/create` qui revient au formulaire de création ; `next=//evil.example` qui revient à l'accueil après une vraie connexion.
+- Échoué (préexistant, hors de ce changement) : `profile.spec.ts` attend le champ « Display name » directement sur `/en/profile`, alors qu'il est derrière le bouton « Edit profile » depuis `de7c5bb`. L'étape d'inscription sans `next` de ce scénario, qui revient à `/en`, passe avant l'échec.
+- Non exécuté : tests d'intégration (aucun code serveur ou DB modifié), suite E2E complète, retour OAuth GitHub/Discord réel et production.
+

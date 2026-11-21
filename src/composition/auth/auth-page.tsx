@@ -6,8 +6,20 @@ import { SignOutButton } from "@/modules/identity/presentation/sign-out-button";
 import { readServerEnv } from "@/shared/infrastructure/env/server";
 import { AuthLayout } from "@/shared/presentation/ui/auth-layout";
 import { Link } from "@/shared/presentation/i18n/navigation";
-export async function AuthPage({ mode }: { mode: "login" | "signup" }) {
+import {
+  readReturnPath,
+  withReturnPath,
+} from "@/shared/presentation/i18n/return-path";
+export async function AuthPage({
+  mode,
+  searchParams,
+}: {
+  mode: "login" | "signup";
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const t = await getTranslations();
+  // Validated server-side; the form only ever receives a safe in-app path.
+  const returnTo = readReturnPath((await searchParams)?.next) ?? "/";
   const actor = await getCurrentActor(await headers());
   return (
     <AuthLayout
@@ -18,7 +30,10 @@ export async function AuthPage({ mode }: { mode: "login" | "signup" }) {
       badge={t("authBadge")}
       footer={
         <Link
-          href={mode === "login" ? "/signup" : "/login"}
+          href={withReturnPath(
+            mode === "login" ? "/signup" : "/login",
+            returnTo,
+          )}
           className="underline underline-offset-4"
         >
           {t(mode === "login" ? "signupPrompt" : "loginPrompt")}
@@ -35,6 +50,7 @@ export async function AuthPage({ mode }: { mode: "login" | "signup" }) {
       ) : (
         <AuthForm
           mode={mode}
+          returnTo={returnTo}
           providers={Object.keys(readServerEnv(process.env).providers)}
         />
       )}

@@ -8,13 +8,14 @@ import { getCurrentActor } from "@/modules/identity/server";
 import { failure, success } from "@/shared/contracts/operation-result";
 import en from "@/shared/presentation/i18n/messages/en.json";
 
+const pathname = vi.hoisted(() => ({ current: "/" }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("@/modules/identity/server", () => ({ getCurrentActor: vi.fn() }));
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => createTranslator({ locale: "en", messages: en }),
 }));
 vi.mock("@/shared/presentation/i18n/navigation", () => ({
-  usePathname: () => "/",
+  usePathname: () => pathname.current,
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), refresh: vi.fn() }),
   Link: ({ href, children, ...props }: React.ComponentProps<"a">) => (
     <a href={href} {...props}>
@@ -42,6 +43,17 @@ for (const Layout of [SiteLayout, PlayLayout]) {
     expect(html).toContain('href="/login"');
     expect(html).toContain('href="/signup"');
     expect(html).not.toContain(en.logout);
+  });
+  it(`${Layout.name}: signed-out auth links return to the current page`, async () => {
+    vi.mocked(getCurrentActor).mockResolvedValue(failure("UNAUTHENTICATED"));
+    pathname.current = "/lobbies";
+    try {
+      const html = await render();
+      expect(html).toContain('href="/login?next=%2Flobbies"');
+      expect(html).toContain('href="/signup?next=%2Flobbies"');
+    } finally {
+      pathname.current = "/";
+    }
   });
   it(`${Layout.name}: accounts retain profile and sign-out without signed-out actions`, async () => {
     vi.mocked(getCurrentActor).mockResolvedValue(

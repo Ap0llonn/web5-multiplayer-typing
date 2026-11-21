@@ -18,12 +18,13 @@ for (const [locale, messages] of [
       for (const suffix of ["", "/play", "/play/create", "/lobbies"]) {
         await page.goto(`/${locale}${suffix}`);
         const nav = page.getByRole("navigation");
+        const next = suffix ? `?next=${encodeURIComponent(suffix)}` : "";
         for (const [name, path] of [
           [messages.siteNav.join, "/play"],
           [messages.siteNav.seeLobbies, "/lobbies"],
           [messages.siteNav.createRace, "/play/create"],
-          [messages.login, "/login"],
-          [messages.signup, "/signup"],
+          [messages.login, `/login${next}`],
+          [messages.signup, `/signup${next}`],
         ]) {
           const link = nav.getByRole("link", { name, exact: true });
           await expect(link).toBeVisible();
@@ -90,6 +91,51 @@ for (const [locale, messages] of [
     });
   });
 }
+
+test("signing up from the create page returns to room creation", async ({
+  page,
+}) => {
+  const username = `ret${crypto.randomUUID().replaceAll("-", "").slice(0, 10)}`;
+  await page.goto("/en/play/create");
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: en.signup, exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/en\/signup\?next=%2Fplay%2Fcreate$/);
+  await page.getByLabel(en.username, { exact: true }).fill(username);
+  await page
+    .getByLabel(en.email, { exact: true })
+    .fill(`${username}@example.test`);
+  await page.getByLabel(en.password, { exact: true }).fill("test-password-123");
+  await page.getByRole("button", { name: en.signup, exact: true }).click();
+  await expect(page).toHaveURL(/\/en\/play\/create$/);
+  await expect(page.locator('input[name="name"]')).toBeVisible();
+});
+
+test("an external return path falls back to home after login", async ({
+  page,
+}) => {
+  const username = `ext${crypto.randomUUID().replaceAll("-", "").slice(0, 10)}`;
+  const response = await page.request.post("/api/auth/sign-up/email", {
+    headers: {
+      origin: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
+      "x-forwarded-for": "192.0.2.229",
+    },
+    data: {
+      name: username,
+      username,
+      email: `${username}@example.test`,
+      password: "test-password-123",
+    },
+  });
+  expect(response.ok()).toBe(true);
+  await page.context().clearCookies();
+  await page.goto("/en/login?next=%2F%2Fevil.example");
+  await page.getByLabel(en.username, { exact: true }).fill(username);
+  await page.getByLabel(en.password, { exact: true }).fill("test-password-123");
+  await page.getByRole("button", { name: en.login, exact: true }).click();
+  await expect(page).toHaveURL(/\/en\/?$/);
+});
 
 test("account navigation stays consistent across site and play pages", async ({
   page,
