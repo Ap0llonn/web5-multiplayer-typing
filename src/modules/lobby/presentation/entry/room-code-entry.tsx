@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/shared/presentation/ui/button";
 import { Input } from "@/shared/presentation/ui/field";
@@ -10,7 +10,17 @@ import { useRouter } from "@/shared/presentation/i18n/navigation";
 import "./room-code-entry.css";
 import { roomCodeSchema } from "../../contracts/lobby-schemas";
 
+const ROOM_CODE_LENGTH = 6;
+// Mirrors roomCodeSchema: the server still validates; this only guides typing and pasting.
+export function sanitizeRoomCodeInput(value: string) {
+  return value
+    .toUpperCase()
+    .replace(/[^23456789ABCDEFGHJKMNPQRSTUVWXYZ]/g, "")
+    .slice(0, ROOM_CODE_LENGTH);
+}
+
 export function RoomCodeEntry() {
+  const [code, setCode] = useState("");
   const router = useRouter();
   const t = useTranslations("play");
   const id = useId();
@@ -49,9 +59,12 @@ export function RoomCodeEntry() {
               className="room-code-input"
               name="code"
               placeholder={t("roomCodePlaceholder")}
-              pattern="\s*[23456789ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz]{6}\s*"
-              minLength={6}
-              maxLength={12}
+              value={code}
+              onChange={(event) =>
+                setCode(sanitizeRoomCodeInput(event.target.value))
+              }
+              pattern="[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}"
+              minLength={ROOM_CODE_LENGTH}
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}

@@ -3,6 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createTranslator, NextIntlClientProvider } from "next-intl";
 import { PlayPage } from "@/composition/play/play-page";
+import { sanitizeRoomCodeInput } from "@/modules/lobby/presentation/entry/room-code-entry";
 import { getCurrentActor } from "@/modules/identity/server";
 import en from "@/shared/presentation/i18n/messages/en.json";
 import fr from "@/shared/presentation/i18n/messages/fr.json";
@@ -52,6 +53,7 @@ for (const [locale, messages] of [
     expect(html.match(/<form/g)).toHaveLength(1);
     expect(html.match(/<input/g)).toHaveLength(1);
     expect(html).toContain('name="code"');
+    expect(html).toContain('pattern="[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}"');
     expect(html).toContain(messages.play.roomCodeLabel);
     expect(html).not.toContain('name="name"');
     expect(html).not.toContain('name="capacity"');
@@ -60,3 +62,10 @@ for (const [locale, messages] of [
     expect(getCurrentActor).not.toHaveBeenCalled();
   });
 }
+
+it("limits typed or pasted room codes to six allowed uppercase characters", () => {
+  expect(sanitizeRoomCodeInput("abc234")).toBe("ABC234");
+  expect(sanitizeRoomCodeInput("  abc 234  ")).toBe("ABC234");
+  expect(sanitizeRoomCodeInput("ABC234XYZ")).toBe("ABC234");
+  expect(sanitizeRoomCodeInput("A0O1ILB-c!")).toBe("ABC");
+});
